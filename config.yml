@@ -1,0 +1,37 @@
+# config.yml
+
+# Default color settings for embeds
+colors:
+  default: '#ff1493'
+  success: '#00ff00'
+  error: '#ff0000'
+  info: '#0099ff'
+
+# Specific command color settings
+commands:
+  coinflip: '#ff1493'
+  meme: '#ff1493'
+  avatar: '#0099ff'
+  tp: '#ff1493'
+  love: '#ff1493'
+  help: '#ff1493'
+  clear: '#ff1493'
+  e621: '#ff1493'
+  info: '#ff1493'
+  poll: '#ff1493'
+
+# Custom status configuration
+status:
+  text: "Powered by ChatGPT"
+  type: "Custom"  # Types can be: Playing, Streaming, Listening, Watching, Custom
+  url: ""  # Only required if type is Streaming
+
+# Messages for commands
+messages:
+  errorExecutingCommand: "An error occurred while executing the command."
+  greeting: "Hello, welcome to the server!"
+  farewell: "Goodbye! Hope to see you again soon."
+  environmentVariablesNotSet: "Environment variables TOKEN, clientId, or guildIds are not set."
+  serverNameLog: "Server's: "
+  totalMembersLog: "Total members across all servers: "
+  errorLoggingIn: "Error logging in: "
