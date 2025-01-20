@@ -22,7 +22,7 @@ module.exports = {
 
         client.user.setPresence({
             activities: [{ name: config.status.text, type: ActivityType[config.status.type], url: config.status.type === 'STREAMING' ? config.status.url : undefined }],
-            status: 'online'
+            status: 'idle'
         });
     }
 };
