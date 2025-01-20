@@ -1,18 +1,25 @@
 {
   "name": "puro",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
-    "start": "concurrently \"nodemon app.js\" \"nodemon handler/register.js > /dev/null 2>&1 &\""
+    "start": "concurrently \"nodemon app.js\" \"nodemon handler/register.js\""
   },
-  "keywords": ["discord", "bot", "automation", "community", "fun"],
+  "keywords": [
+    "discord",
+    "bot",
+    "automation",
+    "community",
+    "fun"
+  ],
   "author": "Norbert Baricz",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.6.8",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0",
     "nodemon": "^3.1.0"
   },
   "devDependencies": {

@@ -22,7 +22,7 @@ commands:
 
 # Custom status configuration
 status:
-  text: "Powered by ChatGPT"
+  text: "Powered by Skypixel™️"
   type: "Custom"  # Types can be: Playing, Streaming, Listening, Watching, Custom
   url: ""  # Only required if type is Streaming
 
