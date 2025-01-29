@@ -22,11 +22,7 @@ commands:
 
 # Custom status configuration
 status:
-<<<<<<< HEAD
   text: "New update is available!" # Powered by Skypixel™️
-=======
-  text: "Powered by Skypixel™️"
->>>>>>> refs/remotes/origin/main
   type: "Custom"  # Types can be: Playing, Streaming, Listening, Watching, Custom
   url: null  # Using null instead of empty string for better semantics
 
