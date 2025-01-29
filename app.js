@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
@@ -24,32 +24,85 @@ const client = new Client({
     ]
 });
 
-// Load commands
-client.commands = new Map();
-const commands = [];
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+// Load and register commands
+async function loadAndRegisterCommands() {
+    console.log('\n🤖 Starting command registration process...');
+    const commands = [];
+    const commandsPath = path.join(__dirname, 'commands');
+    client.commands = new Map();
 
-for (const file of commandFiles) {
-    const command = require(path.join(commandsPath, file));
-    commands.push(command.data.toJSON());
-    client.commands.set(command.data.name, command);
-}
+    try {
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        console.log(`\n🔍 Found ${commandFiles.length} command files to load...\n`);
 
-// Load events
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+        for (const file of commandFiles) {
+            try {
+                const command = require(path.join(commandsPath, file));
+                if (!command.data || !command.execute) {
+                    console.log(`⚠️ Command at ${file} is missing required properties`);
+                    continue;
+                }
+                commands.push(command.data.toJSON());
+                client.commands.set(command.data.name, command);
+                console.log(`✅ Successfully loaded command: ${file}`);
+            } catch (error) {
+                console.log(`⚠️ Error loading command ${file}:`, error);
+            }
+        }
 
-for (const file of eventFiles) {
-    const event = require(path.join(eventsPath, file));
-    if (event.once) {
-        client.once(event.name, (...args) => event.execute(...args, client));
-    } else {
-        client.on(event.name, (...args) => event.execute(...args, client));
+        // Register commands with Discord API
+        const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+        console.log('\n⚡ Started refreshing application (/) commands...');
+        
+        const data = await rest.put(
+            Routes.applicationCommands(process.env.clientId),
+            { body: commands },
+        );
+        
+        console.log(`\n✅ Successfully reloaded ${data.length} application (/) commands!\n`);
+    } catch (error) {
+        console.error('Error during command registration:', error);
+        process.exit(1);
     }
 }
 
-// Load discord bot
-client.login(process.env.TOKEN).catch(error => {
-    console.error(`${config.messages.errorLoggingIn} ${error}`);
-});
+// Load events with error handling
+const eventsPath = path.join(__dirname, 'events');
+
+try {
+    const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+
+    for (const file of eventFiles) {
+        try {
+            const event = require(path.join(eventsPath, file));
+            if (!event.name || !event.execute) {
+                console.warn(`⚠️ Event file ${file} is missing required properties`);
+                continue;
+            }
+            if (event.once) {
+                client.once(event.name, (...args) => event.execute(...args, client));
+            } else {
+                client.on(event.name, (...args) => event.execute(...args, client));
+            }
+        } catch (error) {
+            console.error(`⚠️ Error loading event file ${file}:`, error);
+        }
+    }
+} catch (error) {
+    console.error(`Error reading events directory:`, error);
+    process.exit(1);
+}
+
+// Initialize bot
+(async () => {
+    try {
+        // First register commands
+        await loadAndRegisterCommands();
+        
+        // Then login
+        await client.login(process.env.TOKEN);
+    } catch (error) {
+        console.error(`${config.messages.errorLoggingIn} ${error}`);
+        process.exit(1);
+    }
+})();
