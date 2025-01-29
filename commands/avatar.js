@@ -3,8 +3,13 @@ const { EmbedBuilder } = require('discord.js');
 const yaml = require('js-yaml');
 const fs = require('fs');
 
-// Load the config.yml file
-const config = yaml.load(fs.readFileSync('./config.yml', 'utf8'));
+// Load the config.yml file with error handling
+let config;
+try {
+    config = yaml.load(fs.readFileSync('./config.yml', 'utf8'));
+} catch (error) {
+    config = { commands: {}, colors: { default: '#0099ff' } }; // Fallback config
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,22 +18,38 @@ module.exports = {
         .addUserOption(option => 
             option.setName('user')
                 .setDescription('The user to show the avatar of')
-                .setRequired(true)),
+                .setRequired(true))
+        .addBooleanOption(option =>
+            option.setName('server')
+                .setDescription('Show server-specific avatar if available')
+                .setRequired(false)),
     
     async execute(interaction) {
-        const user = interaction.options.getUser('user');
+        try {
+            const user = interaction.options.getUser('user');
+            const showServerAvatar = interaction.options.getBoolean('server') ?? false;
+            
+            // Get member if server avatar is requested and in a guild
+            const member = showServerAvatar && interaction.guild 
+                ? interaction.guild.members.cache.get(user.id) 
+                : null;
 
-        if (!user) {
-            return interaction.reply('User not found.');
+            const avatarUrl = member?.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 }) 
+                || user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
+
+            const avatarEmbed = new EmbedBuilder()
+                .setColor(config.commands?.avatar || config.colors?.default || '#0099ff')
+                .setTitle(`${user.username}'s ${showServerAvatar && member?.avatar ? 'Server ' : ''}Avatar`)
+                .setImage(avatarUrl)
+                .setFooter({ text: `Requested by ${interaction.user.username}` })
+                .setTimestamp();
+
+            await interaction.reply({ embeds: [avatarEmbed] });
+        } catch (error) {
+            await interaction.reply({ 
+                content: 'There was an error while executing this command!', 
+                ephemeral: true 
+            }).catch(console.error);
         }
-
-        const avatarUrl = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
-
-        const avatarEmbed = new EmbedBuilder()
-            .setColor(config.commands.avatar || config.colors.default)
-            .setTitle(`${user.username}'s Avatar`)
-            .setImage(avatarUrl);
-
-        await interaction.reply({ embeds: [avatarEmbed] });
     },
 };

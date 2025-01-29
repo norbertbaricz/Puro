@@ -2,29 +2,29 @@
 
 # Default color settings for embeds
 colors:
-  default: '#ff1493'
+  default: &default '#ff1493'  # Using YAML anchor for repeated color
   success: '#00ff00'
   error: '#ff0000'
   info: '#0099ff'
 
 # Specific command color settings
 commands:
-  coinflip: '#ff1493'
-  meme: '#ff1493'
+  coinflip: '#0099ff'    # Using YAML reference instead of repeating value
+  meme: '#0099ff'
   avatar: '#0099ff'
-  tp: '#ff1493'
-  love: '#ff1493'
-  help: '#ff1493'
-  clear: '#ff1493'
-  e621: '#ff1493'
-  info: '#ff1493'
-  poll: '#ff1493'
+  tp: '#0099ff'
+  love: '#0099ff'
+  help: '#0099ff'
+  clear: '#0099ff'
+  e621: '#0099ff'
+  info: '#0099ff'
+  poll: '#0099ff'
 
 # Custom status configuration
 status:
-  text: "Powered by ChatGPT"
+  text: "New update is available!" # Powered by Skypixel™️
   type: "Custom"  # Types can be: Playing, Streaming, Listening, Watching, Custom
-  url: ""  # Only required if type is Streaming
+  url: null  # Using null instead of empty string for better semantics
 
 # Messages for commands
 messages:
@@ -32,6 +32,5 @@ messages:
   greeting: "Hello, welcome to the server!"
   farewell: "Goodbye! Hope to see you again soon."
   environmentVariablesNotSet: "Environment variables TOKEN, clientId, or guildIds are not set."
-  serverNameLog: "Server's: "
   totalMembersLog: "Total members across all servers: "
   errorLoggingIn: "Error logging in: "
