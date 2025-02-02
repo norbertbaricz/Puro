@@ -31,8 +31,8 @@ module.exports = {
         if (!statusConfig || !statusConfig.text || !statusConfig.type) {
             console.log('⚠️ No status activities configured, using default');
             await client.user.setPresence({ 
-                activities: [{ name: 'Default Status', type: ActivityType.Playing }],
-                status: 'idle'
+                activities: [{ name: 'Powered by Skypixel™️', type: ActivityType.Custom }],
+                status: 'dnd'
             });
             return;
         }
@@ -46,23 +46,38 @@ module.exports = {
             'Competing': ActivityType.Competing
         };
 
-        const customStatus = {
-            name: statusConfig.text,
-            type: activityTypes[statusConfig.type] || ActivityType.Playing,
-            ...(statusConfig.url && { url: statusConfig.url })
-        };
+        // Special handling for Streaming status
+        let customStatus;
+        if (statusConfig.type === 'Streaming') {
+            customStatus = {
+                name: statusConfig.text,
+                type: ActivityType.Streaming,
+                url: statusConfig.url || 'https://www.twitch.tv/maxwastaked' // Fallback URL if none provided
+            };
+        } else {
+            customStatus = {
+                name: statusConfig.text,
+                type: activityTypes[statusConfig.type]
+            };
+        }
 
         // Set custom status
         try {
             await client.user.setPresence({ 
                 activities: [customStatus],
-                status: 'online'
+                status: 'idle'
             });
             console.log('✅ Custom status set successfully:', customStatus.name);
         } catch (error) {
             console.error('❌ Error setting custom status:', error);
+            // Fallback to a simple status if streaming fails
+            await client.user.setPresence({ 
+                activities: [{ 
+                    name: statusConfig.text, 
+                    type: ActivityType.Custom 
+                }],
+                status: 'idle'
+            });
         }
-
-        // Memory usage monitoring
     }
 };
