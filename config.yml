@@ -22,9 +22,9 @@ commands:
 
 # Custom status configuration
 status:
-  text: "New update is available!" # Powered by Skypixel™️
+  text: "Powered by Skypixel™️" # Powered by Skypixel™️
   type: "Custom"  # Types can be: Playing, Streaming, Listening, Watching, Custom
-  url: null  # Using null instead of empty string for better semantics
+  url: "https://thewolfdenvr.carrd.co/"  # Using null instead of empty string for better semantics
 
 # Messages for commands
 messages:
