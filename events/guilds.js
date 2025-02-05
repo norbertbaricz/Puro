@@ -13,7 +13,8 @@ const IMAGE_ONLY_CHANNELS = [
     '1239021031570800651',
     '1332941016889823325',
     '1332941122133164173',
-    '1332942365551235163'
+    '1332942365551235163',
+    '1229630651536375899'
 ];
 
 const IMAGE_VIDEO_CHANNELS = [
@@ -37,62 +38,187 @@ try {
 module.exports = {
     name: Events.MessageCreate,
     async execute(message) {
-        // Image-only channel moderation
-        if (IMAGE_ONLY_GUILDS.includes(message.guildId)) {
+        try {
+            // Check if message is in allowed guild
+            if (!IMAGE_ONLY_GUILDS.includes(message.guildId)) return;
+            
+            // Ignore bot messages
+            if (message.author.bot) return;
+
+            // Get member's nickname or username
+            const memberName = message.member.nickname || message.author.username;
+
+            // Handle IMAGE_ONLY_CHANNELS (only images allowed)
             if (IMAGE_ONLY_CHANNELS.includes(message.channelId)) {
-                // Ignore bot messages
-                if (message.author.bot) return;
-                
-                // Check if the message contains an image
-                if (!message.attachments.some(attachment => attachment.contentType?.startsWith('image/'))) {
-                    await message.delete();
-                    
-                    // Create warning embed using color from config
-                    const warningEmbed = new EmbedBuilder()
-                        .setColor(config.colors?.error || '#FF0000')
-                        .setTitle('⚠️ Warning: Image Required')
-                        .setDescription(`Hey ${message.author}, this channel requires an image attachment with your message!`)
-                        .addFields(
-                            { name: 'Channel', value: `<#${message.channelId}>`, inline: true },
-                            { name: 'Action Taken', value: 'Message Deleted', inline: true }
-                        )
-                        .setTimestamp();
+                const hasImage = message.attachments.some(attachment => 
+                    attachment.contentType?.startsWith('image/') && 
+                    !attachment.contentType?.includes('gif')
+                );
 
-                    // Try to send DM, silently fail if not possible
-                    await message.author.send({ embeds: [warningEmbed] }).catch(() => {});
-                    return;
-                }
-            } else if (IMAGE_VIDEO_CHANNELS.includes(message.channelId)) {
-                // Ignore bot messages
-                if (message.author.bot) return;
-                
-                // Check if the message contains an image, video, or GIF
-                if (!message.attachments.some(attachment => 
-                    attachment.contentType?.startsWith('image/') || 
-                    attachment.contentType?.startsWith('video/') ||
-                    attachment.contentType === 'image/gif' ||
-                    attachment.url.endsWith('.gif')
-                )) {
-                    await message.delete();
-                    
-                    // Create warning embed for image/video/gif channel
-                    const warningEmbed = new EmbedBuilder()
-                        .setColor(config.colors?.error || '#FF0000')
-                        .setTitle('⚠️ Warning: Media Required')
-                        .setDescription(`Hey ${message.author}, this channel requires an image, video, or GIF attachment with your message!`)
-                        .addFields(
-                            { name: 'Channel', value: `<#${message.channelId}>`, inline: true },
-                            { name: 'Action Taken', value: 'Message Deleted', inline: true }
-                        )
-                        .setTimestamp();
+                if (!hasImage) {
+                    try {
+                        // Get all threads first
+                        const threads = await message.channel.threads.fetch();
+                        const existingThread = threads.threads.find(t => 
+                            t.name === `${memberName}'s Discussion` && !t.archived
+                        );
 
-                    // Try to send DM, silently fail if not possible
-                    await message.author.send({ embeds: [warningEmbed] }).catch(() => {});
-                    return;
+                        // Store content
+                        const originalContent = message.content;
+
+                        if (originalContent) {
+                            if (existingThread) {
+                                // Use existing thread
+                                const messageEmbed = new EmbedBuilder()
+                                    .setColor('#00ff00')
+                                    .setAuthor({
+                                        name: memberName,
+                                        iconURL: message.author.displayAvatarURL({ dynamic: true })
+                                    })
+                                    .setDescription(originalContent)
+                                    .setTimestamp();
+
+                                    await existingThread.send({ embeds: [messageEmbed] });
+                                    await message.delete();
+                            } else {
+                                // Create new thread first, then delete message
+                                const thread = await message.startThread({
+                                    name: `${memberName}'s Discussion`,
+                                    autoArchiveDuration: 60,
+                                    reason: 'Automatically created thread for text message'
+                                });
+
+                                const threadEmbed = new EmbedBuilder()
+                                    .setColor('#00ff00')
+                                    .setAuthor({
+                                        name: memberName,
+                                        iconURL: message.author.displayAvatarURL({ dynamic: true })
+                                    })
+                                    .setTitle('💬 Discussion Thread Created')
+                                    .setDescription(originalContent)
+                                    .addFields(
+                                        { 
+                                            name: '📝 Channel Rules',
+                                            value: 'This channel only allows static images. Videos, GIFs, and text-only messages are not permitted.',
+                                            inline: false 
+                                        },
+                                        { 
+                                            name: '⏰ Auto-Archive',
+                                            value: 'This thread will be automatically archived after 1 hour of inactivity.',
+                                            inline: false 
+                                        }
+                                    )
+                                    .setFooter({ 
+                                        text: `Thread created for ${memberName}` 
+                                    })
+                                    .setTimestamp();
+
+                                await thread.send({ embeds: [threadEmbed] });
+                                await message.delete();
+                            }
+                        } else {
+                            // If no content, just delete the message
+                            await message.delete();
+                        }
+                    } catch (error) {
+                        console.error('Error in thread handling:', error);
+                        // If there's an error, make sure the message is deleted
+                        try {
+                            await message.delete();
+                        } catch (deleteError) {
+                            console.error('Error deleting message:', deleteError);
+                        }
+                    }
                 }
             }
-        }
 
-        // ... rest of your existing guilds.js code ...
+            // Handle IMAGE_VIDEO_CHANNELS (only videos and GIFs allowed)
+            else if (IMAGE_VIDEO_CHANNELS.includes(message.channelId)) {
+                const hasVideoOrGif = message.attachments.some(attachment => 
+                    attachment.contentType?.startsWith('video/') ||
+                    attachment.contentType?.includes('gif') ||
+                    attachment.url.endsWith('.gif')
+                );
+
+                if (!hasVideoOrGif) {
+                    try {
+                        // Get all threads first
+                        const threads = await message.channel.threads.fetch();
+                        const existingThread = threads.threads.find(t => 
+                            t.name === `${memberName}'s Discussion` && !t.archived
+                        );
+
+                        // Store content
+                        const originalContent = message.content;
+
+                        if (originalContent) {
+                            if (existingThread) {
+                                // Use existing thread
+                                const messageEmbed = new EmbedBuilder()
+                                    .setColor('#00ff00')
+                                    .setAuthor({
+                                        name: memberName,
+                                        iconURL: message.author.displayAvatarURL({ dynamic: true })
+                                    })
+                                    .setDescription(originalContent)
+                                    .setTimestamp();
+
+                                await existingThread.send({ embeds: [messageEmbed] });
+                                await message.delete();
+                            } else {
+                                // Create new thread first, then delete message
+                                const thread = await message.startThread({
+                                    name: `${memberName}'s Discussion`,
+                                    autoArchiveDuration: 60,
+                                    reason: 'Automatically created thread for text message'
+                                });
+
+                                const threadEmbed = new EmbedBuilder()
+                                    .setColor('#00ff00')
+                                    .setAuthor({
+                                        name: memberName,
+                                        iconURL: message.author.displayAvatarURL({ dynamic: true })
+                                    })
+                                    .setTitle('💬 Discussion Thread Created')
+                                    .setDescription(originalContent)
+                                    .addFields(
+                                        { 
+                                            name: '📝 Channel Rules',
+                                            value: 'This channel only allows videos and GIFs. Static images and text-only messages are not permitted.',
+                                            inline: false 
+                                        },
+                                        { 
+                                            name: '⏰ Auto-Archive',
+                                            value: 'This thread will be automatically archived after 1 hour of inactivity.',
+                                            inline: false 
+                                        }
+                                    )
+                                    .setFooter({ 
+                                        text: `Thread created for ${memberName}` 
+                                    })
+                                    .setTimestamp();
+
+                                await thread.send({ embeds: [threadEmbed] });
+                                await message.delete();
+                            }
+                        } else {
+                            // If no content, just delete the message
+                            await message.delete();
+                        }
+                    } catch (error) {
+                        console.error('Error in thread handling:', error);
+                        // If there's an error, make sure the message is deleted
+                        try {
+                            await message.delete();
+                        } catch (deleteError) {
+                            console.error('Error deleting message:', deleteError);
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error('Error in guilds.js:', error);
+        }
     },
 };
