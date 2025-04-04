@@ -9,16 +9,19 @@ colors:
 
 # Specific command color settings
 commands:
-  coinflip: '#0099ff'    # Using YAML reference instead of repeating value
-  meme: '#0099ff'
+  announce: '#0099ff'
   avatar: '#0099ff'
-  tp: '#0099ff'
-  love: '#0099ff'
-  help: '#0099ff'
   clear: '#0099ff'
+  coinflip: '#0099ff'
   e621: '#0099ff'
+  help: '#0099ff'
   info: '#0099ff'
-  poll: '#0099ff'
+  love: '#0099ff'
+  meme: '#0099ff'
+  send: '#0099ff'
+  top: '#0099ff'
+  tp: '#0099ff'
+  ttt: '#0099ff'
 
 # Custom status configuration
 status:
