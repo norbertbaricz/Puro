@@ -39,7 +39,27 @@ module.exports = {
                 `Hewwo ${message.author}! 🎀`,
                 `*happy bounces* Hi ${message.author}! 🦊`,
                 `Henlo fren ${message.author}! 🐾`,
-                `Hoi ${message.author}! 💕`
+                `Hoi ${message.author}! 💕`,
+                `*wags tail* Hello ${message.author}! 🐕`,
+                `*perks ears* Hi ${message.author}! 🦊`,
+                `Awoo~ Welcome ${message.author}! 🐺`,
+                `*nuzzles* Heya ${message.author}! 💖`,
+                `*boops* Hi there ${message.author}! 🐽`,
+                `*purrs* Hello ${message.author}! 🐱`,
+                `Greetings and pawsitivity ${message.author}! 🐾`,
+                `*flicks tail* Hey ${message.author}! 🦁`,
+                `*chirps* Hello there ${message.author}! 🐦`,
+                `Mrrp~ Hi ${message.author}! 🐯`,
+                `*bounces excitedly* Heyo ${message.author}! 🦘`,
+                `*wiggles* Hi hi ${message.author}! 🐰`,
+                `*happy floof noises* Hello ${message.author}! 🦊`,
+                `Henlo wonderful ${message.author}! 🌸`,
+                `*excited tail wags* Hi fren ${message.author}! 💫`,
+                `Greetings floofy fren ${message.author}! 🐾`,
+                `*happy prances* Hello ${message.author}! 🦌`,
+                `Pawsome to see you ${message.author}! 🐾`,
+                `*happy squeaks* Hi ${message.author}! 🐹`,
+                `*gentle headboop* Hello ${message.author}! 💝`
             ];
 
             try {
