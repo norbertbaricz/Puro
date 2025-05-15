@@ -1,39 +1,201 @@
 # config.yml
 
-# Default color settings for embeds
+# Global color settings
 colors:
-  default: &default '#ff1493'  # Using YAML anchor for repeated color
-  success: '#00ff00'
-  error: '#ff0000'
-  info: '#0099ff'
+  default: '#ff1493'  # Pink default
+  success: '#00ff00'  # Green
+  error: '#ff0000'    # Red
+  info: '#0099ff'     # Blue
 
-# Specific command color settings
-commands:
-  announce: '#0099ff'
-  avatar: '#0099ff'
-  clear: '#0099ff'
-  coinflip: '#0099ff'
-  e621: '#0099ff'
-  help: '#0099ff'
-  info: '#0099ff'
-  love: '#0099ff'
-  meme: '#0099ff'
-  send: '#0099ff'
-  top: '#0099ff'
-  tp: '#0099ff'
-  ttt: '#0099ff'
-
-# Custom status configuration
+# Bot status configuration
 status:
-  text: "Powered by Skypixel™️" # Powered by Skypixel™️
-  type: "Custom"  # Types can be: Playing, Streaming, Listening, Watching, Custom
-  url: "https://thewolfdenvr.carrd.co/"  # Using null instead of empty string for better semantics
+  text: "Powered by Skypixel™️"
+  type: "Custom"
+  url: "https://thewolfdenvr.carrd.co/"
 
-# Messages for commands
+# General limits
+limits:
+  message: 2000  # Max message length
+  flips: 10      # Max coin flips
+  e621_results: 100  # Max e621 API results
+  meme_cache: 50     # Max memes in cache
+
+# Command-specific configurations
+commands:
+  announce:
+    color: '#0099ff'
+    messages:
+      no_permission: "❌ You need 'Manage Messages' permission!"
+      invalid_channel: "❌ Please specify a text or announcement channel!"
+      no_bot_permission: "❌ I lack permission to send messages in {channel}!"
+      too_long: "❌ Message too long! Max {maxLength} characters."
+      success: "✅ Message sent to {channel}!"
+      error: "❌ Failed to send message!"
+      cooldown: "⏳ Please wait {remaining} seconds."
+  avatar:
+    color: '#0099ff'
+    messages:
+      error: "❌ Error displaying avatar!"
+  clear:
+    color: '#0099ff'
+    messages:
+      no_permission: "❌ You need 'Manage Messages' permission!"
+      no_bot_permission: "❌ I need 'Manage Messages' permission!"
+      no_messages: "⚠️ No messages found to delete."
+      success: "✅ Deleted {count} message{s}!"
+      error: "❌ Error deleting messages!"
+  coinflip:
+    color: '#FFD700'  # Gold
+    messages:
+      error: "❌ Error flipping coin!"
+    emojis:
+      heads: '🌕'
+      tails: '🌑'
+  e621:
+    color: '#FF69B4'  # Pink
+    messages:
+      cooldown: "⏳ Wait {remaining} seconds."
+      nsfw_required: "❌ Explicit content requires an NSFW channel!"
+      no_results: "No results found."
+      no_valid_images: "No suitable images found."
+      error: "❌ Error fetching image!"
+  help:
+    color: '#00FF00'  # Green
+    messages:
+      error: "❌ Error displaying help!"
+  info:
+    color: '#5865F2'  # Discord blue
+    messages:
+      error: "❌ Error fetching bot info!"
+  love:
+    color: '#FF69B4'  # Pink
+    messages:
+      self_love: "💝 No self-love checks!"
+      error: "❌ Error calculating love!"
+      tips:
+        - "Communication is key! 🗣️"
+        - "Show appreciation daily! 🌟"
+        - "Respect differences! 🤝"
+        - "Make time for each other! ⏰"
+        - "Keep romance alive! 🌹"
+      results:
+        100: "Perfect match! 💘 True love!"
+        90: "Amazing chemistry! 💝"
+        70: "Great potential! 💖"
+        50: "There's a spark! 💓"
+        30: "Some attraction! 💗"
+        10: "Maybe just friends? 💔"
+        0: "Time to look elsewhere! 💔"
+  meme:
+    color: '#FF4500'  # Reddit orange
+    messages:
+      cooldown: "⏳ Wait {remaining} seconds."
+      error: "❌ Failed to fetch meme!"
+  send:
+    color: '#0099ff'
+    messages:
+      no_permission: "❌ You need 'Manage Messages' permission!"
+      success: "✅ Message sent to {user}!"
+      error: "❌ Failed to send message to {user}."
+  top:
+    color: '#0099ff'
+    messages:
+      error: "❌ Error fetching leaderboard!"
+  tp:
+    color: '#9B59B6'  # Purple
+    messages:
+      cooldown: "⏳ Teleporter recharging for {remaining} seconds!"
+      not_found: "❌ Member not found!"
+      self_tp: "❌ No teleporting to yourself!"
+      bot_tp: "❌ Cannot teleport to bots!"
+      error: "❌ Teleportation failed!"
+      teleport:
+        - "🌟 *WHOOSH!* A magical portal opens..."
+        - "⚡ *ZAP!* Lightning fast teleportation..."
+        - "🌈 *POOF!* Through the rainbow bridge..."
+        - "🎯 *ZOOM!* Direct transmission..."
+        - "✨ *SPARKLE!* Magical transportation..."
+  ttt:
+    color: '#0099ff'
+    messages:
+      bot_opponent: "❌ No bot opponents!"
+      self_challenge: "❌ No self-challenges!"
+      not_your_turn: "❌ It's {player}'s turn!"
+      timeout: "⏰ Game timed out!"
+      tie: "🤝 It's a tie!"
+      win: "🎉 {player} wins with {symbol}!"
+      error: "❌ Error starting game!"
+
+# Event-specific configurations
+events:
+  interactionCreate:
+    messages:
+      command_not_found: "⚠️ Command {command} not found."
+      execution_error: "❌ Error executing command!"
+      handler_error: "❌ Error processing interaction!"
+  messageCreate:
+    guild_id: '1217588804328620163'
+    greetings:
+      patterns:
+        - '^h+e+l+o+$'           # helo, helloo
+        - '^h+e+l+l+o+$'         # hello, helloo
+        - '^h+i+$'               # hi, hii
+        - '^h+e+y+$'             # hey, heyy
+        - '^h+e+w+o+$'           # hewo, hewoo
+        - '^h+e+l+w+o+$'         # helwo, hellwoo
+        - '^h+a+i+$'             # hai, haiii
+        - '^h+e+i+$'             # hei, heii
+        - '^h+o+i+$'             # hoi, hoiii
+        - '^h+a+y+$'             # hay, hayyy
+      responses:
+        - "*perks ears* Hey {user}! 🐺"
+        - "*wags fluffy tail* Hi there {user}! 🐺✨"
+        - "*howls softly* Hello {user}! 🐺🌟"
+        - "*tilts head curiously* Hewo {user}! 🐺💫"
+        - "*approaches with wagging tail* {user}! 🐺🌈"
+        - "*playful noises* G'day {user}! 🐺"
+        - "*happy bounces* Greetings {user}! 🐺🎉"
+        - "*excited tail wagging* Hi hi {user}! 🐺🌺"
+        - "*friendly smile* Henlo {user}! 🐺🌸"
+        - "*bounds over happily* Hi {user}! 🐺💝"
+        - "*gentle awoo* Haiiii {user}! 🐺✨"
+        - "*playful pounce* Hewwo {user}! 🐺🎀"
+        - "*happy zoomies* Hi {user}! 🐺🦊"
+        - "*welcoming howl* Henlo pack mate {user}! 🐺🐾"
+        - "*wolf tail wag* Hoi {user}! 🐺💕"
+        - "*excited dance* Hello {user}! 🐺⭐"
+        - "*alert ears* Hi {user}! 🐺🌙"
+        - "*joyful awoo~* Welcome {user}! 🐺🌟"
+        - "*friendly nuzzle* Heya {user}! 🐺💖"
+        - "*gentle boop* Hi there {user}! 🐺✨"
+        - "*happy noises* Hello {user}! 🐺🌸"
+        - "*wolf pack welcome* Greetings {user}! 🐺🐾"
+        - "*flicks tail* Hey {user}! 🐺🌟"
+        - "*melodic howl* Hello there {user}! 🐺🌙"
+        - "*playful growl* Hi {user}! 🐺💫"
+        - "*bounces with energy* Heyo {user}! 🐺✨"
+        - "*happy wiggles* Hi hi {user}! 🐺🎉"
+        - "*wolf pack greetings* Hello {user}! 🐺🌟"
+        - "*friendly approach* Henlo wonderful {user}! 🐺🌸"
+        - "*excited welcome* Hi pack mate {user}! 🐺💫"
+        - "*wolf pack celebration* Welcome fren {user}! 🐺🐾"
+        - "*graceful bow* Hello {user}! 🐺🌙"
+        - "*wolf-style welcome* Great to see you {user}! 🐺✨"
+        - "*happy yips* Hi {user}! 🐺💝"
+        - "*gentle greeting* Welcome to the pack {user}! 🐺🌟"
+      messages:
+        error: "❌ Error sending greeting!"
+  ready:
+    messages:
+      login_success: "✅ Logged in as {tag}"
+      stats:
+        servers: "🌐 Serving {count} servers"
+        members: "👥 Reaching {count} users"
+        channels: "📊 Managing {count} channels"
+      status_error: "❌ Error setting status!"
+      no_status: "⚠️ No status configured, using default"
+
+# General messages
 messages:
-  errorExecutingCommand: "An error occurred while executing the command."
-  greeting: "Hello, welcome to the server!"
-  farewell: "Goodbye! Hope to see you again soon."
-  environmentVariablesNotSet: "Environment variables TOKEN, clientId, or guildIds are not set."
-  totalMembersLog: "Total members across all servers: "
+  environmentVariablesNotSet: "Environment variables TOKEN or clientId not set."
   errorLoggingIn: "Error logging in: "
