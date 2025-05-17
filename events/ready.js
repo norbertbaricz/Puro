@@ -18,11 +18,11 @@ module.exports = {
         console.log(config.messages.stats.channels.replace('{count}', totalChannels));
 
         const statusConfig = client.config.status;
-        if (!statusConfig?.text || !statusConfig?.type) {
+        if (!statusConfig?.texts?.length) { // Am schimbat asta, verifica doar lungimea array-ului
             console.log(config.messages.no_status);
-            await client.user.setPresence({ 
-                activities: [{ name: 'Powered by Skypixel™️', type: ActivityType.Custom }],
-                status: 'dnd'
+            await client.user.setPresence({
+                activities: [{ name: 'Error' }],
+                status: statusConfig?.status || 'dnd'
             });
             return;
         }
@@ -36,18 +36,36 @@ module.exports = {
             'Competing': ActivityType.Competing
         };
 
-        try {
-            const activity = statusConfig.type === 'Streaming' 
-                ? { name: statusConfig.text, type: ActivityType.Streaming, url: statusConfig.url }
-                : { name: statusConfig.text, type: activityTypes[statusConfig.type] };
+        const setRandomActivity = async () => {
+            const randomText = statusConfig.texts[Math.floor(Math.random() * statusConfig.texts.length)];
+            let activity;
 
-            await client.user.setPresence({ activities: [activity], status: 'idle' });
-        } catch (error) {
-            console.error(config.messages.status_error, error);
-            await client.user.setPresence({ 
-                activities: [{ name: statusConfig.text, type: ActivityType.Custom }],
-                status: 'idle'
-            });
-        }
+            if (statusConfig.type === 'Custom') {
+                activity = {
+                    name: randomText,
+                    type: ActivityType.Custom,
+                };
+            } else if (statusConfig.type === 'Streaming') {
+                activity = {
+                    name: randomText,
+                    type: ActivityType.Streaming,
+                    url: statusConfig.url || "https://www.twitch.tv/insym", // Adaugă un URL implicit pentru streaming
+                };
+            } else {
+                activity = {
+                    name: randomText,
+                    type: activityTypes[statusConfig.type] || ActivityType.Playing,
+                };
+            }
+
+            try {
+                await client.user.setPresence({ activities: [activity], status: statusConfig.status || 'dnd' });
+            } catch (error) {
+                console.error(config.messages.status_error, error);
+            }
+        };
+
+        setRandomActivity();
+        setInterval(setRandomActivity, 10000);
     },
 };

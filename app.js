@@ -17,7 +17,7 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildPresences, // GuildPresences
         GatewayIntentBits.GuildVoiceStates
     ]
 });
@@ -90,7 +90,6 @@ try {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
-    client.user.setActivity(config.status.text, { type: config.status.type, url: config.status.url });
 });
 
 (async () => {
