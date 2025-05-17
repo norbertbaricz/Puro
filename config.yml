@@ -9,9 +9,30 @@ colors:
 
 # Bot status configuration
 status:
-  text: "Powered by Skypixel™️"
-  type: "Custom"
-  url: "https://thewolfdenvr.carrd.co/"
+  texts:  # Listă de texte care se schimbă random la 10 secunde
+    - "Ready to help ❤️"
+    - "Serving the pack! 🐺"
+    - "Online and active! 🌟"
+    - "Helping users! 💫"
+    - "Powered by Skypixel™️"
+    - "The Wolf Den VR is here! 🚀"
+    - "Join us in the Metaverse! 🌐"
+    - "Exploring new frontiers! 🚀"
+    - "Your guide to the virtual world! 🧭"
+    - "Connecting communities, one byte at a time! 🤝"
+    - "Creating immersive experiences! ✨"
+    - "Where the adventure begins! 🗺️"
+    - "Your home away from home! 🏡"
+    - "Come howl with us! 🐺"
+    - "Experience the future, today! 🔮"
+    - "Building the future, together. 🏗️"
+    - "Your ultimate VR destination. 🎯"
+    - "Unleash your inner wolf! 🐾"
+    - "The pack is waiting for you!  기다려"
+    - "Your journey starts here. 시작"
+  type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
+  url: "https://thewolfdenvr.carrd.co/"  # URL pentru Streaming (opțional)
+  status: "idle"  # Poate fi "online", "dnd", "idle" sau "invisible"
 
 # General limits
 limits:

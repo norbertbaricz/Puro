@@ -28,7 +28,9 @@
     "dotenv": "^16.4.5",
     "js-yaml": "^4.1.0",
     "jsdom": "^26.0.0",
-    "node-fetch": "^2.7.0"
+    "libsodium-wrappers": "^0.7.15",
+    "node-fetch": "^2.7.0",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
