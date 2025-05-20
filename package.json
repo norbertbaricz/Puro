@@ -23,9 +23,13 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
+    "@huggingface/hub": "^2.1.0",
+    "@huggingface/inference": "^3.13.1",
+    "@huggingface/mcp-client": "^0.2.0",
     "axios": "^1.9.0",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
     "js-yaml": "^4.1.0",
     "jsdom": "^26.0.0",
     "libsodium-wrappers": "^0.7.15",
