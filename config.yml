@@ -154,7 +154,7 @@ events:
       command_not_found: "⚠️ Command {command} not found."
       execution_error: "❌ Error executing command!"
       handler_error: "❌ Error processing interaction!"
-  messageCreate:
+  messageCreate: # This is your existing messageCreate for greetings
     guild_id: '1217588804328620163'
     greetings:
       patterns:
