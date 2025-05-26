@@ -5,9 +5,9 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('announce')
         .setDescription('Announce a message to a specific channel!')
-        .addChannelOption(option => 
+        .addChannelOption(option =>
             option.setName('channel').setDescription('The channel to send to').setRequired(true))
-        .addStringOption(option => 
+        .addStringOption(option =>
             option.setName('message').setDescription('The message to send').setRequired(true))
         .addBooleanOption(option =>
             option.setName('publish').setDescription('Publish in announcement channel').setRequired(false))
@@ -16,7 +16,8 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.announce;
         try {
-            if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+            // Fixed line: Use interaction.memberPermissions
+            if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages)) {
                 return interaction.reply({ content: config.messages.no_permission, ephemeral: true });
             }
 
@@ -39,9 +40,9 @@ module.exports = {
             }
 
             if (message.length > interaction.client.config.limits.message) {
-                return interaction.reply({ 
-                    content: config.messages.too_long.replace('{maxLength}', interaction.client.config.limits.message), 
-                    ephemeral: true 
+                return interaction.reply({
+                    content: config.messages.too_long.replace('{maxLength}', interaction.client.config.limits.message),
+                    ephemeral: true
                 });
             }
 
@@ -56,8 +57,8 @@ module.exports = {
             await interaction.editReply({ content: config.messages.success.replace('{channel}', channel), ephemeral: true });
         } catch (error) {
             console.error('Announce error:', error);
-            const reply = interaction.deferred ? interaction.editReply : interaction.reply;
-            await reply.call(interaction, { content: config.messages.error, ephemeral: true });
+            const replyMethod = interaction.deferred || interaction.replied ? interaction.editReply : interaction.reply;
+            await replyMethod.call(interaction, { content: config.messages.error, ephemeral: true });
         }
     },
 };

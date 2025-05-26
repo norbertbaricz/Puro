@@ -165,7 +165,7 @@ function loadEvents() {
 
 // Initialize Express App
 const app = express();
-const PORT = process.env.DASHBOARD_PORT || 3000; // Dashboard port, configurable via .env
+const PORT = process.env.DASHBOARD_PORT || 800; // Dashboard port, configurable via .env
 
 app.set('view engine', 'ejs'); // Set EJS as the templating engine
 app.set('views', path.join(__dirname, 'views')); // Specify the views directory (for views/index.ejs)
