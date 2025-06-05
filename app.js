@@ -3,8 +3,6 @@ const { Client, GatewayIntentBits, REST, Routes, Collection } = require('discord
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
-const express = require('express');
-const ejs = require('ejs');
 
 // Default configuration
 let config = { 
@@ -139,7 +137,7 @@ function loadEvents() {
                         client.eventLoadDetails.push({ file, name: event.name, status: 'success', message: 'Loaded successfully.' });
                         loadedEventsCount++;
                     } else {
-                        const missingProps = `Missing or invalid "name" or "execute" properties.`;
+                        const missingProps = `Missing or invalid "name" or "execute" properties.` ;
                         console.log(`❌ Event ${file} ${missingProps}`);
                         client.eventLoadDetails.push({ file, status: 'error', message: missingProps });
                     }
@@ -163,65 +161,7 @@ function loadEvents() {
     }
 }
 
-// Initialize Express App
-const app = express();
-const PORT = process.env.DASHBOARD_PORT || 800; // Dashboard port, configurable via .env
-
-app.set('view engine', 'ejs'); // Set EJS as the templating engine
-app.set('views', path.join(__dirname, 'views')); // Specify the views directory (for views/index.ejs)
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files (CSS, client-side JS) if needed
-
-// Dashboard Route
-app.get('/', (req, res) => {
-    const commandSummary = {
-        totalFiles: client.commandLoadDetails.filter(d => d.file).length,
-        loadedSuccessfully: client.commandLoadDetails.filter(d => d.status === 'success' && d.file).length,
-        errors: client.commandLoadDetails.filter(d => d.status === 'error' && d.file).length,
-        details: client.commandLoadDetails
-    };
-
-    const eventSummary = {
-        totalFiles: client.eventLoadDetails.filter(d => d.file).length,
-        loadedSuccessfully: client.eventLoadDetails.filter(d => d.status === 'success' && d.file).length,
-        errors: client.eventLoadDetails.filter(d => d.status === 'error' && d.file).length,
-        details: client.eventLoadDetails
-    };
-    
-    res.render('index', { // Render views/index.ejs
-        botUser: client.user,
-        commandSummary,
-        eventSummary,
-        configMessages: config.messages, // Pass config messages if needed in EJS
-        status: req.query.status // For feedback from reload action
-    });
-});
-
-// Route to reload commands and events
-app.get('/reload', async (req, res) => {
-    console.log('\n🔄 Received request to reload commands and events via dashboard...');
-    try {
-        // Clear old event listeners to prevent duplicates
-        if (client.eventLoadDetails) {
-            client.eventLoadDetails.forEach(eventDetail => {
-                if (eventDetail.name && eventDetail.status === 'success') {
-                    client.removeAllListeners(eventDetail.name);
-                }
-            });
-        }
-        
-        loadEvents(); // Reload events (defines new listeners)
-        await loadAndRegisterCommands(); // Reload and re-register commands
-        
-        console.log('✅ Reload complete via dashboard.');
-        res.redirect('/?status=reloaded'); // Redirect with success status
-    } catch (error) {
-        console.error('❌ Error during manual reload via dashboard:', error);
-        res.redirect('/?status=reload_error'); // Redirect with error status
-    }
-});
-
-
-// Main asynchronous function to start the bot and server
+// Main asynchronous function to start the bot
 async function main() {
     try {
         loadEvents(); // Load events first
@@ -231,22 +171,11 @@ async function main() {
         // client.user is only available after login
         console.log(`\n🤖 Bot logged in as ${client.user.tag}`);
 
-        // Start the Express server after the bot is logged in
-        app.listen(PORT, () => {
-            console.log(`\n🌐 Dashboard server running on http://localhost:${PORT}`);
-        });
-
     } catch (error) {
         console.error(`❌ ${client.config.messages.errorLoggingIn || 'Error during initialization or login:'} ${error.message}`);
-        
-        // Attempt to start the web server even if the bot fails to log in, to display errors
+        // Log the error in load details for debugging purposes if needed
         client.eventLoadDetails.push({ type: 'summary', message: `Bot login/initialization error: ${error.message}`, status: 'error' });
         client.commandLoadDetails.push({ type: 'summary', message: `Bot login/initialization error: ${error.message}`, status: 'error' });
-        
-        app.listen(PORT, () => {
-            console.log(`\n🌐 Dashboard server (bot might have failed to start) running on http://localhost:${PORT}`);
-            console.log("   Check the dashboard for error details if available.");
-        });
     }
 }
 
