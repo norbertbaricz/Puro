@@ -113,11 +113,15 @@ commands:
       cooldown: "⏳ Wait {remaining} seconds."
       error: "❌ Failed to fetch meme!"
   send:
-    color: '#0099ff'
+    color: '#0099ff' # Optional color you can use for embeds if you decide to add them
     messages:
-      no_permission: "❌ You need 'Manage Messages' permission!"
-      success: "✅ Message sent to {user}!"
-      error: "❌ Failed to send message to {user}."
+      no_permission: "❌ You need the 'Manage Messages' permission to use this command!"
+      success: "✅ Message successfully sent to {user}!"
+      error: "❌ Failed to send the message to {user}." # More general error if something happens before the DM attempt
+      cannot_dm_user: "❌ Could not send a DM to {user}. They might have DMs closed, server privacy settings, or have blocked the bot."
+      dm_fail: "❌ Sending the DM to {user} failed for an unknown reason." # For other errors during .send()
+      user_not_found: "❌ The specified user could not be found." # If .getUser() returns null
+      error_generic: "❌ An unexpected error occurred while processing the send command." # General fallback
   top:
     color: '#0099ff'
     messages:
