@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const {
     createAudioPlayer,
     createAudioResource,
@@ -17,6 +17,14 @@ const util = require('util');
 const statAsync = util.promisify(fs.stat);
 const unlinkAsync = util.promisify(fs.unlink);
 
+// IMPORTANT: This 'config' variable needs to be loaded from your config.yml.
+// How you access it depends on your bot's structure.
+// If your main bot file passes config to commands, you might access it via interaction.client.config
+// For demonstration, let's assume it's loaded like this:
+// const config = require('../../config.js'); // Or however your config is loaded
+// For this example, I'll access it via `interaction.client.config`
+// Make sure your main bot file sets `client.config = config;` after loading config.yml
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('speak')
@@ -27,37 +35,44 @@ module.exports = {
                 .setRequired(true)),
 
     async execute(interaction) {
-        // const logPrefix = `[SpeakCmd][${interaction.id}]`; // logPrefix nu mai este necesar
+        const config = interaction.client.config; // Access config from the client object
+        const messages = config.commands.speak.messages; // Shorthand for speak messages
+
         const originalText = interaction.options.getString('text');
         const member = interaction.member;
+
+        if (!member || !member.voice) {
+            return interaction.reply({ content: messages.not_in_server, flags: [MessageFlags.Ephemeral] });
+        }
+
         const voiceChannel = member.voice.channel;
 
         if (!voiceChannel) {
-            return interaction.reply({ content: 'You must be in a voice channel to use this command!', ephemeral: true });
+            return interaction.reply({ content: messages.no_voice_channel, flags: [MessageFlags.Ephemeral] });
         }
 
         const permissions = voiceChannel.permissionsFor(interaction.client.user);
         if (!permissions.has("CONNECT")) {
-            return interaction.reply({ content: 'I do not have permission to connect to this voice channel!', ephemeral: true });
+            return interaction.reply({ content: messages.no_connect_permission, flags: [MessageFlags.Ephemeral] });
         }
         if (!permissions.has("SPEAK")) {
-            return interaction.reply({ content: 'I do not have permission to speak in this voice channel!', ephemeral: true });
+            return interaction.reply({ content: messages.no_speak_permission, flags: [MessageFlags.Ephemeral] });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
         let translatedText;
         try {
             const res = await translate(originalText, { to: 'en', autoCorrect: true });
             translatedText = res.text;
             if (!translatedText || translatedText.trim() === "") {
-                await interaction.editReply({ content: 'Translation resulted in empty text. Cannot speak nothing!' });
+                await interaction.editReply({ content: messages.empty_translation });
                 return;
             }
         } catch (error) {
-            let errorMessage = 'An error occurred during translation.';
+            let errorMessage = messages.translation_error;
             if (error.message && error.message.includes('TooManyRequests') || error.name === 'TooManyRequestsError') {
-                errorMessage = 'Translation service is busy or limit reached. Please try again later.';
+                errorMessage = messages.translation_too_many_requests;
             }
             return interaction.editReply({ content: errorMessage });
         }
@@ -67,7 +82,8 @@ module.exports = {
             try {
                 fs.mkdirSync(audioDir);
             } catch (mkdirError) {
-                return interaction.editReply({ content: 'Error setting up audio storage. Cannot proceed.' });
+                await interaction.editReply({ content: messages.audio_storage_error });
+                return; // Added return here to stop execution if mkdir fails
             }
         }
         const audioFileName = path.join(audioDir, `audio_${interaction.id}.mp3`);
@@ -82,11 +98,12 @@ module.exports = {
         const cleanup = async () => {
             if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
                 connection.destroy();
-            } else if (fs.existsSync(audioFileName)) {
+            }
+            if (fs.existsSync(audioFileName)) {
                 try {
                     await unlinkAsync(audioFileName);
                 } catch (unlinkErr) {
-                    // Eroare la ștergerea fișierului, dar nu facem logging în consolă
+                    // Ignore error on file deletion
                 }
             }
         };
@@ -106,7 +123,7 @@ module.exports = {
                 const fileStats = await statAsync(audioFileName);
                 if (fileStats.size === 0) throw new Error('Audio file is empty.');
             } catch (fileError) {
-                await interaction.editReply({ content: 'Failed to create or access the audio file for speaking.' });
+                await interaction.editReply({ content: messages.empty_audio_file });
                 await cleanup();
                 return;
             }
@@ -140,7 +157,7 @@ module.exports = {
             try {
                 await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
             } catch (error) {
-                await interaction.editReply({ content: 'Could not establish voice connection in time. Please try again.' });
+                await interaction.editReply({ content: messages.connection_timeout });
                 await cleanup();
                 return;
             }
@@ -149,11 +166,9 @@ module.exports = {
             player.play(resource);
             connection.subscribe(player);
 
-            await interaction.editReply({ content: `Now speaking: "${translatedText}"` });
+            await interaction.editReply({ content: messages.speaking_now.replace('{translatedText}', translatedText) });
 
-            player.on(AudioPlayerStatus.Playing, () => {
-                // Acțiune la începerea redării (dacă e necesar, dar fără logging)
-            });
+            player.on(AudioPlayerStatus.Playing, () => {});
 
             player.on(AudioPlayerStatus.Idle, async () => {
                 await cleanup();
@@ -161,18 +176,18 @@ module.exports = {
 
             player.on('error', async (error) => {
                 try {
-                    await interaction.editReply({ content: 'An error occurred during audio playback.' });
+                    await interaction.editReply({ content: messages.playback_error });
                 } catch (editError) {
-                    // Ignorăm eroarea de la editReply în consolă
+                    // Ignore error on editReply
                 }
                 await cleanup();
             });
 
         } catch (error) {
             try {
-                await interaction.editReply({ content: 'A critical error occurred. Could not play audio.' });
+                await interaction.editReply({ content: messages.critical_error });
             } catch (editError) {
-                // Ignorăm eroarea de la editReply în consolă
+                // Ignore error on editReply
             }
             await cleanup();
         }

@@ -122,6 +122,24 @@ commands:
       dm_fail: "❌ Sending the DM to {user} failed for an unknown reason." # For other errors during .send()
       user_not_found: "❌ The specified user could not be found." # If .getUser() returns null
       error_generic: "❌ An unexpected error occurred while processing the send command." # General fallback
+  # --- NEW SPEAK COMMAND MESSAGES ---
+  speak:
+    color: '#8A2BE2' # BlueViolet, a good color for audio commands
+    messages:
+      no_voice_channel: "You must be in a voice channel to use this command!"
+      not_in_server: "I cannot determine your voice channel. Are you in a server?"
+      no_connect_permission: "I do not have permission to connect to this voice channel!"
+      no_speak_permission: "I do not have permission to speak in this voice channel!"
+      empty_translation: "Translation resulted in empty text. Cannot speak nothing!"
+      translation_error: "An error occurred during translation."
+      translation_too_many_requests: "Translation service is busy or limit reached. Please try again later."
+      audio_storage_error: "Error setting up audio storage. Cannot proceed."
+      empty_audio_file: "Failed to create or access the audio file for speaking."
+      connection_timeout: "Could not establish voice connection in time. Please try again."
+      playback_error: "An error occurred during audio playback."
+      critical_error: "A critical error occurred. Could not play audio."
+      speaking_now: "Now speaking: \"{translatedText}\""
+  # --- END NEW SPEAK COMMAND MESSAGES ---
   top:
     color: '#0099ff'
     messages:
