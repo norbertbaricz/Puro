@@ -72,6 +72,40 @@ commands:
     emojis:
       heads: '🌕'
       tails: '🌑'
+
+  eightball:
+    color: '#2C2F33' # O culoare întunecată, aproape neagră
+    image_url: 'https://i.imgur.com/hLfGOio.jpeg' # Link stabil pentru imagine
+    messages:
+      title: "🎱 Magic 8-Ball 🎱"
+      question_field: "Your Question"
+      answer_field: "The 8-Ball's Answer"
+      error: "❌ An error occurred while shaking the 8-Ball."
+    answers:
+      affirmative:
+        - "It is certain."
+        - "It is decidedly so."
+        - "Without a doubt."
+        - "Yes – definitely."
+        - "You may rely on it."
+        - "As I see it, yes."
+        - "Most likely."
+        - "Outlook good."
+        - "Yes."
+        - "Signs point to yes."
+      non_committal:
+        - "Reply hazy, try again."
+        - "Ask again later."
+        - "Better not tell you now."
+        - "Cannot predict now."
+        - "Concentrate and ask again."
+      negative:
+        - "Don't count on it."
+        - "My reply is no."
+        - "My sources say no."
+        - "Outlook not so good."
+        - "Very doubtful."
+
   e621:
     color: '#FF69B4'  # Pink
     messages:
@@ -80,6 +114,46 @@ commands:
       no_results: "No results found."
       no_valid_images: "No suitable images found."
       error: "❌ Error fetching image!"
+  
+  guess:
+    color: '#0099ff' # A nice blue for the game
+    messages:
+      title: "🎲 Guess the Number! 🎲"
+      description: "Hello, {user}! I have chosen a number between **{min}** and **{max}**.\nYou have **{chances}** attempts to guess it."
+      prompt: "Type your guess in the chat!"
+      prompt_value: "Good luck!"
+      footer: "Game started by {userTag}"
+      win_title: "🎉 Congratulations! You won! 🎉"
+      win_description: "That's correct! The secret number was **{secretNumber}**."
+      lose_title: "😭 You lost! 😭"
+      lose_description: "Unfortunately, you've run out of attempts. The secret number was **{secretNumber}**."
+      hint_higher: "The secret number is **higher**! You have **{chances}** attempts left."
+      hint_lower: "The secret number is **lower**! You have **{chances}** attempts left."
+      invalid_guess: "\"{guess}\" is not a valid number. Please try again!"
+      invalid_range: "The minimum value must be less than the maximum value!"
+      invalid_chances: "The number of chances must be greater than zero!"
+      timeout: "The game has ended because the time expired!"
+
+  hangman:
+    color: '#8B4513' # A brown color, like wood
+    max_errors: 6 # Number of mistakes until loss (0-6 means 7 stages of the gallows)
+    messages:
+      title: "🪢 Hangman Game"
+      footer: "Game started by {userTag} | Type a letter to guess!"
+      description: "Guess the word below. You have **{lives}** lives left."
+      word_display: "Word:"
+      guessed_letters: "Guessed Letters:"
+      no_letters_guessed: "None yet"
+      win_title: "🎉 Congratulations, You Won! 🎉"
+      win_description: "You guessed the word correctly: **{word}**"
+      lose_title: "😭 Game Over! 😭"
+      lose_description: "You ran out of lives! The word was: **{word}**"
+      letter_already_guessed: "You already guessed the letter `{letter}`. Try another one!"
+      not_a_letter: "`{input}` is not a valid letter. Please try again."
+      game_already_running: "❌ A Hangman game is already running in this channel. Please wait for it to finish."
+      game_timeout: "⏰ The game has been cancelled due to inactivity."
+      wrong_word_guess: "❌ That is not the correct word! One life has been lost."
+
   help:
     color: '#00FF00'  # Green
     messages:
@@ -113,33 +187,15 @@ commands:
       cooldown: "⏳ Wait {remaining} seconds."
       error: "❌ Failed to fetch meme!"
   send:
-    color: '#0099ff' # Optional color you can use for embeds if you decide to add them
+    color: '#0099ff'
     messages:
       no_permission: "❌ You need the 'Manage Messages' permission to use this command!"
       success: "✅ Message successfully sent to {user}!"
-      error: "❌ Failed to send the message to {user}." # More general error if something happens before the DM attempt
+      error: "❌ Failed to send the message to {user}."
       cannot_dm_user: "❌ Could not send a DM to {user}. They might have DMs closed, server privacy settings, or have blocked the bot."
-      dm_fail: "❌ Sending the DM to {user} failed for an unknown reason." # For other errors during .send()
-      user_not_found: "❌ The specified user could not be found." # If .getUser() returns null
-      error_generic: "❌ An unexpected error occurred while processing the send command." # General fallback
-  # --- NEW SPEAK COMMAND MESSAGES ---
-  speak:
-    color: '#8A2BE2' # BlueViolet, a good color for audio commands
-    messages:
-      no_voice_channel: "You must be in a voice channel to use this command!"
-      not_in_server: "I cannot determine your voice channel. Are you in a server?"
-      no_connect_permission: "I do not have permission to connect to this voice channel!"
-      no_speak_permission: "I do not have permission to speak in this voice channel!"
-      empty_translation: "Translation resulted in empty text. Cannot speak nothing!"
-      translation_error: "An error occurred during translation."
-      translation_too_many_requests: "Translation service is busy or limit reached. Please try again later."
-      audio_storage_error: "Error setting up audio storage. Cannot proceed."
-      empty_audio_file: "Failed to create or access the audio file for speaking."
-      connection_timeout: "Could not establish voice connection in time. Please try again."
-      playback_error: "An error occurred during audio playback."
-      critical_error: "A critical error occurred. Could not play audio."
-      speaking_now: "Now speaking: \"{translatedText}\""
-  # --- END NEW SPEAK COMMAND MESSAGES ---
+      dm_fail: "❌ Sending the DM to {user} failed for an unknown reason."
+      user_not_found: "❌ The specified user could not be found."
+      error_generic: "❌ An unexpected error occurred while processing the send command."
   top:
     color: '#0099ff'
     messages:
@@ -176,56 +232,24 @@ events:
       command_not_found: "⚠️ Command {command} not found."
       execution_error: "❌ Error executing command!"
       handler_error: "❌ Error processing interaction!"
-  messageCreate: # This is your existing messageCreate for greetings
+  messageCreate:
     guild_id: '1217588804328620163'
     greetings:
       patterns:
-        - '^h+e+l+o+$'           # helo, helloo
-        - '^h+e+l+l+o+$'         # hello, helloo
-        - '^h+i+$'               # hi, hii
-        - '^h+e+y+$'             # hey, heyy
-        - '^h+e+w+o+$'           # hewo, hewoo
-        - '^h+e+l+w+o+$'         # helwo, hellwoo
-        - '^h+a+i+$'             # hai, haiii
-        - '^h+e+i+$'             # hei, heii
-        - '^h+o+i+$'             # hoi, hoiii
-        - '^h+a+y+$'             # hay, hayyy
+        - '^h+e+l+o+$'
+        - '^h+e+l+l+o+$'
+        - '^h+i+$'
+        - '^h+e+y+$'
+        - '^h+e+w+o+$'
+        - '^h+e+l+w+o+$'
+        - '^h+a+i+$'
+        - '^h+e+i+$'
+        - '^h+o+i+$'
+        - '^h+a+y+$'
       responses:
         - "*perks ears* Hey {user}! 🐺"
         - "*wags fluffy tail* Hi there {user}! 🐺✨"
         - "*howls softly* Hello {user}! 🐺🌟"
-        - "*tilts head curiously* Hewo {user}! 🐺💫"
-        - "*approaches with wagging tail* {user}! 🐺🌈"
-        - "*playful noises* G'day {user}! 🐺"
-        - "*happy bounces* Greetings {user}! 🐺🎉"
-        - "*excited tail wagging* Hi hi {user}! 🐺🌺"
-        - "*friendly smile* Henlo {user}! 🐺🌸"
-        - "*bounds over happily* Hi {user}! 🐺💝"
-        - "*gentle awoo* Haiiii {user}! 🐺✨"
-        - "*playful pounce* Hewwo {user}! 🐺🎀"
-        - "*happy zoomies* Hi {user}! 🐺🦊"
-        - "*welcoming howl* Henlo pack mate {user}! 🐺🐾"
-        - "*wolf tail wag* Hoi {user}! 🐺💕"
-        - "*excited dance* Hello {user}! 🐺⭐"
-        - "*alert ears* Hi {user}! 🐺🌙"
-        - "*joyful awoo~* Welcome {user}! 🐺🌟"
-        - "*friendly nuzzle* Heya {user}! 🐺💖"
-        - "*gentle boop* Hi there {user}! 🐺✨"
-        - "*happy noises* Hello {user}! 🐺🌸"
-        - "*wolf pack welcome* Greetings {user}! 🐺🐾"
-        - "*flicks tail* Hey {user}! 🐺🌟"
-        - "*melodic howl* Hello there {user}! 🐺🌙"
-        - "*playful growl* Hi {user}! 🐺💫"
-        - "*bounces with energy* Heyo {user}! 🐺✨"
-        - "*happy wiggles* Hi hi {user}! 🐺🎉"
-        - "*wolf pack greetings* Hello {user}! 🐺🌟"
-        - "*friendly approach* Henlo wonderful {user}! 🐺🌸"
-        - "*excited welcome* Hi pack mate {user}! 🐺💫"
-        - "*wolf pack celebration* Welcome fren {user}! 🐺🐾"
-        - "*graceful bow* Hello {user}! 🐺🌙"
-        - "*wolf-style welcome* Great to see you {user}! 🐺✨"
-        - "*happy yips* Hi {user}! 🐺💝"
-        - "*gentle greeting* Welcome to the pack {user}! 🐺🌟"
       messages:
         error: "❌ Error sending greeting!"
   ready:
