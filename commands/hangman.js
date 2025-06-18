@@ -75,6 +75,7 @@ module.exports = {
                 )),
 
     async execute(interaction) {
+        // Presupunând că fișierul de configurare este încărcat corect pe client
         const config = interaction.client.config.commands.hangman;
         const channelId = interaction.channel.id;
 
@@ -160,11 +161,17 @@ module.exports = {
         });
 
         game.collector.on('end', async (collected, reason) => {
-            const finalGame = activeGames.get(channelId);
+            // FIX: Verificăm dacă jocul încă există în mapă. Dacă nu, înseamnă că logica de finalizare a rulat deja.
+            if (!activeGames.has(channelId)) {
+                return;
+            }
+            
+            // Ștergem jocul din mapă pentru a preveni rulări multiple și pentru a curăța memoria.
             activeGames.delete(channelId);
 
+            // FIX: Folosim direct obiectul `game` din scope, nu `finalGame`, pentru a evita eroarea.
             if (reason === 'win') {
-                finalGame.wordGuessed = finalGame.word.toUpperCase().split('');
+                game.wordGuessed = game.word.toUpperCase().split('');
             }
             
             let finalEmbed = new EmbedBuilder();
@@ -172,22 +179,22 @@ module.exports = {
                 finalEmbed
                     .setColor(interaction.client.config.colors.success)
                     .setTitle(config.messages.win_title)
-                    .setDescription(config.messages.win_description.replace('{word}', finalGame.word.toUpperCase()))
-                    .addFields({ name: 'The Word Was:', value: `\`${finalGame.wordGuessed.join(' ')}\`` });
+                    .setDescription(config.messages.win_description.replace('{word}', game.word.toUpperCase()))
+                    .addFields({ name: 'The Word Was:', value: `\`${game.wordGuessed.join(' ')}\`` });
             } else if (reason === 'lose') {
                 finalEmbed
                     .setColor(interaction.client.config.colors.error)
                     .setTitle(config.messages.lose_title)
-                    .setDescription(config.messages.lose_description.replace('{word}', finalGame.word.toUpperCase()))
+                    .setDescription(config.messages.lose_description.replace('{word}', game.word.toUpperCase()))
                     .addFields({ name: 'Hangman', value: hangmanStages[config.max_errors] });
-            } else {
+            } else { // Timeout
                 finalEmbed
                     .setColor('#FFA500')
                     .setTitle(config.messages.game_timeout)
-                    .setDescription(`The word was: **${finalGame.word.toUpperCase()}**`);
+                    .setDescription(`The word was: **${game.word.toUpperCase()}**`);
             }
             
-            await finalGame.gameMessage.edit({ embeds: [finalEmbed], components: [] });
+            await game.gameMessage.edit({ embeds: [finalEmbed], components: [] });
         });
     },
 };
