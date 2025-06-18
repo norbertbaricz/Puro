@@ -59,12 +59,12 @@ module.exports = {
             if (isButton) {
                 await interaction.editReply({ embeds: [embed], components });
             } else {
-                await interaction.reply({ embeds: [embed], components, ephemeral: true });
+                await interaction.reply({ embeds: [embed], components});
             }
         } catch (error) {
             console.error('Help error:', error);
             const reply = interaction.deferred ? interaction.editReply : interaction.reply;
-            await reply.call(interaction, { content: config.messages.error, ephemeral: true });
+            await reply.call(interaction, { content: config.messages.error});
         }
     },
 };
