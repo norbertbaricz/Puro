@@ -50,10 +50,12 @@ commands:
       success: "✅ Message sent to {channel}!"
       error: "❌ Failed to send message!"
       cooldown: "⏳ Please wait {remaining} seconds."
+
   avatar:
     color: '#0099ff'
     messages:
       error: "❌ Error displaying avatar!"
+
   clear:
     color: '#0099ff'
     messages:
@@ -62,6 +64,7 @@ commands:
       no_messages: "⚠️ No messages found to delete."
       success: "✅ Deleted {count} message{s}!"
       error: "❌ Error deleting messages!"
+
   coinflip:
     color: '#FFD700'  # Gold
     messages:
@@ -69,7 +72,7 @@ commands:
     emojis:
       heads: '🌕'
       tails: '🌑'
-
+      
   eightball:
     color: '#2C2F33' # O culoare întunecată, aproape neagră
     image_url: 'https://i.imgur.com/hLfGOio.jpeg' # Link stabil pentru imagine
@@ -155,10 +158,12 @@ commands:
     color: '#00FF00'  # Green
     messages:
       error: "❌ Error displaying help!"
+
   info:
     color: '#5865F2'  # Discord blue
     messages:
       error: "❌ Error fetching bot info!"
+
   love:
     color: '#FF69B4'  # Pink
     messages:
@@ -178,11 +183,13 @@ commands:
         30: "Some attraction! 💗"
         10: "Maybe just friends? 💔"
         0: "Time to look elsewhere! 💔"
+
   meme:
     color: '#FF4500'  # Reddit orange
     messages:
       cooldown: "⏳ Wait {remaining} seconds."
       error: "❌ Failed to fetch meme!"
+
   send:
     color: '#0099ff'
     messages:
@@ -193,10 +200,12 @@ commands:
       dm_fail: "❌ Sending the DM to {user} failed for an unknown reason."
       user_not_found: "❌ The specified user could not be found."
       error_generic: "❌ An unexpected error occurred while processing the send command."
+
   top:
     color: '#0099ff'
     messages:
       error: "❌ Error fetching leaderboard!"
+
   tp:
     color: '#9B59B6'  # Purple
     messages:
@@ -211,6 +220,7 @@ commands:
         - "🌈 *POOF!* Through the rainbow bridge..."
         - "🎯 *ZOOM!* Direct transmission..."
         - "✨ *SPARKLE!* Magical transportation..."
+
   ttt:
     color: '#0099ff'
     messages:
@@ -221,6 +231,7 @@ commands:
       tie: "🤝 It's a tie!"
       win: "🎉 {player} wins with {symbol}!"
       error: "❌ Error starting game!"
+
   timeout:
     color: '#ffcc00'
     messages:
@@ -232,6 +243,111 @@ commands:
       success_title: "✅ Member Timed Out"
       success_desc: "{user} has been timed out for **{duration}**."
       error: "❌ Failed to timeout the member."
+
+  pat:
+    color: '#add8e6'
+    messages:
+      self_pat: "You can't pat yourself! 🫶"
+      success_title: "🫶 Pat Time!"
+      success_desc: "**{sender}** gently pats **{receiver}**! That's adorable!"
+
+  hug:
+    color: '#ffb6c1'
+    messages:
+      self_hug: "You can't hug yourself! 🤗"
+      success_title: "🤗 Hug Time!"
+      success_desc: "**{sender}** gives a warm hug to **{receiver}**! How sweet!"
+
+  joke:
+    color: '#ff1493'
+    messages:
+      api_error: "The joke API returned an error. Please try again later."
+      decode_error: "Could not decode the joke format. Please try again!"
+      fetch_error: "Oops! There was a problem fetching the joke from the API. Please try again later."
+      unexpected_error: "An unexpected error occurred while fetching the joke. Please contact an administrator."
+      title: "😂 Here's a Joke for You! 😂"
+
+  ship:
+    color: '#ff69b4'
+    messages:
+      self_ship: "You can't ship yourself with yourself! 💔"
+      title: "🚢 Shipping Result!"
+      description: "{emoji} **{user1}** + **{user2}** = **{shipName}**\nCompatibility: **{percentage}%**"
+
+  rate:
+    color: '#0099ff'
+    messages:
+      title: "⭐ Rate Result"
+      description: "I rate **{thing}** a **{rating}/10**"
+
+  marry:
+    color: '#ffb347'
+    messages:
+      self_marry: "You can't marry yourself! 💍"
+      title: "💍 Marriage Proposal"
+      responses:
+        - "💍 **{proposer}** got down on one knee and proposed to **{target}**! Will you say yes?"
+        - "👰 **{proposer}** wants to marry **{target}**! What a lovely couple!"
+        - "💒 **{proposer}** and **{target}** are getting married! Congratulations!"
+        - "💖 **{proposer}** popped the question to **{target}**! Will love win?"
+        - "💍 **{proposer}** just asked **{target}** to be together forever!"
+        - "🎉 **{proposer}** and **{target}** are now engaged! Cheers!"
+        - "🌹 **{proposer}** gave a beautiful ring to **{target}**!"
+        - "💞 **{proposer}** and **{target}** are ready for a lifetime of happiness!"
+        - "🥂 **{proposer}** and **{target}** are celebrating their engagement!"
+        - "💌 **{proposer}** sent a heartfelt proposal to **{target}**!"
+        - "💑 **{proposer}** and **{target}**: A new love story begins!"
+        - "💝 **{proposer}** couldn't resist and proposed to **{target}**!"
+        - "🎊 **{proposer}** and **{target}** are the talk of the town with their engagement!"
+        - "💗 **{proposer}** and **{target}** are destined for each other!"
+        - "💫 **{proposer}** made a wish and proposed to **{target}**!"
+        - "💍 **{proposer}** surprised **{target}** with a sparkling ring!"
+        - "🎶 **{proposer}** played a romantic song and asked **{target}** to marry!"
+        - "🌟 **{proposer}** and **{target}** are a match made in heaven!"
+        - "💐 **{proposer}** brought flowers and proposed to **{target}**!"
+        - "💖 **{proposer}** and **{target}**: True love always finds a way!"
+        - "💍 **{proposer}** and **{target}** are ready to write their love story together!"
+        - "🥰 **{proposer}** looked into **{target}**'s eyes and asked for forever!"
+        - "💎 **{proposer}** gave **{target}** a diamond ring and a promise!"
+        - "🎇 **{proposer}** and **{target}**: Let the wedding bells ring!"
+        - "💍 **{proposer}** and **{target}**: Happily ever after starts now!"
+
+  divorce:
+    color: '#808080'
+    messages:
+      self_divorce: "You can't divorce yourself! 💔"
+      title: "💔 Divorce"
+      responses:
+        - "💔 **{initiator}** has filed for divorce from **{target}**. It's over!"
+        - "😢 **{initiator}** and **{target}** are no longer together."
+        - "📄 **{initiator}** handed divorce papers to **{target}**."
+        - "💔 After a long talk, **{initiator}** and **{target}** decided to part ways."
+        - "😭 **{initiator}** left **{target}**. Sometimes love just isn't enough."
+        - "🧾 **{initiator}** and **{target}** signed the divorce papers."
+        - "💔 **{initiator}** broke the bond with **{target}**. Single life, here we come!"
+        - "😔 **{initiator}** and **{target}** are officially divorced."
+        - "📉 The relationship between **{initiator}** and **{target}** has ended."
+        - "💔 **{initiator}** couldn't take it anymore and divorced **{target}**."
+        - "🕊️ **{initiator}** and **{target}** have gone their separate ways."
+        - "😢 **{initiator}** whispered goodbye to **{target}**."
+        - "📬 **{initiator}** sent **{target}** a breakup letter."
+        - "💔 **{initiator}** and **{target}**: It was good while it lasted."
+        - "🗑️ **{initiator}** threw away the wedding ring from **{target}**."
+        - "😶‍🌫️ **{initiator}** and **{target}** are now strangers again."
+        - "💔 **{initiator}** and **{target}**: The end of an era."
+        - "📦 **{initiator}** packed up and left **{target}**."
+        - "🧹 **{initiator}** swept away the memories with **{target}**."
+        - "💔 **{initiator}** and **{target}**: No more 'us', just 'me'."
+        - "🕳️ **{initiator}** fell out of love with **{target}**."
+        - "📉 The love between **{initiator}** and **{target}** hit rock bottom."
+        - "💔 **{initiator}** and **{target}**: Love lost, lessons learned."
+        - "🧊 **{initiator}** gave **{target}** the cold shoulder... forever."
+        - "🚪 **{initiator}** walked out on **{target}**."
+        - "💔 **{initiator}** and **{target}**: The story ends here."
+        - "🪦 The marriage of **{initiator}** and **{target}** is now history."
+        - "🧾 **{initiator}** and **{target}**: Signed, sealed, divorced."
+        - "💔 **{initiator}** and **{target}**: No more happy endings."
+        - "🧳 **{initiator}** packed their bags and left **{target}** behind."
 
 # Event-specific configurations
 events:
