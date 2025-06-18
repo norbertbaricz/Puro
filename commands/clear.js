@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,11 +13,19 @@ module.exports = {
         const config = interaction.client.config.commands.clear;
         try {
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-                return interaction.reply({ content: config.messages.no_permission, ephemeral: true });
+                const embed = new EmbedBuilder()
+                    .setColor(config.color || '#ff0000')
+                    .setTitle('⛔ No Permission')
+                    .setDescription(config.messages.no_permission);
+                return interaction.reply({ embeds: [embed], ephemeral: true });
             }
 
             if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {
-                return interaction.reply({ content: config.messages.no_bot_permission, ephemeral: true });
+                const embed = new EmbedBuilder()
+                    .setColor(config.color || '#ff0000')
+                    .setTitle('⛔ Missing Bot Permission')
+                    .setDescription(config.messages.no_bot_permission);
+                return interaction.reply({ embeds: [embed], ephemeral: true });
             }
 
             const amount = interaction.options.getInteger('amount');
@@ -32,18 +40,32 @@ module.exports = {
             });
 
             if (filteredMessages.size === 0) {
-                return interaction.editReply({ content: config.messages.no_messages, ephemeral: true });
+                const embed = new EmbedBuilder()
+                    .setColor(config.color || '#ffcc00')
+                    .setTitle('⚠️ No Messages')
+                    .setDescription(config.messages.no_messages);
+                return interaction.editReply({ embeds: [embed], ephemeral: true });
             }
 
             const deletedMessages = await interaction.channel.bulkDelete(filteredMessages, true);
 
-            await interaction.editReply({
-                content: config.messages.success.replace('{count}', deletedMessages.size).replace('{s}', deletedMessages.size === 1 ? '' : 's'),
-                ephemeral: true
-            });
+            const embed = new EmbedBuilder()
+                .setColor(config.color || '#00ff00')
+                .setTitle('✅ Messages Deleted')
+                .setDescription(
+                    config.messages.success
+                        .replace('{count}', deletedMessages.size)
+                        .replace('{s}', deletedMessages.size === 1 ? '' : 's')
+                );
+
+            await interaction.editReply({ embeds: [embed], ephemeral: true });
         } catch (error) {
             console.error('Clear error:', error);
-            await interaction.editReply({ content: config.messages.error, ephemeral: true });
+            const embed = new EmbedBuilder()
+                .setColor(config.color || '#ff0000')
+                .setTitle('❌ Error')
+                .setDescription(config.messages.error || 'An error occurred while clearing messages.');
+            await interaction.editReply({ embeds: [embed], ephemeral: true });
         }
     },
 };
