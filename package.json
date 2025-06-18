@@ -1,6 +1,6 @@
 {
   "name": "puro",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
