@@ -1,5 +1,3 @@
-# config.yml
-
 # Global color settings
 colors:
   default: '#ff1493'  # Pink default
@@ -15,7 +13,6 @@ status:
     - "Online and active! 🌟"
     - "Helping users! 💫"
     - "Powered by Skypixel™️"
-    - "The Wolf Den VR is here! 🚀"
     - "Join us in the Metaverse! 🌐"
     - "Exploring new frontiers! 🚀"
     - "Your guide to the virtual world! 🧭"
@@ -28,8 +25,8 @@ status:
     - "Building the future, together. 🏗️"
     - "Your ultimate VR destination. 🎯"
     - "Unleash your inner wolf! 🐾"
-    - "The pack is waiting for you!  기다려"
-    - "Your journey starts here. 시작"
+    - "The pack is waiting for you!"
+    - "Your journey starts here."
   type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
   url: "https://thewolfdenvr.carrd.co/"  # URL pentru Streaming (opțional)
   status: "idle"  # Poate fi "online", "dnd", "idle" sau "invisible"
@@ -224,6 +221,17 @@ commands:
       tie: "🤝 It's a tie!"
       win: "🎉 {player} wins with {symbol}!"
       error: "❌ Error starting game!"
+  timeout:
+    color: '#ffcc00'
+    messages:
+      no_permission: "❌ You need 'Moderate Members' permission to use this command!"
+      no_bot_permission: "❌ I need 'Moderate Members' permission to timeout members!"
+      invalid_format: "❌ Invalid duration format! Use s (seconds), m (minutes), h (hours), or d (days)."
+      invalid_unit: "❌ Invalid duration unit!"
+      not_moderatable: "❌ I cannot timeout this member!"
+      success_title: "✅ Member Timed Out"
+      success_desc: "{user} has been timed out for **{duration}**."
+      error: "❌ Failed to timeout the member."
 
 # Event-specific configurations
 events:
