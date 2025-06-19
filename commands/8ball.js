@@ -13,11 +13,6 @@ module.exports = {
         const config = interaction.client.config.commands.eightball;
 
         try {
-            const remaining = ratelimit(interaction.user.id, 5000);
-            if (remaining) {
-                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-            }
-            
             const question = interaction.options.getString('question');
 
             const allAnswers = [

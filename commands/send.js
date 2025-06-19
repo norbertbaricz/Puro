@@ -15,11 +15,6 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages), // Permission required to use the command
 
     async execute(interaction) {
-        const remaining = ratelimit(interaction.user.id, 5000);
-        if (remaining) {
-            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-        }
-
         // Assumes config.yml is loaded into interaction.client.config
         const configPath = interaction.client.config.commands.send;
         const configMessages = configPath && configPath.messages ? configPath.messages : {};

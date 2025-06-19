@@ -15,11 +15,6 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
-        const remaining = ratelimit(interaction.user.id, 5000);
-        if (remaining) {
-            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-        }
-
         // Obține configurația din client. Se presupune că a fost încărcată la pornire.
         const config = interaction.client.config;
         const timeoutConfig = config.commands.timeout;

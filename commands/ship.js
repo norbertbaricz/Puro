@@ -9,11 +9,6 @@ module.exports = {
                 .setDescription('The member you want to ship with')
                 .setRequired(true)),
     async execute(interaction) {
-        const remaining = ratelimit(interaction.user.id, 5000);
-        if (remaining) {
-            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-        }
-
         const user1 = interaction.user;
         const user2 = interaction.options.getUser('member');
         const config = interaction.client.config;

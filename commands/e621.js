@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
-const ratelimit = require('../ratelimit');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,11 +13,6 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.e621;
         try {
-            const remaining = ratelimit(interaction.user.id, 5000);
-            if (remaining) {
-                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-            }
-
             const isExplicit = interaction.options.getBoolean('explicit') ?? false;
             if (isExplicit && !interaction.channel.nsfw) {
                 return interaction.reply({ content: config.messages.nsfw_required, ephemeral: true });

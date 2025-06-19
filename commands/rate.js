@@ -9,11 +9,6 @@ module.exports = {
                 .setDescription('What do you want me to rate?')
                 .setRequired(true)),
     async execute(interaction) {
-        const remaining = ratelimit(interaction.user.id, 5000);
-        if (remaining) {
-            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-        }
-
         const config = interaction.client.config;
         const rateConfig = config.commands.rate;
 

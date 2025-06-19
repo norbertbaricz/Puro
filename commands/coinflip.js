@@ -10,11 +10,6 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.coinflip;
         try {
-            const remaining = ratelimit(interaction.user.id, 5000);
-            if (remaining) {
-                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-            }
-
             const flips = Math.min(interaction.options.getInteger('flips') || 1, interaction.client.config.limits.flips);
             const results = Array(flips).fill().map(() => Math.random() < 0.5 ? 'Heads' : 'Tails');
             const heads = results.filter(r => r === 'Heads').length;
