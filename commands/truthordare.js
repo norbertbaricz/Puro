@@ -5,6 +5,11 @@ module.exports = {
         .setName('truthordare')
         .setDescription('Get a random truth or dare!'),
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+        
         const config = interaction.client.config;
         const todConfig = config.commands.truthordare;
 

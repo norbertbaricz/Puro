@@ -42,6 +42,11 @@ module.exports = {
             option.setName('opponent').setDescription('The opponent').setRequired(true)),
 
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+
         const config = interaction.client.config.commands.ttt;
         const opponent = interaction.options.getUser('opponent');
         const challenger = interaction.user;

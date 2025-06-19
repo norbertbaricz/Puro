@@ -18,6 +18,11 @@ module.exports = {
                 .setRequired(true)),
 
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+
         // Access config from the client object, assuming it's attached in your main bot file
         const config = interaction.client.config;
         const guessConfig = config.commands.guess; // Shorthand for guess command config

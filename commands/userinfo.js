@@ -9,6 +9,11 @@ module.exports = {
                 .setDescription('The member to get information about')
                 .setRequired(true)),
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+
         const config = interaction.client.config;
         const userinfoConfig = config.commands.userinfo;
 

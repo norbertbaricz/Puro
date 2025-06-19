@@ -18,7 +18,7 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.meme;
         try {
-            const remaining = ratelimit(interaction.user.id, 3000);
+            const remaining = ratelimit(interaction.user.id, 5000);
             if (remaining) {
                 return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
             }

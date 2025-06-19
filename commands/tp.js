@@ -11,6 +11,11 @@ module.exports = {
             .setRequired(true)),
 
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+
         // Safely access configuration
         const commandConfig = interaction.client.config.commands.tp;
         const configMessages = commandConfig?.messages || {}; // Use empty object if messages are not defined in config

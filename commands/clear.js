@@ -12,6 +12,11 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.clear;
         try {
+            const remaining = ratelimit(interaction.user.id, 5000);
+            if (remaining) {
+                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
                 const embed = new EmbedBuilder()
                     .setColor(config.color || '#ff0000')

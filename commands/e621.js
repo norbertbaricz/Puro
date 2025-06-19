@@ -58,7 +58,8 @@ module.exports = {
                 .setColor(config.color)
                 .setImage(randomPost.file.url)
                 .setFooter({ text: `Score: ${randomPost.score.total} | Rating: ${randomPost.rating}` })
-                .setTimestamp();
+                .setTimestamp()
+                .setDescription(`[Open image](${randomPost.file.url})`);
 
             if (randomPost.tags.artist.length > 0) {
                 embed.setAuthor({ name: `Artist: ${randomPost.tags.artist.join(', ')}` });
