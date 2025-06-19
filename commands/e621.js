@@ -13,9 +13,12 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.e621;
         try {
+            if (!interaction.channel) {
+                return interaction.reply({ content: "❌ This command can only be used in a server channel.", flags: 64 });
+            }
             const isExplicit = interaction.options.getBoolean('explicit') ?? false;
             if (isExplicit && !interaction.channel.nsfw) {
-                return interaction.reply({ content: config.messages.nsfw_required, ephemeral: true });
+                return interaction.reply({ content: config.messages.nsfw_required, flags: 64 });
             }
 
             await interaction.deferReply();
