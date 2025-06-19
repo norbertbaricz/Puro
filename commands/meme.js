@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
-const ratelimit = require('../ratelimit');
 
 const memeCache = {
     memes: [],
@@ -18,11 +17,6 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.meme;
         try {
-            const remaining = ratelimit(interaction.user.id, 5000);
-            if (remaining) {
-                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-            }
-
             await interaction.deferReply();
 
             let meme;

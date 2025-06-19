@@ -9,11 +9,6 @@ module.exports = {
                 .setDescription('The member you want to marry')
                 .setRequired(true)),
     async execute(interaction) {
-        const remaining = ratelimit(interaction.user.id, 5000);
-        if (remaining) {
-            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-        }
-
         const proposer = interaction.user;
         const target = interaction.options.getUser('member');
         const config = interaction.client.config;

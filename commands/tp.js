@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const ratelimit = require('../ratelimit'); // Assuming this is a synchronous rate-limiting function
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -11,11 +10,6 @@ module.exports = {
             .setRequired(true)),
 
     async execute(interaction) {
-        const remaining = ratelimit(interaction.user.id, 5000);
-        if (remaining) {
-            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-        }
-
         // Safely access configuration
         const commandConfig = interaction.client.config.commands.tp;
         const configMessages = commandConfig?.messages || {}; // Use empty object if messages are not defined in config
@@ -49,12 +43,6 @@ module.exports = {
         };
 
         try {
-            const remainingCooldown = ratelimit(interaction.user.id, 30000); // 30 seconds cooldown
-            if (remainingCooldown) {
-                // remainingCooldown is expected to be a pre-formatted string (e.g., "15.3 seconds")
-                return interaction.reply({ content: getMessage('cooldown', { remaining: remainingCooldown }), ephemeral: true });
-            }
-
             const targetUser = interaction.options.getUser('member'); // Step 1: Get the User object
 
             // This check is mostly for safety; setRequired(true) should prevent targetUser from being null.

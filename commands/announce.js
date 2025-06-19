@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
-const ratelimit = require('../ratelimit');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -18,12 +17,7 @@ module.exports = {
         try {
             // Fixed line: Use interaction.memberPermissions
             if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages)) {
-                return interaction.reply({ content: config.messages.no_permission, ephemeral: true });
-            }
-
-            const remaining = ratelimit(interaction.user.id, 10000);
-            if (remaining) {
-                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+                return interaction.reply({ content: config.messages.no_permission, flags: 64 });
             }
 
             const channel = interaction.options.getChannel('channel');
@@ -46,7 +40,7 @@ module.exports = {
                 });
             }
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
 
             await channel.send({
                 content: message,

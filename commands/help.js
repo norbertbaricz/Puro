@@ -12,11 +12,6 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.help;
         try {
-            const remaining = ratelimit(interaction.user.id, 5000);
-            if (remaining) {
-                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
-            }
-
             const isButton = interaction.isButton();
             if (isButton) await interaction.deferUpdate();
 
