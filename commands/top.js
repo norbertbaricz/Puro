@@ -10,6 +10,11 @@ module.exports = {
         const config = interaction.client.config.commands.top;
 
         try {
+            const remaining = ratelimit(interaction.user.id, 5000);
+            if (remaining) {
+                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+            }
+
             await interaction.deferReply();
 
             // Preluăm toți membrii de pe server pentru a avea acces la datele lor

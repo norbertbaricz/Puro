@@ -9,6 +9,11 @@ module.exports = {
                 .setDescription('The member you want to hug')
                 .setRequired(true)),
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+
         const sender = interaction.user;
         const receiver = interaction.options.getUser('member');
         const config = interaction.client.config;

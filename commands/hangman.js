@@ -75,6 +75,14 @@ module.exports = {
                 )),
 
     async execute(interaction) {
+        // Verifică dacă există canal (doar pe servere, nu DM)
+        if (!interaction.channel) {
+            return interaction.reply({
+                content: "❌ This command can only be used in a server channel.",
+                flags: 64 // ephemeral
+            });
+        }
+
         // Presupunând că fișierul de configurare este încărcat corect pe client
         const config = interaction.client.config.commands.hangman;
         const channelId = interaction.channel.id;

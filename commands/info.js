@@ -14,6 +14,11 @@ module.exports = {
         .setDescription('Bot information'),
 
     async execute(interaction) {
+        const remaining = ratelimit(interaction.user.id, 5000);
+        if (remaining) {
+            return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+        }
+
         const config = interaction.client.config.commands.info;
         try {
             await interaction.deferReply();

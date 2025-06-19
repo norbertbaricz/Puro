@@ -13,6 +13,11 @@ module.exports = {
         const jokeConfig = config.commands.joke;
 
         try {
+            const remaining = ratelimit(interaction.user.id, 5000);
+            if (remaining) {
+                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+            }
+
             // Make a request to the JokeAPI using Axios.
             const response = await axios.get('https://v2.jokeapi.dev/joke/Any', {
                 params: {

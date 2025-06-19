@@ -32,6 +32,11 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.love;
         try {
+            const remaining = ratelimit(interaction.user.id, 5000);
+            if (remaining) {
+                return interaction.reply({ content: config.messages.cooldown.replace('{remaining}', remaining), ephemeral: true });
+            }
+
             const user1 = interaction.options.getUser('user1');
             const user2 = interaction.options.getUser('user2') || interaction.user;
 
