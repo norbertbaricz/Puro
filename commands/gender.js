@@ -13,8 +13,8 @@ module.exports = {
         const genderConfig = config.commands.gender;
 
         const member = interaction.options.getMember('member');
-        if (!member) {
-            return interaction.reply({ content: genderConfig.messages.not_found, ephemeral: true });
+        if (!member || !member.user) {
+            return interaction.reply({ content: genderConfig.messages.not_found, flags: 64 });
         }
 
         const identities = genderConfig.identities;

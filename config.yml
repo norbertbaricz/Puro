@@ -607,16 +607,144 @@ events:
         - '^h+e+l+l+o+$'
         - '^h+i+$'
         - '^h+e+y+$'
+        - '^h+e+y+a+$'
+        - '^h+e+y+y+$'
         - '^h+e+w+o+$'
         - '^h+e+l+w+o+$'
-        - '^h+a+i+$'
-        - '^h+e+i+$'
-        - '^h+o+i+$'
-        - '^h+a+y+$'
+        - '^yo+$'
+        - '^yo+u+$'
+        - '^sup+$'
+        - '^wassup+$'
+        - '^good\\s*morning+$'
+        - '^good\\s*afternoon+$'
+        - '^good\\s*evening+$'
+        - '^good\\s*night+$'
+        - '^morning+$'
+        - '^evening+$'
+        - '^night+$'
+        - '^hiya+$'
+        - '^hi+ya+$'
+        - '^greetings+$'
+        - '^salutations+$'
+        - '^howdy+$'
+        - '^yo+o+$'
+        - '^hey+o+$'
+        - '^hey+ya+$'
+        - '^hey+there+$'
+        - '^hello+there+$'
+        - '^welcome+$'
+        - '^peace+$'
+        - '^aloha+$'
+        - '^hey+everyone+$'
+        - '^hey+guys+$'
+        - '^hey+all+$'
+        - '^hi+everyone+$'
+        - '^hi+all+$'
+        - '^yo+everyone+$'
+        - '^yo+all+$'
+        - '^hey+fam+$'
+        - '^hey+friends+$'
+        - '^hey+buddy+$'
+        - '^hey+pal+$'
+        - '^hey+mate+$'
+        - '^hey+bro+$'
+        - '^hey+sis+$'
+        - '^hey+dude+$'
+        - '^hey+girl+$'
+        - '^hey+man+$'
+        - '^hey+woman+$'
+        - '^hey+team+$'
+        - '^hey+crew+$'
+        - '^hey+pack+$'
+        - '^hey+wolf+$'
+        - '^hey+wolves+$'
+        - '^yo+pack+$'
+        - '^yo+wolf+$'
+        - '^yo+wolves+$'
+        - '^hi+pack+$'
+        - '^hi+wolf+$'
+        - '^hi+wolves+$'
       responses:
         - "*perks ears* Hey {user}! 🐺"
         - "*wags fluffy tail* Hi there {user}! 🐺✨"
         - "*howls softly* Hello {user}! 🐺🌟"
+        - "*waves paw* Welcome, {user}! 👋"
+        - "*barks happily* Hey, {user}! 🐶"
+        - "*wiggles nose* Yo {user}! 😎"
+        - "*fluffs fur* Greetings, {user}! 🦊"
+        - "*howls at the moon* Good to see you, {user}! 🌙"
+        - "*does a happy spin* Hiya, {user}! 🌀"
+        - "*gives a friendly boop* Howdy, {user}! 🐾"
+        - "*wags tail excitedly* What's up, {user}? 🌞"
+        - "*nods politely* Salutations, {user}! 🎩"
+        - "*raises paw* Wassup, {user}! ✋"
+        - "*smiles warmly* Good morning, {user}! ☀️"
+        - "*yawns* Good night, {user}! 🌙"
+        - "*waves tail* Good evening, {user}! 🌆"
+        - "*greets with a soft bark* Afternoon, {user}! ☕"
+        - "*howls playfully* Yo yo, {user}! 🎶"
+        - "*gives a high five* Hey there, {user}! ✋"
+        - "*sits and wags tail* Welcome back, {user}! 🏡"
+        - "*howls in greeting* Hello, {user}! 🐺"
+        - "*bows politely* Aloha, {user}! 🌺"
+        - "*waves tail* Glad you're here, {user}! 🐾"
+        - "*howls with joy* Glad to see you, {user}! 🎉"
+        - "*jumps in excitement* Hey hey, {user}! 🦴"
+        - "*sniffs the air* New scent detected: {user}! 👃"
+        - "*does a little dance* Welcome, {user}! 💃"
+        - "*howls at the stars* Evening, {user}! ✨"
+        - "*gives a friendly nudge* Hi, {user}! 🐾"
+        - "*wags tail* Nice to see you, {user}! 😊"
+        - "*perks up ears* What's up, {user}? 👂"
+        - "*howls a tune* Welcome to the pack, {user}! 🎵"
+        - "*offers a paw* Let's have fun, {user}! 🐾"
+        - "*smiles with bright eyes* Hey, {user}! 🌟"
+        - "*howls a greeting* Good to see you, {user}! 🐺"
+        - "*gives a gentle boop* Hi, {user}! 🐽"
+        - "*wags tail and smiles* Welcome, {user}! 🐾"
+        - "*howls at the sunrise* Morning, {user}! 🌅"
+        - "*waves tail* Nighty night, {user}! 🌙"
+        - "*greets with a bark* Yo, {user}! 🐕"
+        - "*howls at the sunset* Evening, {user}! 🌇"
+        - "*gives a playful bark* Hi, {user}! 🐶"
+        - "*wiggles ears* Hey, {user}! 🐰"
+        - "*smiles and wags tail* Welcome, {user}! 🐺"
+        - "*howls softly* Glad to see you, {user}! 🐾"
+        - "*waves paw* Hi, {user}! 👋"
+        - "*nods* Hello, {user}! 😊"
+        - "*howls at the moon* Good night, {user}! 🌝"
+        - "*greets with a soft bark* Good afternoon, {user}! ☀️"
+        - "*wags tail* Welcome to the server, {user}! 🎉"
+        - "*howls with excitement* Let's have a great day, {user}! 🌞"
+        - "*smiles with a wag* Happy to see you, {user}! 🐺"
+        - "*howls a welcome* Hey, {user}! 🐺"
+        - "*waves tail* Glad you're here, {user}! 🐾"
+        - "*greets with a howl* Hello, {user}! 🐺"
+        - "*smiles and barks* Hi, {user}! 🐶"
+        - "*howls at the stars* Good evening, {user}! ✨"
+        - "*wags tail and smiles* Welcome, {user}! 🐺"
+        - "*greets with a bark* Hi, {user}! 🐕"
+        - "*howls at the sunrise* Good morning, {user}! 🌅"
+        - "*waves paw* Good night, {user}! 🌙"
+        - "*smiles warmly* Welcome, {user}! 😊"
+        - "*howls with joy* Glad to see you, {user}! 🐺"
+        - "*wags tail* Hi, {user}! 🐾"
+        - "*greets with a soft bark* Hello, {user}! 🐺"
+        - "*waves tail* Welcome, {user}! 🐺"
+        - "*howls a greeting* Hi, {user}! 🐺"
+        - "*smiles and wags tail* Good to see you, {user}! 🐺"
+        - "*greets with a bark* Hey, {user}! 🐺"
+        - "*howls at the moon* Welcome, {user}! 🌙"
+        - "*waves paw* Hi, {user}! 👋"
+        - "*smiles and wags tail* Welcome, {user}! 🐺"
+        - "*howls softly* Glad to see you, {user}! 🐾"
+        - "*waves paw* Hi, {user}! 👋"
+        - "*nods* Hello, {user}! 😊"
+        - "*howls at the moon* Good night, {user}! 🌝"
+        - "*greets with a soft bark* Good afternoon, {user}! ☀️"
+        - "*wags tail* Welcome to the server, {user}! 🎉"
+        - "*howls with excitement* Let's have a great day, {user}! 🌞"
+        - "*smiles with a wag* Happy to see you, {user}! 🐺"
       messages:
         error: "❌ Error sending greeting!"
   ready:

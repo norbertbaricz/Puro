@@ -8,6 +8,10 @@ module.exports = {
         const config = interaction.client.config;
         const serverinfoConfig = config.commands.serverinfo;
 
+        if (!interaction.guild) {
+            return interaction.reply({ content: "❌ This command can only be used in a server.", flags: 64 });
+        }
+
         const { guild } = interaction;
         const owner = await guild.fetchOwner();
         const channels = guild.channels.cache;
