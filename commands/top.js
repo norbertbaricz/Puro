@@ -1,87 +1,123 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionsBitField } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('top')
-        .setDescription('Shows the top 10 most recently active members.'),
+        .setDescription('Shows a leaderboard of the most active members.')
+        .addIntegerOption(option =>
+            option
+                .setName('count')
+                .setDescription('How many members to show on the leaderboard? (Default: 5)')
+                .setMinValue(1)
+                .setMaxValue(10)
+        )
+        .addIntegerOption(option =>
+            option
+                .setName('duration')
+                .setDescription('For how many days should activity be measured? (Default: 7)')
+                .setMinValue(1)
+                .setMaxValue(30)
+        ),
 
     async execute(interaction) {
-        // Presupunem că config-ul este atașat la client
-        const config = interaction.client.config.commands.top;
+        const config = interaction.client.config;
+        const topConfig = config.commands.top;
+        const topMsg = topConfig.messages;
+        const topColor = topConfig.color;
 
         try {
             await interaction.deferReply();
 
-            // Preluăm toți membrii de pe server pentru a avea acces la datele lor
-            const members = await interaction.guild.members.fetch();
-            
-            // Folosim o Mapă pentru a stoca numărul de mesaje
+            const count = interaction.options.getInteger('count') || 5;
+            const durationDays = interaction.options.getInteger('duration') || 7;
             const messageCount = new Map();
-            
-            // Filtrăm doar canalele text unde bot-ul poate citi mesaje
+            const sinceTimestamp = Date.now() - (durationDays * 24 * 60 * 60 * 1000);
+
             const textChannels = interaction.guild.channels.cache.filter(ch => 
-                ch.type === 0 && // ChannelType.GuildText
-                ch.permissionsFor(interaction.client.user).has('ViewChannel') &&
-                ch.permissionsFor(interaction.client.user).has('ReadMessageHistory')
+                ch.type === ChannelType.GuildText &&
+                ch.permissionsFor(interaction.guild.members.me).has(PermissionsBitField.Flags.ReadMessageHistory)
             );
+
+            // Embed de procesare
+            const processingEmbed = new EmbedBuilder()
+                .setTitle(topMsg.calculating_title || '🔍 Calculating Activity...')
+                .setDescription(
+                    (topMsg.calculating_desc || 'Please wait. I am analyzing activity from the last **{days} days**. This might take a moment.')
+                        .replace('{days}', durationDays)
+                )
+                .setColor('#FFA500')
+                .setTimestamp();
+            await interaction.editReply({ embeds: [processingEmbed] });
             
-            // Iterăm prin fiecare canal și preluăm ultimele 100 de mesaje
-            for (const [, channel] of textChannels) {
+            for (const channel of textChannels.values()) {
                 try {
-                    const messages = await channel.messages.fetch({ limit: 100 });
-                    messages.forEach(msg => {
-                        if (!msg.author.bot) {
-                            messageCount.set(msg.author.id, (messageCount.get(msg.author.id) || 0) + 1);
+                    let lastId;
+                    while (true) {
+                        const messages = await channel.messages.fetch({ limit: 100, before: lastId });
+                        if (messages.size === 0) break;
+                        for (const msg of messages.values()) {
+                            if (msg.createdTimestamp < sinceTimestamp) break;
+                            if (!msg.author.bot) {
+                                messageCount.set(msg.author.id, (messageCount.get(msg.author.id) || 0) + 1);
+                            }
                         }
-                    });
+                        if (messages.last().createdTimestamp < sinceTimestamp) break;
+                        lastId = messages.last().id;
+                    }
                 } catch (error) {
-                    // Ignorăm erorile de la canalele unde nu avem acces, etc.
-                    console.error(`Could not fetch messages from ${channel.name}: ${error.message}`);
+                    console.warn(`Could not fetch messages from ${channel.name}: ${error.message}`);
                 }
             }
 
             if (messageCount.size === 0) {
-                return interaction.editReply({ content: "I couldn't find any recent activity to create a leaderboard." });
+                return interaction.editReply({ content: (topMsg.no_activity || `I couldn't find any recent activity in the last {days} days to create a leaderboard.`).replace('{days}', durationDays) });
             }
 
-            // Sortăm membrii descrescător și luăm primii 10
             const sortedMembers = [...messageCount.entries()]
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
+                .slice(0, count);
 
             const topUser = await interaction.client.users.fetch(sortedMembers[0][0]);
 
             const embed = new EmbedBuilder()
-                .setColor(config.color)
-                .setTitle('🏆 Top 10 Recently Active Members')
-                .setDescription(`Based on the last 100 messages in each channel on **${interaction.guild.name}**.`)
-                .setThumbnail(topUser.displayAvatarURL({ dynamic: true, size: 256 })) // <-- AVATARUL ADĂUGAT AICI
+                .setColor(topColor)
+                .setTitle((topMsg.title || `🏆 Top {count} Active Members`).replace('{count}', sortedMembers.length))
+                .setDescription(
+                    (topMsg.description || `Based on messages sent in the last **{days} days** on **{servername}**.`)
+                        .replace('{days}', durationDays)
+                        .replace('{servername}', interaction.guild.name)
+                )
+                .setThumbnail(topUser.displayAvatarURL({ dynamic: true, size: 256 }))
                 .setTimestamp();
 
-            // Adăugăm fiecare membru în embed
+            let leaderboardString = '';
             for (let i = 0; i < sortedMembers.length; i++) {
-                const [userId, count] = sortedMembers[i];
-                const member = members.get(userId);
-                if (member) {
-                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-                    embed.addFields({
-                        name: `${medal} ${member.user.displayName}`,
-                        value: `\`${count}\` recent messages`,
-                        inline: false
-                    });
-                }
+                const [userId, msgCount] = sortedMembers[i];
+                const member = await interaction.guild.members.fetch(userId).catch(() => null);
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
+                const displayName = member ? member.user.displayName : (await interaction.client.users.fetch(userId)).tag;
+                leaderboardString += `${medal} **${displayName}** - \`${msgCount}\` messages\n`;
             }
 
+            embed.addFields({
+                name: topMsg.leaderboard_field || 'Leaderboard',
+                value: leaderboardString || (topMsg.leaderboard_empty || 'No activity found.')
+            });
+
             embed.setFooter({ 
-                text: `Requested by ${interaction.user.tag}`,
+                text: (topMsg.footer || `Requested by {user}`).replace('{user}', interaction.user.tag),
                 iconURL: interaction.user.displayAvatarURL({ dynamic: true })
             });
 
             await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
-            console.error('Top command error:', error);
-            await interaction.editReply({ content: config.messages.error || "An error occurred while fetching the leaderboard." });
+            console.error('Top command execution error:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: topMsg.error || "An unexpected error occurred while running the command.", ephemeral: true });
+            } else {
+                await interaction.editReply({ content: topMsg.error || "An unexpected error occurred while fetching the leaderboard." });
+            }
         }
     },
 };
