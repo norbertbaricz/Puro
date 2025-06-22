@@ -277,10 +277,18 @@ commands:
   top:
     color: '#0099ff'
     messages:
+      calculating_title: "🔍 Calculating Activity..."
+      calculating_desc: "Please wait. I am analyzing activity from the last **{days} days**. This might take a moment."
       error: "❌ Error fetching leaderboard!"
+      no_activity: "I couldn't find any recent activity in the last {days} days to create a leaderboard."
+      title: "🏆 Top {count} Active Members"
+      description: "Based on messages sent in the last **{days} days** on **{servername}**."
+      leaderboard_field: "Leaderboard"
+      leaderboard_empty: "No activity found."
+      footer: "Requested by {user}"
 
   tp:
-    color: '#9B59B6'  # Purple
+    color: '#9B59B6'
     messages:
       cooldown: "⏳ Teleporter recharging for {remaining} seconds!"
       not_found: "❌ Member not found!"
@@ -591,6 +599,22 @@ commands:
       no: "No"
       none: "None"
       footer: "Requested by {user}"
+
+  giveaway:
+    color: '#00FF00'
+    messages:
+      calculating_title: "🔍 Calculating Activity..."
+      calculating_desc: "Please wait while I analyze server activity from the last **{days} days**. This might take a moment."
+      error: "❌ An error occurred while fetching activity data. Please ensure I have the correct permissions to read message history in relevant channels."
+      no_active: "Oops! No active members found in the last {days} days. 😔"
+      winner_title: "🎉 Giveaway Winner! 🎉"
+      winner_desc: "Congratulations, {winner}! You've won the **{prize}**! 🎁\n\nHere are the top active members who were in the running:"
+      prize_field: "🏆 Prize"
+      winner_field: "🎊 Winner"
+      top_field: "🌟 Top {count} Active Members"
+      top_field_empty: "No active members found."
+      footer: "Activity based on the last {days} days."
+      image: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWthODZwa2Y0MXEyajAxOXFubDJ4b3lnaWdsbDhza3B1cTJxcm9naSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif"
 
 # Event-specific configurations
 events:
