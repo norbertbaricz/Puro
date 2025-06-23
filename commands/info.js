@@ -15,16 +15,14 @@ function getAndroidOsVersion() {
 function getTermuxPackageVersion() {
     try {
         // Obține versiunea pachetului Termux
+        // WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+        // The above warning is from 'pkg' command itself, not an error.
+        // It means 'pkg show' is generally stable for scripts, but 'pkg install' might not be.
         return execSync('pkg show termux | grep Version | cut -d\' \' -f2').toString().trim();
     } catch (error) {
         return 'Unknown Termux Version';
     }
 }
-
-// Nu mai folosim direct os.totalmem() pentru că e înșelător.
-// Vom afișa doar memoria folosită de procesul Node.js.
-// Dacă vrei să afișezi memoria totală a telefonului, poți folosi `getprop mem.total` sau `cat /proc/meminfo`
-// dar asta depășește scopul de a monitoriza botul în Termux.
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -32,7 +30,16 @@ module.exports = {
         .setDescription('Bot information'),
 
     async execute(interaction) {
-        const config = interaction.client.config.commands.info; // Asigură-te că `config` este disponibil
+        // Asigură-te că `config` este disponibil și are structura așteptată
+        // Presupunând că 'config' este accesibil prin interaction.client.config
+        // și că are un obiect 'commands' cu un obiect 'info' în interior
+        const config = interaction.client.config?.commands?.info || {
+            color: '#0099ff', // Culoare default dacă nu este configurată
+            messages: {
+                error: 'A apărut o eroare la preluarea informațiilor botului.' // Mesaj default
+            }
+        };
+
         try {
             await interaction.deferReply();
 
@@ -58,6 +65,13 @@ module.exports = {
             const heapUsedMB = Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100;
             const heapTotalMB = Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100;
 
+            // Get CPU Model safely
+            let cpuModel = 'N/A';
+            const cpus = os.cpus();
+            if (cpus && cpus.length > 0) {
+                cpuModel = cpus[0].model;
+            }
+
             const embed = new EmbedBuilder()
                 .setColor(config.color)
                 .setTitle('🤖 Bot Information')
@@ -81,7 +95,7 @@ module.exports = {
                         name: '💻 System Information',
                         value: [
                             `🖥️ OS: \`Android ${getAndroidOsVersion()} (Termux ${getTermuxPackageVersion()})\``,
-                            `⚙️ CPU Model: \`${os.cpus()[0].model || 'N/A'}\``, // `os.cpus()[0].model` poate fi gol
+                            `⚙️ CPU Model: \`${cpuModel}\``, // Utilizăm variabila cpuModel verificată
                             `📊 Memory Usage (Bot): \`${heapUsedMB} MB / ${heapTotalMB} MB\``, // Mai precis pentru bot
                             `📦 Node.js: \`${process.version}\``,
                             `🔧 Discord.js: \`v${require('discord.js').version}\``
