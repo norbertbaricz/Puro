@@ -281,8 +281,10 @@ commands:
       calculating_desc: "Please wait. I am analyzing activity from the last **{days} days**. This might take a moment."
       error: "❌ Error fetching leaderboard!"
       no_activity: "I couldn't find any recent activity in the last {days} days to create a leaderboard."
-      title: "🏆 Top {count} Active Members"
-      description: "Based on messages sent in the last **{days} days** on **{servername}**."
+      title_active: "🏆 Top {count} Active Members"
+      title_inactive: "🏆 Top {count} Inactive Members"
+      description_active: "Based on messages sent in the last **{days} days** on **{servername}**."
+      description_inactive: "Based on message activity in the last **{days} days** on **{servername}**."
       leaderboard_field: "Leaderboard"
       leaderboard_empty: "No activity found."
       footer: "Requested by {user}"
@@ -639,13 +641,9 @@ events:
         - '^yo+u+$'
         - '^sup+$'
         - '^wassup+$'
-        - '^good\\s*morning+$'
         - '^good\\s*afternoon+$'
         - '^good\\s*evening+$'
-        - '^good\\s*night+$'
-        - '^morning+$'
         - '^evening+$'
-        - '^night+$'
         - '^hiya+$'
         - '^hi+ya+$'
         - '^greetings+$'
@@ -696,14 +694,11 @@ events:
         - "*barks happily* Hey, {user}! 🐶"
         - "*wiggles nose* Yo {user}! 😎"
         - "*fluffs fur* Greetings, {user}! 🦊"
-        - "*howls at the moon* Good to see you, {user}! 🌙"
         - "*does a happy spin* Hiya, {user}! 🌀"
         - "*gives a friendly boop* Howdy, {user}! 🐾"
         - "*wags tail excitedly* What's up, {user}? 🌞"
         - "*nods politely* Salutations, {user}! 🎩"
         - "*raises paw* Wassup, {user}! ✋"
-        - "*smiles warmly* Good morning, {user}! ☀️"
-        - "*yawns* Good night, {user}! 🌙"
         - "*waves tail* Good evening, {user}! 🌆"
         - "*greets with a soft bark* Afternoon, {user}! ☕"
         - "*howls playfully* Yo yo, {user}! 🎶"
@@ -716,18 +711,14 @@ events:
         - "*jumps in excitement* Hey hey, {user}! 🦴"
         - "*sniffs the air* New scent detected: {user}! 👃"
         - "*does a little dance* Welcome, {user}! 💃"
-        - "*howls at the stars* Evening, {user}! ✨"
         - "*gives a friendly nudge* Hi, {user}! 🐾"
         - "*wags tail* Nice to see you, {user}! 😊"
         - "*perks up ears* What's up, {user}? 👂"
         - "*howls a tune* Welcome to the pack, {user}! 🎵"
         - "*offers a paw* Let's have fun, {user}! 🐾"
         - "*smiles with bright eyes* Hey, {user}! 🌟"
-        - "*howls a greeting* Good to see you, {user}! 🐺"
         - "*gives a gentle boop* Hi, {user}! 🐽"
         - "*wags tail and smiles* Welcome, {user}! 🐾"
-        - "*howls at the sunrise* Morning, {user}! 🌅"
-        - "*waves tail* Nighty night, {user}! 🌙"
         - "*greets with a bark* Yo, {user}! 🐕"
         - "*howls at the sunset* Evening, {user}! 🌇"
         - "*gives a playful bark* Hi, {user}! 🐶"
@@ -736,7 +727,6 @@ events:
         - "*howls softly* Glad to see you, {user}! 🐾"
         - "*waves paw* Hi, {user}! 👋"
         - "*nods* Hello, {user}! 😊"
-        - "*howls at the moon* Good night, {user}! 🌝"
         - "*greets with a soft bark* Good afternoon, {user}! ☀️"
         - "*wags tail* Welcome to the server, {user}! 🎉"
         - "*howls with excitement* Let's have a great day, {user}! 🌞"
@@ -745,18 +735,7 @@ events:
         - "*waves tail* Glad you're here, {user}! 🐾"
         - "*greets with a howl* Hello, {user}! 🐺"
         - "*smiles and barks* Hi, {user}! 🐶"
-        - "*howls at the stars* Good evening, {user}! ✨"
         - "*wags tail and smiles* Welcome, {user}! 🐺"
-        - "*greets with a bark* Hi, {user}! 🐕"
-        - "*howls at the sunrise* Good morning, {user}! 🌅"
-        - "*waves paw* Good night, {user}! 🌙"
-        - "*smiles warmly* Welcome, {user}! 😊"
-        - "*howls with joy* Glad to see you, {user}! 🐺"
-        - "*wags tail* Hi, {user}! 🐾"
-        - "*greets with a soft bark* Hello, {user}! 🐺"
-        - "*waves tail* Welcome, {user}! 🐺"
-        - "*howls a greeting* Hi, {user}! 🐺"
-        - "*smiles and wags tail* Good to see you, {user}! 🐺"
         - "*greets with a bark* Hey, {user}! 🐺"
         - "*howls at the moon* Welcome, {user}! 🌙"
         - "*waves paw* Hi, {user}! 👋"
@@ -764,11 +743,26 @@ events:
         - "*howls softly* Glad to see you, {user}! 🐾"
         - "*waves paw* Hi, {user}! 👋"
         - "*nods* Hello, {user}! 😊"
-        - "*howls at the moon* Good night, {user}! 🌝"
         - "*greets with a soft bark* Good afternoon, {user}! ☀️"
         - "*wags tail* Welcome to the server, {user}! 🎉"
         - "*howls with excitement* Let's have a great day, {user}! 🌞"
         - "*smiles with a wag* Happy to see you, {user}! 🐺"
+        # New responses added
+        - "* bounds forward* Yo, {user}, you’re in the pack now! 🐺"
+        - "*tilts head* Hey {user}, ready to howl with us? 🌟"
+        - "*chases tail* Hiya, {user}! Let’s make some noise! 🐾"
+        - "*paws at the ground* Sup, {user}? Time to run with the wolves! 🐺"
+        - "*flashes a toothy grin* Hey there, {user}! Welcome to the den! 😁"
+        - "*leaps playfully* Yo {user}, let’s explore the wild together! 🌲"
+        - "*howls in harmony* Greetings, {user}! Join the pack vibe! 🎶"
+        - "*winks with a wag* Hey {user}, you’re looking pawsome! 🐺✨"
+        - "*rolls over playfully* Hi {user}! Ready for some fun? 🐾"
+        - "*sniffs curiously* Yo {user}, what’s the word in the forest? 🌳"
+        - "*bounces with energy* Hey {user}, let’s make today epic! 🚀"
+        - "*howls a cheerful tune* Welcome, {user}, to the wolf pack! 🐺🎉"
+        - "*paws the air* Hiya {user}! Let’s kick things off! 🦴"
+        - "*grins widely* Yo, {user}! The pack’s thrilled you’re here! 🐾"
+        - "*spins in excitement* Hey {user}, let’s run under the stars! 🌠"
       messages:
         error: "❌ Error sending greeting!"
   ready:

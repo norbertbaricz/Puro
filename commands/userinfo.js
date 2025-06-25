@@ -24,6 +24,17 @@ module.exports = {
 
         const avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 4096 });
 
+        // Calculate account age in milliseconds
+        const accountCreatedTimestamp = member.user.createdTimestamp;
+        const oneYearAgo = Date.now() - (365 * 24 * 60 * 60 * 1000); // 12 months in milliseconds
+
+        let securityStatus;
+        if (accountCreatedTimestamp < oneYearAgo) {
+            securityStatus = '✅ Account older than 12 months';
+        } else {
+            securityStatus = '⚠️ Account younger than 12 months';
+        }
+
         const embed = new EmbedBuilder()
             .setColor(userinfoConfig.color)
             .setTitle(userinfoConfig.messages.title.replace('{tag}', member.user.tag))
@@ -36,7 +47,8 @@ module.exports = {
                 { name: userinfoConfig.messages.fields.nickname, value: member.nickname || userinfoConfig.messages.none, inline: true },
                 { name: userinfoConfig.messages.fields.account_created, value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:F>`, inline: false },
                 { name: userinfoConfig.messages.fields.joined_server, value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>`, inline: false },
-                { name: userinfoConfig.messages.fields.roles, value: roles, inline: false }
+                { name: userinfoConfig.messages.fields.roles, value: roles, inline: false },
+                { name: `🔒 ${userinfoConfig.messages.fields.security || 'Security'}`, value: securityStatus, inline: true } // Added lock emoji here
             )
             .setFooter({ text: userinfoConfig.messages.footer.replace('{user}', interaction.user.tag), iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
             .setTimestamp();
