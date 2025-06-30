@@ -233,9 +233,37 @@ commands:
       error: "❌ Error displaying help!"
 
   info:
-    color: '#5865F2'  # Discord blue
+    color: '#5865F2'
     messages:
-      error: "❌ Error fetching bot info!"
+      error: "❌ An error occurred while executing this command!"
+    
+    # Toate textele pentru comanda /info
+    content:
+      creator:
+        title: '👤 Creator Information'
+        creator_name_label: 'Creator Name'
+        creator_name_value: 'MaxUltimat3'
+        creation_date_label: 'Bot Creation Date'
+        creation_date_value: '1715299200'  # Timestamp in seconds since epoch
+      status:
+        title: '📊 Status & Statistics'
+        servers_label: '🌐 Servers'
+        members_label: '👥 Total Members'
+        commands_label: '📝 Registered Commands'
+        latency_label: '📶 API Latency'
+      system:
+        title: '💻 System Information'
+        os_label: '🖥️ Operating System'
+        cpu_label: '⚙️ CPU Model'
+        mem_usage_label: '📊 Memory Usage'
+        total_mem_label: '💾 Total System Memory'
+        node_label: '📦 Node.js Version'
+        djs_label: '🔧 Discord.js Version'
+      uptime:
+        title: '⏱️ Bot Uptime'
+        description: "**The bot has been online for:**\n{uptimeString}"
+        # Formatarea pentru string-ul de uptime
+        time_format: '`{days}` days, `{hours}` hours, `{minutes}` minutes, and `{seconds}` seconds'
 
   love:
     color: '#FF69B4'  # Pink
