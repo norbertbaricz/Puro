@@ -1,6 +1,69 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { exec } = require('child_process');
-const os = require('os');
+const { exec } = require('child_process'); // Used for running system commands
+const os = require('os'); // Node.js built-in OS module
+
+/**
+ * Helper function to execute a shell command and return its stdout.
+ * @param {string} command The shell command to execute.
+ * @returns {Promise<string>} A promise that resolves with the command's stdout, or rejects with an error.
+ */
+function executeCommand(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                // Log stderr for debugging purposes, but don't necessarily reject if stderr is just warnings
+                if (stderr) console.warn(`Stderr from command "${command}": ${stderr}`);
+                reject(new Error(`Command failed: ${error.message}`));
+                return;
+            }
+            resolve(stdout.trim()); // Trim whitespace from the output
+        });
+    });
+}
+
+/**
+ * Fetches system hardware information like CPU temperature and battery percentage.
+ * This function assumes a Linux environment with 'sensors' and 'acpi' installed.
+ * It will return 'N/A' for values it cannot retrieve or if on a different OS.
+ * @returns {Promise<{cpuTemperature: string, batteryPercentage: string}>}
+ */
+async function getSystemHardwareInfo() {
+    let cpuTemperature = 'N/A';
+    let batteryPercentage = 'N/A';
+
+    // Attempt to get CPU temperature (Linux specific, requires lm-sensors)
+    if (os.type() === 'Linux') {
+        try {
+            // This command tries to get temperature from 'Core 0'.
+            // You might need to adjust 'grep "Core 0"' to 'grep "Package id 0"'
+            // or another label based on your 'sensors' output for better accuracy.
+            const tempOutput = await executeCommand('sensors | grep "Core 0" | awk \'{print $3}\'');
+            const temperatureMatch = tempOutput.match(/\+([\d.]+)°C/);
+            if (temperatureMatch && temperatureMatch[1]) {
+                cpuTemperature = `${temperatureMatch[1]}°C`;
+            }
+        } catch (error) {
+            console.warn(`Could not get CPU temperature (lm-sensors might not be installed or configured): ${error.message}`);
+        }
+
+        // Attempt to get battery percentage (Linux specific, requires acpi)
+        try {
+            const batteryOutput = await executeCommand('acpi -b');
+            const batteryMatch = batteryOutput.match(/(\d+)%/);
+            if (batteryMatch && batteryMatch[1]) {
+                batteryPercentage = `${batteryMatch[1]}%`;
+            }
+        } catch (error) {
+            console.warn(`Could not get battery percentage (acpi might not be installed): ${error.message}`);
+        }
+    } else {
+        // Placeholder for other OS, you'd need different commands here
+        console.info('System temperature and battery percentage retrieval is currently implemented for Linux only.');
+    }
+
+    return { cpuTemperature, batteryPercentage };
+}
+
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -28,6 +91,9 @@ module.exports = {
         try {
             await interaction.deferReply();
 
+            // Fetch system hardware info upfront
+            const { cpuTemperature, batteryPercentage } = await getSystemHardwareInfo();
+
             const embed = new EmbedBuilder()
                 .setColor(config.color || '#0099ff')
                 .setFooter({ text: `Bot ID: ${client.user.id}` })
@@ -35,6 +101,7 @@ module.exports = {
                 .setThumbnail(client.user.displayAvatarURL());
 
             if (!infoType) {
+                // Display all information
                 embed.setTitle(config.all?.title || 'Bot Information');
 
                 const creatorContent = content.creator || {};
@@ -57,7 +124,7 @@ module.exports = {
                 const memoryUsage = process.memoryUsage();
                 embed.addFields({
                     name: systemContent.title || 'System Information',
-                    value: `${systemContent.os_label || 'Operating System'}: \`${os.type()} ${os.release()}\`\n${systemContent.cpu_label || 'CPU'}: \`${os.cpus()[0]?.model || 'Unknown'}\`\n${systemContent.mem_usage_label || 'Memory Usage'}: \`${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.total_mem_label || 'Total Memory'}: \`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.node_label || 'Node.js Version'}: \`${process.version}\`\n${systemContent.djs_label || 'Discord.js Version'}: \`v${require('discord.js').version}\``,
+                    value: `${systemContent.os_label || 'Operating System'}: \`${os.type()} ${os.release()}\`\n${systemContent.cpu_label || 'CPU'}: \`${os.cpus()[0]?.model || 'Unknown'}\`\n${systemContent.mem_usage_label || 'Memory Usage'}: \`${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.total_mem_label || 'Total Memory'}: \`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.node_label || 'Node.js Version'}: \`${process.version}\`\n${systemContent.djs_label || 'Discord.js Version'}: \`v${require('discord.js').version}\`\n${systemContent.cpu_temp_label || 'CPU Temperature'}: \`${cpuTemperature}\`\n${systemContent.battery_label || 'Battery'}: \`${batteryPercentage}\``,
                     inline: false
                 });
 
@@ -79,6 +146,7 @@ module.exports = {
                     inline: false
                 });
             } else {
+                // Display specific information type
                 if (infoType === 'creator') {
                     const creatorContent = content.creator || {};
                     embed
@@ -110,7 +178,9 @@ module.exports = {
                             { name: systemContent.mem_usage_label || 'Memory Usage', value: `\`${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB\``, inline: true },
                             { name: systemContent.total_mem_label || 'Total Memory', value: `\`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\``, inline: true },
                             { name: systemContent.node_label || 'Node.js Version', value: `\`${process.version}\``, inline: true },
-                            { name: systemContent.djs_label || 'Discord.js Version', value: `\`v${require('discord.js').version}\``, inline: true }
+                            { name: systemContent.djs_label || 'Discord.js Version', value: `\`v${require('discord.js').version}\``, inline: true },
+                            { name: systemContent.cpu_temp_label || 'CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
+                            { name: systemContent.battery_label || 'Battery', value: `\`${batteryPercentage}\``, inline: true }
                         );
                 } else if (infoType === 'uptime') {
                     const uptimeContent = content.uptime || {};
@@ -128,33 +198,11 @@ module.exports = {
 
                     embed
                         .setTitle(uptimeContent.title || 'Bot Uptime')
-                        .setDescription(description);
-
-                    // --- Adding System Temperature (for Linux with `sensors` only) ---
-                    exec('sensors | grep "Core 0" | awk \'{print $3}\'', (error, stdout, stderr) => {
-                        if (error) {
-                            console.error(`Error getting temperature: ${error.message}`);
-                            // You can add an error description to the embed if you wish
-                            // embed.addField('Temperature', 'Could not retrieve temperature.');
-                            return;
-                        }
-                        if (stderr) {
-                            console.error(`Stderr error getting temperature: ${stderr}`);
-                            return;
-                        }
-
-                        const temperatureMatch = stdout.match(/\+([\d.]+)°C/); // Look for a format like "+XX.X°C"
-                        const temperature = temperatureMatch ? temperatureMatch[1] : 'N/A';
-
-                        embed.addFields(
-                            { name: 'CPU Temperature', value: `${temperature}°C`, inline: true }
+                        .setDescription(description)
+                        .addFields(
+                            { name: 'CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
+                            { name: 'Battery', value: `\`${batteryPercentage}\``, inline: true }
                         );
-
-                        // This is where you would typically send the embed.
-                        // Make sure your embed sending function is called *after* all information is added.
-                        // For example: message.channel.send({ embeds: [embed] });
-                    });
-                    // --- End adding temperature ---
                 }
             }
 
