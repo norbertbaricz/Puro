@@ -1,11 +1,11 @@
 {
   "name": "puro",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon --quiet --watch app.js --trace-warnings app.js",
-    "dev": "nodemon --inspect --verbose --trace-warnings app.js"
+    "start": "nodemon --quiet --ext js,yml --trace-warnings app.js",
+    "dev": "nodemon --inspect --verbose --ext js,yml --trace-warnings app.js"
   },
   "dependencies": {
     "axios": "^1.9.0",
