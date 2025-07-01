@@ -124,16 +124,43 @@ module.exports = {
                         .replace('{minutes}', minutes)
                         .replace('{seconds}', seconds);
                     const description = (uptimeContent.description || 'The bot has been online for {uptimeString}.').replace('{uptimeString}', uptimeString);
+
                     embed
                         .setTitle(uptimeContent.title || 'Bot Uptime')
                         .setDescription(description);
+
+                    // --- Adding System Temperature (for Linux with `sensors` only) ---
+                    exec('sensors | grep "Core 0" | awk \'{print $3}\'', (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`Error getting temperature: ${error.message}`);
+                            // You can add an error description to the embed if you wish
+                            // embed.addField('Temperature', 'Could not retrieve temperature.');
+                            return;
+                        }
+                        if (stderr) {
+                            console.error(`Stderr error getting temperature: ${stderr}`);
+                            return;
+                        }
+
+                        const temperatureMatch = stdout.match(/\+([\d.]+)°C/); // Look for a format like "+XX.X°C"
+                        const temperature = temperatureMatch ? temperatureMatch[1] : 'N/A';
+
+                        embed.addFields(
+                            { name: 'CPU Temperature', value: `${temperature}°C`, inline: true }
+                        );
+
+                        // This is where you would typically send the embed.
+                        // Make sure your embed sending function is called *after* all information is added.
+                        // For example: message.channel.send({ embeds: [embed] });
+                    });
+                    // --- End adding temperature ---
                 }
             }
 
             await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
-            console.error(`Error executing /devinfo command (type: ${infoType || 'all'}):`, error);
+            console.error(`Error executing /info command (type: ${infoType || 'all'}):`, error);
             const errorMessage = { content: config.messages?.error || 'An error occurred while executing the command.' };
             if (interaction.deferred || interaction.replied) {
                 await interaction.followUp({ ...errorMessage, flags: 64 });
