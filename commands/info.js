@@ -114,9 +114,12 @@ module.exports = {
                 const statusContent = content.status || {};
                 const guilds = client.guilds.cache;
                 const totalMembers = guilds.reduce((acc, guild) => acc + guild.memberCount, 0);
+                // Adaugă numărul de eventuri încărcate
+                const eventsCount = client.events ? client.events.size : 0;
+
                 embed.addFields({
                     name: statusContent.title || 'Bot Status',
-                    value: `${statusContent.servers_label || 'Servers'}: \`${guilds.size}\`\n${statusContent.members_label || 'Members'}: \`${totalMembers}\`\n${statusContent.commands_label || 'Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || 'Latency'}: \`${client.ws.ping}ms\``,
+                    value: `${statusContent.servers_label || 'Servers'}: \`${guilds.size}\`\n${statusContent.members_label || 'Members'}: \`${totalMembers}\`\n${statusContent.commands_label || 'Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || 'Latency'}: \`${client.ws.ping}ms\`\n${'Events'}: \`${eventsCount}\``,
                     inline: false
                 });
 
@@ -159,12 +162,16 @@ module.exports = {
                     const statusContent = content.status || {};
                     const guilds = client.guilds.cache;
                     const totalMembers = guilds.reduce((acc, guild) => acc + guild.memberCount, 0);
+                    // Adaugă numărul de eventuri încărcate
+                    const eventsCount = client.events ? client.events.size : 0;
+
                     embed
                         .setTitle(statusContent.title || 'Bot Status')
                         .addFields(
                             { name: statusContent.servers_label || 'Servers', value: `\`${guilds.size}\``, inline: true },
                             { name: statusContent.members_label || 'Members', value: `\`${totalMembers}\``, inline: true },
                             { name: statusContent.commands_label || 'Commands', value: `\`${client.commands?.size || 0}\``, inline: true },
+                            { name: 'Events', value: `\`${eventsCount}\``, inline: true },
                             { name: statusContent.latency_label || 'Latency', value: `\`${client.ws.ping}ms\``, inline: true }
                         );
                 } else if (infoType === 'system') {
@@ -198,11 +205,7 @@ module.exports = {
 
                     embed
                         .setTitle(uptimeContent.title || 'Bot Uptime')
-                        .setDescription(description)
-                        .addFields(
-                            { name: 'CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
-                            { name: 'Battery', value: `\`${batteryPercentage}\``, inline: true }
-                        );
+                        .setDescription(description);
                 }
             }
 
