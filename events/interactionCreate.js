@@ -25,6 +25,12 @@ module.exports = {
                         await helpCommand.execute(interaction);
                     }
                 }
+            } else if (interaction.isStringSelectMenu()) {
+                const [command, action] = interaction.customId.split('_');
+                if (command === 'help' && action === 'category' && typeof interaction.client.commands.get('help')?.handleCategorySelect === 'function') {
+                    await interaction.client.commands.get('help').handleCategorySelect(interaction);
+                    return;
+                }
             } else if (interaction.isChatInputCommand()) {
                 const command = interaction.client.commands.get(interaction.commandName);
                 if (!command) {
