@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -9,6 +9,7 @@ module.exports = {
             option.setName('channel').setDescription('The channel to send to').setRequired(true))
         .addStringOption(option =>
             option.setName('message').setDescription('The message to send').setRequired(true))
+        // opțiunea opțională trebuie să fie ultima!
         .addBooleanOption(option =>
             option.setName('publish').setDescription('Publish in announcement channel').setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
@@ -16,9 +17,12 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.announce;
         try {
-            // Fixed line: Use interaction.memberPermissions
             if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages)) {
-                return interaction.reply({ content: config.messages.no_permission, flags: 64 });
+                const embed = new EmbedBuilder()
+                    .setTitle('No Permission')
+                    .setDescription(config.messages.no_permission)
+                    .setColor(0xff0000);
+                return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const channel = interaction.options.getChannel('channel');
@@ -26,19 +30,27 @@ module.exports = {
             const publish = interaction.options.getBoolean('publish') ?? false;
 
             if (![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
-                return interaction.reply({ content: config.messages.invalid_channel, ephemeral: true });
+                const embed = new EmbedBuilder()
+                    .setTitle('Invalid Channel')
+                    .setDescription(config.messages.invalid_channel)
+                    .setColor(0xffa500);
+                return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const botMember = interaction.guild.members.me;
             if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
-                return interaction.reply({ content: config.messages.no_bot_permission.replace('{channel}', channel), ephemeral: true });
+                const embed = new EmbedBuilder()
+                    .setTitle('Missing Permission')
+                    .setDescription(config.messages.no_bot_permission.replace('{channel}', channel))
+                    .setColor(0xff0000);
             }
 
             if (message.length > interaction.client.config.limits.message) {
-                return interaction.reply({
-                    content: config.messages.too_long.replace('{maxLength}', interaction.client.config.limits.message),
-                    ephemeral: true
-                });
+                const embed = new EmbedBuilder()
+                    .setTitle('Message Too Long')
+                    .setDescription(config.messages.too_long.replace('{maxLength}', interaction.client.config.limits.message))
+                    .setColor(0xffa500);
+                return interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             await interaction.deferReply({ flags: 64 });
@@ -49,11 +61,20 @@ module.exports = {
                 flags: publish && channel.type === ChannelType.GuildAnnouncement ? MessageFlags.CrossPost : null
             });
 
-            await interaction.editReply({ content: config.messages.success.replace('{channel}', channel), ephemeral: true });
+            const embed = new EmbedBuilder()
+                .setTitle('Announcement Sent')
+                .setDescription(config.messages.success.replace('{channel}', channel))
+                .setColor(0x00b300);
+
+            await interaction.editReply({ embeds: [embed] });
         } catch (error) {
             console.error('Announce error:', error);
+            const embed = new EmbedBuilder()
+                .setTitle('Error')
+                .setDescription(config.messages.error)
+                .setColor(0xff0000);
             const replyMethod = interaction.deferred || interaction.replied ? interaction.editReply : interaction.reply;
-            await replyMethod.call(interaction, { content: config.messages.error, ephemeral: true });
+            await replyMethod.call(interaction, { embeds: [embed] });
         }
     },
 };

@@ -1,102 +1,102 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
     data: new SlashCommandBuilder()
         .setName('send')
-        .setDescription('Send a DM to a user')
-        .addUserOption(option =>
-            option.setName('user')
-            .setDescription('The user to DM')
-            .setRequired(true))
+        .setDescription('Send a DM to a user or everyone in the server')
         .addStringOption(option =>
             option.setName('message')
-            .setDescription('The message to send')
-            .setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages), // Permission required to use the command
+                .setDescription('The message to send')
+                .setRequired(true))
+        .addUserOption(option =>
+            option.setName('user')
+                .setDescription('The user to DM')
+                .setRequired(false))
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
     async execute(interaction) {
-        // Assumes config.yml is loaded into interaction.client.config
         const configPath = interaction.client.config.commands.send;
         const configMessages = configPath && configPath.messages ? configPath.messages : {};
 
-        // Define messages with English defaults, which will be overridden by config.yml if keys exist
         const messages = {
             no_permission: configMessages.no_permission || "You do not have permission to use this command.",
             success: configMessages.success || "Successfully sent a DM to {user}.",
-            error: configMessages.error || "Could not process the send command for {user}.", // General command error for a user
-            error_generic: configMessages.error_generic || "An unexpected error occurred.", // Generic fallback
+            success_all: configMessages.success_all || "Successfully sent a DM to {count} users.",
+            error: configMessages.error || "Could not process the send command for {user}.",
+            error_generic: configMessages.error_generic || "An unexpected error occurred.",
             cannot_dm_user: configMessages.cannot_dm_user || "Could not send a DM to {user}. They may have DMs disabled, server privacy settings, or the bot is blocked.",
             dm_fail: configMessages.dm_fail || "Failed to send the DM to {user} due to an unknown issue.",
             user_not_found: configMessages.user_not_found || "The specified user could not be found.",
         };
 
-        let targetUser;
-
         try {
-            // Check if the interaction is in a server
             if (!interaction.inGuild()) {
-                return interaction.reply({ content: "This command can only be used within a server.", ephemeral: true });
+                return interaction.reply({ content: "This command can only be used within a server.", flags: 64 });
             }
 
-            // Permission check (redundant if setDefaultMemberPermissions works correctly, but good for safety)
             if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages)) {
-                return interaction.reply({ content: messages.no_permission, ephemeral: true });
+                return interaction.reply({ content: messages.no_permission, flags: 64 });
             }
 
-            targetUser = interaction.options.getUser('user');
+            const targetUser = interaction.options.getUser('user');
             const messageContent = interaction.options.getString('message');
 
-            if (!targetUser) {
-                // Should be prevented by .setRequired(true)
-                return interaction.reply({ content: messages.user_not_found, ephemeral: true });
-            }
-
-            try {
-                // Attempt to send the DM
-                await targetUser.send(messageContent);
-                // Confirm success to the command initiator
-                await interaction.reply({
-                    content: messages.success.replace('{user}', targetUser.tag),
-                    ephemeral: true
-                });
-            } catch (dmError) {
-                // This block is entered if targetUser.send() fails
-                console.error(`Error sending DM to ${targetUser.tag} (ID: ${targetUser.id}):`, dmError); // Logs the full error to console
-
-                let dmErrorMessage;
-                if (dmError.code === 50007) { // Specific code for "Cannot send messages to this user"
-                    dmErrorMessage = messages.cannot_dm_user.replace('{user}', targetUser.tag);
-                } else {
-                    // For other types of errors when sending DM
-                    dmErrorMessage = messages.dm_fail.replace('{user}', targetUser.tag);
+            if (targetUser) {
+                try {
+                    await targetUser.send(messageContent);
+                    const embed = new EmbedBuilder()
+                        .setTitle('DM Sent')
+                        .setDescription(messages.success.replace('{user}', targetUser.tag))
+                        .setColor(0x00b300);
+                    return interaction.reply({ embeds: [embed], flags: 64 });
+                } catch (dmError) {
+                    let dmErrorMessage;
+                    if (dmError.code === 50007) {
+                        dmErrorMessage = messages.cannot_dm_user.replace('{user}', targetUser.tag);
+                    } else {
+                        dmErrorMessage = messages.dm_fail.replace('{user}', targetUser.tag);
+                    }
+                    const embed = new EmbedBuilder()
+                        .setTitle('DM Failed')
+                        .setDescription(dmErrorMessage)
+                        .setColor(0xff0000);
+                    return interaction.reply({ embeds: [embed], flags: 64 });
                 }
-
-                // Send feedback to the command initiator
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ content: dmErrorMessage, ephemeral: true });
-                } else {
-                    await interaction.reply({ content: dmErrorMessage, ephemeral: true });
-                }
-            }
-
-        } catch (error) {
-            // This block is for other errors (e.g., issues reading options, permissions, etc.)
-            console.error('Error in send command execution:', error); // Logs the full error to console
-
-            let finalErrorMessage = messages.error_generic; // Default generic message
-            const attemptedTargetUser = interaction.options.getUser('user'); // Try to get the user for the error message
-
-            if (attemptedTargetUser) {
-                // Uses messages.error (which will take your YAML value if attemptedTargetUser is valid)
-                finalErrorMessage = messages.error.replace('{user}', attemptedTargetUser.tag);
-            }
-
-            // Send feedback to the command initiator
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: finalErrorMessage, ephemeral: true });
             } else {
-                await interaction.reply({ content: finalErrorMessage, ephemeral: true });
+                await interaction.deferReply({ flags: 64 });
+                const members = await interaction.guild.members.fetch();
+                let sentCount = 0;
+                let failedCount = 0;
+                for (const member of members.values()) {
+                    if (member.user.bot) continue;
+                    try {
+                        await member.send(messageContent);
+                        sentCount++;
+                    } catch {
+                        failedCount++;
+                    }
+                }
+                const embed = new EmbedBuilder()
+                    .setTitle('DM Broadcast')
+                    .setDescription(messages.success_all.replace('{count}', sentCount))
+                    .setColor(0x00b300)
+                    .addFields(
+                        { name: 'Success', value: `${sentCount}`, inline: true },
+                        { name: 'Failed', value: `${failedCount}`, inline: true }
+                    );
+                await interaction.editReply({ embeds: [embed] });
+            }
+        } catch (error) {
+            console.error('Error in send command execution:', error);
+            const embed = new EmbedBuilder()
+                .setTitle('Error')
+                .setDescription(messages.error_generic)
+                .setColor(0xff0000);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ embeds: [embed], flags: 64 });
+            } else {
+                await interaction.reply({ embeds: [embed], flags: 64 });
             }
         }
     },
