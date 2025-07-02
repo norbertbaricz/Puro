@@ -40,32 +40,46 @@ client.commands = new Collection(); // Use Collection for commands
 client.commandLoadDetails = []; // Store details about command loading
 client.eventLoadDetails = []; // Store details about event loading
 
-// Function to load and register slash commands
+// Helper function to recursively get all .js files in a directory and subdirectories
+function getAllJsFiles(dir) {
+    let results = [];
+    const list = fs.readdirSync(dir, { withFileTypes: true });
+    for (const file of list) {
+        const filePath = path.join(dir, file.name);
+        if (file.isDirectory()) {
+            results = results.concat(getAllJsFiles(filePath));
+        } else if (file.isFile() && file.name.endsWith('.js')) {
+            results.push(filePath);
+        }
+    }
+    return results;
+}
+
+// Function to load and register slash commands (recursive)
 async function loadAndRegisterCommands() {
     console.log('\n🤖 Starting command registration...');
-    const commandsToRegister = []; // Commands to register with Discord API
+    const commandsToRegister = [];
     const localCommandsPath = path.join(__dirname, 'commands');
-    client.commandLoadDetails = []; // Reset on each load
+    client.commandLoadDetails = [];
     let filesFound = 0;
 
     try {
         if (fs.existsSync(localCommandsPath)) {
-            const commandFiles = fs.readdirSync(localCommandsPath).filter(file => file.endsWith('.js'));
+            const commandFiles = getAllJsFiles(localCommandsPath);
             filesFound = commandFiles.length;
             console.log(`\n🔍 Found ${filesFound} command files...`);
             client.commandLoadDetails.push({ type: 'summary', message: `Found ${filesFound} command files.` });
 
-            for (const file of commandFiles) {
-                const filePath = path.join(localCommandsPath, file);
+            for (const filePath of commandFiles) {
+                const file = path.relative(localCommandsPath, filePath);
                 try {
-                    delete require.cache[require.resolve(filePath)]; // Clear cache for hot reloading
+                    delete require.cache[require.resolve(filePath)];
                     const command = require(filePath);
 
-                    // Validate command structure
                     if (command.data && typeof command.data.name === 'string' && typeof command.execute === 'function') {
-                        commandsToRegister.push(command.data.toJSON()); // For global registration
-                        client.commands.set(command.data.name, command); // For local use
-                        console.log(`✅ Loaded command: ${file}`); // Console log without (Name: ...)
+                        commandsToRegister.push(command.data.toJSON());
+                        client.commands.set(command.data.name, command);
+                        console.log(`✅ Loaded command: ${file}`);
                         client.commandLoadDetails.push({ file, name: command.data.name, status: 'success', message: 'Loaded successfully.' });
                     } else {
                         const missingProps = `Missing or invalid "data" (with "name") or "execute" properties.`;
@@ -82,16 +96,15 @@ async function loadAndRegisterCommands() {
             client.commandLoadDetails.push({ type: 'summary', message: "'commands' directory does not exist." });
         }
 
-        // Register commands with Discord API if any are found
         if (commandsToRegister.length > 0) {
             const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
             console.log(`\n⚡ Refreshing ${commandsToRegister.length} application (/) commands...`);
-            
+
             const data = await rest.put(
                 Routes.applicationCommands(process.env.clientId),
                 { body: commandsToRegister },
             );
-            
+
             const refreshMessage = `Successfully reloaded ${data.length} application (/) commands!`;
             console.log(`\n✅ ${refreshMessage}`);
             client.commandLoadDetails.push({ type: 'summary', message: refreshMessage, status: 'success' });
@@ -105,35 +118,34 @@ async function loadAndRegisterCommands() {
     }
 }
 
-// Function to load event handlers
+// Function to load event handlers (recursive)
 function loadEvents() {
     console.log('\n🎉 Starting event loading...');
     const localEventsPath = path.join(__dirname, 'events');
-    client.eventLoadDetails = []; // Reset on each load
+    client.eventLoadDetails = [];
     let loadedEventsCount = 0;
     let filesFound = 0;
 
     try {
         if (fs.existsSync(localEventsPath)) {
-            const eventFiles = fs.readdirSync(localEventsPath).filter(file => file.endsWith('.js'));
+            const eventFiles = getAllJsFiles(localEventsPath);
             filesFound = eventFiles.length;
             console.log(`\n🔍 Found ${filesFound} event files...`);
             client.eventLoadDetails.push({ type: 'summary', message: `Found ${filesFound} event files.` });
 
-            for (const file of eventFiles) {
-                const filePath = path.join(localEventsPath, file);
+            for (const filePath of eventFiles) {
+                const file = path.relative(localEventsPath, filePath);
                 try {
-                    delete require.cache[require.resolve(filePath)]; // Clear cache for hot reloading
+                    delete require.cache[require.resolve(filePath)];
                     const event = require(filePath);
 
-                    // Validate event structure
                     if (event.name && typeof event.name === 'string' && typeof event.execute === 'function') {
                         if (event.once) {
                             client.once(event.name, (...args) => event.execute(...args, client));
                         } else {
                             client.on(event.name, (...args) => event.execute(...args, client));
                         }
-                        console.log(`✅ Loaded event: ${file}`); // Console log without (Name: ...)
+                        console.log(`✅ Loaded event: ${file}`);
                         client.eventLoadDetails.push({ file, name: event.name, status: 'success', message: 'Loaded successfully.' });
                         loadedEventsCount++;
                     } else {
