@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, Collection } = require('discord.js');
-const fs = require('fs');
+const fs = require('fs'); // fs.promises is used for async operations
 const path = require('path');
 const yaml = require('js-yaml');
 
@@ -41,18 +41,19 @@ client.commandLoadDetails = []; // Store details about command loading
 client.eventLoadDetails = []; // Store details about event loading
 
 // Helper function to recursively get all .js files in a directory and subdirectories
-function getAllJsFiles(dir) {
-    let results = [];
-    const list = fs.readdirSync(dir, { withFileTypes: true });
-    for (const file of list) {
-        const filePath = path.join(dir, file.name);
-        if (file.isDirectory()) {
-            results = results.concat(getAllJsFiles(filePath));
-        } else if (file.isFile() && file.name.endsWith('.js')) {
-            results.push(filePath);
+async function getAllJsFiles(dir) {
+    const dirents = await fs.promises.readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(dirents.map((dirent) => {
+        const res = path.resolve(dir, dirent.name);
+        if (dirent.isDirectory()) {
+            return getAllJsFiles(res);
+        } else if (dirent.isFile() && dirent.name.endsWith('.js')) {
+            return res;
         }
-    }
-    return results;
+        return []; // Return empty array for non-matching files/types
+    }));
+    // Flatten the array of files and sub-directory files
+    return Array.prototype.concat(...files);
 }
 
 // Function to load and register slash commands (recursive)
@@ -65,15 +66,14 @@ async function loadAndRegisterCommands() {
 
     try {
         if (fs.existsSync(localCommandsPath)) {
-            const commandFiles = getAllJsFiles(localCommandsPath);
+            const commandFiles = await getAllJsFiles(localCommandsPath);
             filesFound = commandFiles.length;
             console.log(`\n🔍 Found ${filesFound} command files...`);
             client.commandLoadDetails.push({ type: 'summary', message: `Found ${filesFound} command files.` });
 
             for (const filePath of commandFiles) {
-                const file = path.relative(localCommandsPath, filePath);
                 try {
-                    delete require.cache[require.resolve(filePath)];
+                    const file = path.relative(localCommandsPath, filePath);
                     const command = require(filePath);
 
                     if (command.data && typeof command.data.name === 'string' && typeof command.execute === 'function') {
@@ -87,8 +87,9 @@ async function loadAndRegisterCommands() {
                         client.commandLoadDetails.push({ file, status: 'error', message: missingProps });
                     }
                 } catch (error) {
+                    const file = path.relative(localCommandsPath, filePath) || filePath;
                     console.log(`❌ Error loading command ${file}:`, error);
-                    client.commandLoadDetails.push({ file, status: 'error', message: `Error loading: ${error.message}` });
+                    client.commandLoadDetails.push({ file, status: 'error', message: `Failed to load: ${error.message}` });
                 }
             }
         } else {
@@ -115,12 +116,13 @@ async function loadAndRegisterCommands() {
     } catch (error) {
         console.error('❌ Command registration/loading error:', error);
         client.commandLoadDetails.push({ type: 'summary', message: `Command registration/loading error: ${error.message}`, status: 'error' });
+        throw error; // Re-throw to stop the bot from starting in a broken state
     }
 }
 
 // Function to load event handlers (recursive)
-function loadEvents() {
-    console.log('\n🎉 Starting event loading...');
+async function loadEvents() {
+    console.log('\n🗓️ Starting event loading...');
     const localEventsPath = path.join(__dirname, 'events');
     client.eventLoadDetails = [];
     let loadedEventsCount = 0;
@@ -128,15 +130,14 @@ function loadEvents() {
 
     try {
         if (fs.existsSync(localEventsPath)) {
-            const eventFiles = getAllJsFiles(localEventsPath);
+            const eventFiles = await getAllJsFiles(localEventsPath);
             filesFound = eventFiles.length;
             console.log(`\n🔍 Found ${filesFound} event files...`);
             client.eventLoadDetails.push({ type: 'summary', message: `Found ${filesFound} event files.` });
 
             for (const filePath of eventFiles) {
-                const file = path.relative(localEventsPath, filePath);
                 try {
-                    delete require.cache[require.resolve(filePath)];
+                    const file = path.relative(localEventsPath, filePath);
                     const event = require(filePath);
 
                     if (event.name && typeof event.name === 'string' && typeof event.execute === 'function') {
@@ -154,8 +155,9 @@ function loadEvents() {
                         client.eventLoadDetails.push({ file, status: 'error', message: missingProps });
                     }
                 } catch (error) {
+                    const file = path.relative(localEventsPath, filePath) || filePath;
                     console.error(`❌ Error loading event ${file}:`, error);
-                    client.eventLoadDetails.push({ file, status: 'error', message: `Error loading: ${error.message}` });
+                    client.eventLoadDetails.push({ file, status: 'error', message: `Failed to load: ${error.message}` });
                 }
             }
         } else {
@@ -169,14 +171,15 @@ function loadEvents() {
 
     } catch (error) {
         console.error('❌ Error reading events directory:', error);
-        client.eventLoadDetails.push({ type: 'summary', message: `Error reading events directory: ${error.message}`, status: 'error' });
+        client.eventLoadDetails.push({ type: 'summary', message: `Failed to read events directory: ${error.message}`, status: 'error' });
+        throw error; // Re-throw to stop the bot from starting
     }
 }
 
 // Main asynchronous function to start the bot
 async function main() {
     try {
-        loadEvents(); // Load events first
+        await loadEvents(); // Load events first
         await loadAndRegisterCommands(); // Then load and register commands
 
         await client.login(process.env.TOKEN); // Log in to Discord
@@ -187,12 +190,14 @@ async function main() {
         console.error(`❌ ${client.config.messages.errorLoggingIn || 'Error during initialization or login:'} ${error.message}`);
         // Log the error in load details for debugging purposes if needed
         client.eventLoadDetails.push({ type: 'summary', message: `Bot login/initialization error: ${error.message}`, status: 'error' });
-        client.commandLoadDetails.push({ type: 'summary', message: `Bot login/initialization error: ${error.message}`, status: 'error' });
+        process.exit(1); // Exit on critical startup/login failure
     }
 }
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
+    console.error('🚨 UNCAUGHT EXCEPTION! Shutting down...');
+    console.error(err);
+    process.exit(1); // Mandatory shutdown on unknown error state
 });
 
 process.on('unhandledRejection', (reason, promise) => {
