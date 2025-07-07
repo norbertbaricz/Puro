@@ -75,7 +75,7 @@ commands:
       
   eightball:
     color: '#2C2F33' # O culoare întunecată, aproape neagră
-    image_url: 'https://i.imgur.com/hLfGOio.jpeg' # Link stabil pentru imagine
+    image_url: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdHl3ZDBzd2J0d21uZTMzeHNnNGZhdDl3ZmRicmxqbDRvcnJwMjF1OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iZZdwNpZwBX4mOAWM6/giphy.gif' # Link stabil pentru imagine
     messages:
       title: "🎱 Magic 8-Ball 🎱"
       question_field: "Your Question"
