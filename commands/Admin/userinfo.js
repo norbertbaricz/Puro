@@ -36,6 +36,20 @@ module.exports = {
             securityStatus = '⚠️ Account younger than 12 months';
         }
 
+        // Try to find who invited the user
+        let inviterTag = 'NaN';
+        try {
+            // Fetch all invites for the guild
+            const invites = await interaction.guild.invites.fetch();
+            // Try to find an invite used by this member (not always possible)
+            const usedInvite = invites.find(inv => inv.uses > 0 && inv.inviter && inv.inviter.id !== member.id && inv.inviter.id !== interaction.guild.ownerId);
+            if (usedInvite && usedInvite.inviter) {
+                inviterTag = usedInvite.inviter.tag;
+            }
+        } catch (e) {
+            inviterTag = 'NaN';
+        }
+
         const embed = new EmbedBuilder()
             .setColor(userinfoConfig.color)
             .setTitle(userinfoConfig.messages.title.replace('{tag}', member.user.tag))
@@ -49,7 +63,8 @@ module.exports = {
                 { name: userinfoConfig.messages.fields.account_created, value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:F>`, inline: false },
                 { name: userinfoConfig.messages.fields.joined_server, value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>`, inline: false },
                 { name: userinfoConfig.messages.fields.roles, value: roles, inline: false },
-                { name: `🔒 ${userinfoConfig.messages.fields.security || 'Security'}`, value: securityStatus, inline: true } // Added lock emoji here
+                { name: `🔒 ${userinfoConfig.messages.fields.security || 'Security'}`, value: securityStatus, inline: true },
+                { name: 'Invited by', value: inviterTag, inline: true } // Show who invited the user
             )
             .setFooter({ text: userinfoConfig.messages.footer.replace('{user}', interaction.user.tag), iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
             .setTimestamp();
