@@ -22,6 +22,15 @@ module.exports = {
 
         const iconUrl = guild.iconURL({ dynamic: true, size: 4096 });
 
+        // Count open invites
+        let inviteCount = 'NaN';
+        try {
+            const invites = await guild.invites.fetch();
+            inviteCount = invites.size.toString();
+        } catch (e) {
+            inviteCount = 'NaN';
+        }
+
         const embed = new EmbedBuilder()
             .setColor(serverinfoConfig.color)
             .setTitle(serverinfoConfig.messages.title.replace('{servername}', guild.name))
@@ -37,7 +46,8 @@ module.exports = {
                 { name: serverinfoConfig.messages.fields.voice_channels, value: `${voiceChannels}`, inline: true },
                 { name: serverinfoConfig.messages.fields.roles, value: `${guild.roles.cache.size}`, inline: true },
                 { name: serverinfoConfig.messages.fields.boost_level, value: `${boostLevel}`, inline: true },
-                { name: serverinfoConfig.messages.fields.boosts, value: `${guild.premiumSubscriptionCount}`, inline: true }
+                { name: serverinfoConfig.messages.fields.boosts, value: `${guild.premiumSubscriptionCount}`, inline: true },
+                { name: 'Open Invites', value: inviteCount, inline: true } // Add open invites count
             )
             .setFooter({ text: serverinfoConfig.messages.footer.replace('{user}', interaction.user.tag), iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
             .setTimestamp();
