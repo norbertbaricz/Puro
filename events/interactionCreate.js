@@ -4,49 +4,67 @@ module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
         const config = interaction.client.config.events.interactionCreate;
-        try {
-            if (interaction.isButton()) {
-                const [command, action] = interaction.customId.split('_');
-                if (command === 'help') {
-                    const currentPage = parseInt(interaction.message.embeds[0].description.split('/')[0].split(' ')[1]);
-                    const totalPages = parseInt(interaction.message.embeds[0].description.split('/')[1]);
-                    
-                    let newPage = currentPage;
-                    switch (action) {
-                        case 'first': newPage = 1; break;
-                        case 'prev': newPage = Math.max(1, currentPage - 1); break;
-                        case 'next': newPage = Math.min(totalPages, currentPage + 1); break;
-                        case 'last': newPage = totalPages; break;
-                    }
 
-                    const helpCommand = interaction.client.commands.get('help');
-                    if (helpCommand) {
-                        interaction.options = { getInteger: () => newPage };
-                        await helpCommand.execute(interaction);
-                    }
-                }
-            } else if (interaction.isStringSelectMenu()) {
-                const [command, action] = interaction.customId.split('_');
-                if (command === 'help' && action === 'category' && typeof interaction.client.commands.get('help')?.handleCategorySelect === 'function') {
-                    await interaction.client.commands.get('help').handleCategorySelect(interaction);
-                    return;
-                }
-            } else if (interaction.isChatInputCommand()) {
+        try {
+            // Handle Slash Commands
+            if (interaction.isChatInputCommand()) {
                 const command = interaction.client.commands.get(interaction.commandName);
+
                 if (!command) {
-                    console.error(`No command matching ${interaction.commandName}`);
-                    return interaction.reply({ 
-                        content: config.messages.command_not_found.replace('{command}', interaction.commandName), 
-                        ephemeral: true 
+                    console.error(`No command matching ${interaction.commandName} was found.`);
+                    return interaction.reply({
+                        content: config.messages.command_not_found.replace('{command}', interaction.commandName),
+                        ephemeral: true
                     });
                 }
 
                 await command.execute(interaction);
+                return;
             }
+
+            // Handle Button Interactions
+            if (interaction.isButton()) {
+                const customId = interaction.customId;
+                
+                // Logic for help command's "Back" button
+                if (customId === 'help_back_to_categories') {
+                    const helpCommand = interaction.client.commands.get('help');
+                    if (helpCommand && typeof helpCommand.handleBackButton === 'function') {
+                        await helpCommand.handleBackButton(interaction);
+                    }
+                }
+                
+                // Adaugă aici altă logică pentru butoane dacă este necesar (ex: tictactoe este gestionat prin collector, deci nu necesită cod aici)
+                return;
+            }
+
+            // Handle Select Menu Interactions
+            if (interaction.isStringSelectMenu()) {
+                const customId = interaction.customId;
+
+                // Logic for help command's category selection
+                if (customId === 'help_category_select') {
+                    const helpCommand = interaction.client.commands.get('help');
+                    if (helpCommand && typeof helpCommand.handleCategorySelect === 'function') {
+                        await helpCommand.handleCategorySelect(interaction);
+                    }
+                }
+                return;
+            }
+
         } catch (error) {
             console.error('Interaction handler error:', error);
-            const reply = interaction.deferred ? interaction.editReply : interaction.reply;
-            await reply.call(interaction, { content: config.messages.handler_error, ephemeral: true });
+            
+            const errorMessage = {
+                content: config.messages.handler_error || 'There was an error while processing this interaction!',
+                ephemeral: true
+            };
+
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(errorMessage).catch(console.error);
+            } else {
+                await interaction.reply(errorMessage).catch(console.error);
+            }
         }
     },
 };
