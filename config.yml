@@ -40,6 +40,15 @@ limits:
 
 # Command-specific configurations
 commands:
+  allnick:
+    color: '#00ff00'
+    messages:
+      no_permission: "⛔ You need the 'Manage Nicknames' permission to use this command."
+      success: "Nicknames for **{changed}** members changed to: `{newNick}`."
+      reset_success: "Reset nickname for **{changed}** members."
+      failed: "❌ Failed for {failed} members."
+      skipped: "⚠️ Skipped {skipped} members (owner or higher/equal role)."
+
   announce:
     color: '#0099ff'
     messages:
@@ -55,6 +64,27 @@ commands:
     color: '#0099ff'
     messages:
       error: "❌ Error displaying avatar!"
+
+  balance:
+    color: '#3498db'
+    messages:
+      title: "💰 Wallet Balance Inquiry"
+      description_self: "Here is your current wallet balance:"
+      description_other: "Here is the wallet balance for {user}:"
+      field_user: "User"
+      field_balance: "Balance"
+
+  ban:
+    color: '#8b0000'
+    messages:
+      cannot_ban: "I cannot ban this member."
+      invalid_period: "Invalid period format. Use formats like 1d, 7d, 1h, or 'permanent'."
+      success_title: "Member Banned"
+      field_user: "User"
+      field_banned_by: "Banned by"
+      field_duration: "Duration"
+      field_reason: "Reason"
+      permanent: "Permanent"
 
   clear:
     color: '#0099ff'
@@ -72,7 +102,44 @@ commands:
     emojis:
       heads: '🌕'
       tails: '🌑'
-      
+
+  divorce:
+    color: '#808080'
+    messages:
+      self_divorce: "You can't divorce yourself! 💔"
+      title: "💔 Divorce"
+      responses:
+        - "💔 **{initiator}** has filed for divorce from **{target}**. It's over!"
+        - "😢 **{initiator}** and **{target}** are no longer together."
+        - "📄 **{initiator}** handed divorce papers to **{target}**."
+        - "💔 After a long talk, **{initiator}** and **{target}** decided to part ways."
+        - "😭 **{initiator}** left **{target}**. Sometimes love just isn't enough."
+        - "🧾 **{initiator}** and **{target}** signed the divorce papers."
+        - "💔 **{initiator}** broke the bond with **{target}**. Single life, here we come!"
+        - "😔 **{initiator}** and **{target}** are officially divorced."
+        - "📉 The relationship between **{initiator}** and **{target}** has ended."
+        - "💔 **{initiator}** couldn't take it anymore and divorced **{target}**."
+        - "🕊️ **{initiator}** and **{target}** have gone their separate ways."
+        - "😢 **{initiator}** whispered goodbye to **{target}**."
+        - "📬 **{initiator}** sent **{target}** a breakup letter."
+        - "💔 **{initiator}** and **{target}**: It was good while it lasted."
+        - "🗑️ **{initiator}** threw away the wedding ring from **{target}**."
+        - "😶‍🌫️ **{initiator}** and **{target}** are now strangers again."
+        - "💔 **{initiator}** and **{target}**: The end of an era."
+        - "📦 **{initiator}** packed up and left **{target}**."
+        - "🧹 **{initiator}** swept away the memories with **{target}**."
+        - "💔 **{initiator}** and **{target}**: No more 'us', just 'me'."
+        - "🕳️ **{initiator}** fell out of love with **{target}**."
+        - "📉 The love between **{initiator}** and **{target}** hit rock bottom."
+        - "💔 **{initiator}** and **{target}**: Love lost, lessons learned."
+        - "🧊 **{initiator}** gave **{target}** the cold shoulder... forever."
+        - "🚪 **{initiator}** walked out on **{target}**."
+        - "💔 **{initiator}** and **{target}**: The story ends here."
+        - "🪦 The marriage of **{initiator}** and **{target}** is now history."
+        - "🧾 **{initiator}** and **{target}**: Signed, sealed, divorced."
+        - "💔 **{initiator}** and **{target}**: No more happy endings."
+        - "🧳 **{initiator}** packed their bags and left **{target}** behind."
+
   eightball:
     color: '#2C2F33' # O culoare întunecată, aproape neagră
     image_url: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdHl3ZDBzd2J0d21uZTMzeHNnNGZhdDl3ZmRicmxqbDRvcnJwMjF1OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iZZdwNpZwBX4mOAWM6/giphy.gif' # Link stabil pentru imagine
@@ -187,7 +254,48 @@ commands:
       no_results: "No results found."
       no_valid_images: "No suitable images found."
       error: "❌ Error fetching image!"
-  
+
+  gender:
+    title: "🌈 Gender & Sexuality Check!"
+    description: "{member} is **{percentage}% {identity}**!"
+    identities:
+      - label: "Gay 🏳️‍🌈"
+        color: "#ff69b4"
+      - label: "Straight 🏳️‍⚧️"
+        color: "#3498db"
+      - label: "Bisexual 💜💙💖"
+        color: "#8e44ad"
+      - label: "Pansexual 💛💗💙"
+        color: "#f1c40f"
+      - label: "Asexual 🖤🤍💜"
+        color: "#2c3e50"
+      - label: "Lesbian 🧡🤍💗"
+        color: "#e67e22"
+      - label: "Transgender 💙🤍💗"
+        color: "#5dade2"
+      - label: "Non-binary 💛🤍💜🖤"
+        color: "#f7ca18"
+      - label: "Queer 🌈"
+        color: "#16a085"
+    messages:
+      not_found: "Member not found."
+
+  giveaway:
+    color: '#00FF00'
+    messages:
+      calculating_title: "🔍 Calculating Activity..."
+      calculating_desc: "Please wait while I analyze server activity from the last **{days} days**. This might take a moment."
+      error: "❌ An error occurred while fetching activity data. Please ensure I have the correct permissions to read message history in relevant channels."
+      no_active: "Oops! No active members found in the last {days} days. 😔"
+      winner_title: "🎉 Giveaway Winner! 🎉"
+      winner_desc: "Congratulations, {winner}! You've won the **{prize}**! 🎁\n\nHere are the top active members who were in the running:"
+      prize_field: "🏆 Prize"
+      winner_field: "🎊 Winner"
+      top_field: "🌟 Top {count} Active Members"
+      top_field_empty: "No active members found."
+      footer: "Activity based on the last {days} days."
+      image: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWthODZwa2Y0MXEyajAxOXFubDJ4b3lnaWdsbDhza3B1cTJxcm9naSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif"
+
   guess:
     color: '#0099ff' # A nice blue for the game
     messages:
@@ -232,12 +340,17 @@ commands:
     messages:
       error: "❌ Error displaying help!"
 
+  hug:
+    color: '#ffb6c1'
+    messages:
+      self_hug: "You can't hug yourself! 🤗"
+      success_title: "🤗 Hug Time!"
+      success_desc: "**{sender}** gives a warm hug to **{receiver}**! How sweet!"
+
   info:
     color: '#5865F2'
     messages:
       error: "❌ An error occurred while executing this command!"
-    
-    # Toate textele pentru comanda /info
     content:
       creator:
         title: '👤 Creator Information'
@@ -259,11 +372,43 @@ commands:
         total_mem_label: '💾 Total System Memory'
         node_label: '📦 Node.js Version'
         djs_label: '🔧 Discord.js Version'
+        cpu_temp_label: 'CPU Temperature'
+        battery_label: 'Battery'
       uptime:
         title: '⏱️ Bot Uptime'
         description: "**The bot has been online for:**\n{uptimeString}"
-        # Formatarea pentru string-ul de uptime
         time_format: '`{days}` days, `{hours}` hours, `{minutes}` minutes, and `{seconds}` seconds'
+
+  joke:
+    color: '#ff1493'
+    messages:
+      api_error: "The joke API returned an error. Please try again later."
+      decode_error: "Could not decode the joke format. Please try again!"
+      fetch_error: "Oops! There was a problem fetching the joke from the API. Please try again later."
+      unexpected_error: "An unexpected error occurred while fetching the joke. Please contact an administrator."
+      title: "😂 Here's a Joke for You! 😂"
+
+  kick:
+    color: '#ff0000'
+    messages:
+      no_permission: "You do not have permission to use this command."
+      bot_no_permission: "I do not have permission to kick members."
+      user_not_found: "That user is not in this server."
+      cannot_kick_self: "You cannot kick yourself."
+      cannot_kick_bot: "I cannot kick myself."
+      cannot_kick_member: "I cannot kick this member. They may have a higher role than me or I lack permissions."
+      success_title: "Member Kicked"
+      field_user: "User"
+      field_kicked_by: "Kicked by"
+      field_reason: "Reason"
+      footer: "Guild: {guildName}"
+      error: "An error occurred while trying to kick the member: {error}"
+
+  leaderboard:
+    color: '#ffd700'
+    messages:
+      title: "👑 Top 10 Richest Members 👑"
+      no_members: "It looks like there are no members with money yet!"
 
   love:
     color: '#FF69B4'  # Pink
@@ -284,112 +429,6 @@ commands:
         30: "Some attraction! 💗"
         10: "Maybe just friends? 💔"
         0: "Time to look elsewhere! 💔"
-
-  meme:
-    color: '#FF4500'  # Reddit orange
-    messages:
-      cooldown: "⏳ Wait {remaining} seconds."
-      error: "❌ Failed to fetch meme!"
-
-  send:
-    color: '#0099ff'
-    messages:
-      no_permission: "❌ You need the 'Manage Messages' permission to use this command!"
-      success: "✅ Message successfully sent to {user}!"
-      error: "❌ Failed to send the message to {user}."
-      cannot_dm_user: "❌ Could not send a DM to {user}. They might have DMs closed, server privacy settings, or have blocked the bot."
-      dm_fail: "❌ Sending the DM to {user} failed for an unknown reason."
-      user_not_found: "❌ The specified user could not be found."
-      error_generic: "❌ An unexpected error occurred while processing the send command."
-
-  top:
-    color: '#0099ff'
-    messages:
-      calculating_title: "🔍 Calculating Activity..."
-      calculating_desc: "Please wait. I am analyzing activity from the last **{days} days**. This might take a moment."
-      error: "❌ Error fetching leaderboard!"
-      no_activity: "I couldn't find any recent activity in the last {days} days to create a leaderboard."
-      title_active: "🏆 Top {count} Active Members"
-      title_inactive: "🏆 Top {count} Inactive Members"
-      description_active: "Based on messages sent in the last **{days} days** on **{servername}**."
-      description_inactive: "Based on message activity in the last **{days} days** on **{servername}**."
-      leaderboard_field: "Leaderboard"
-      leaderboard_empty: "No activity found."
-      footer: "Requested by {user}"
-
-  tp:
-    color: '#9B59B6'
-    messages:
-      cooldown: "⏳ Teleporter recharging for {remaining} seconds!"
-      not_found: "❌ Member not found!"
-      self_tp: "❌ No teleporting to yourself!"
-      bot_tp: "❌ Cannot teleport to bots!"
-      error: "❌ Teleportation failed!"
-      teleport:
-        - "🌟 *WHOOSH!* A magical portal opens..."
-        - "⚡ *ZAP!* Lightning fast teleportation..."
-        - "🌈 *POOF!* Through the rainbow bridge..."
-        - "🎯 *ZOOM!* Direct transmission..."
-        - "✨ *SPARKLE!* Magical transportation..."
-
-  ttt:
-    color: '#0099ff'
-    messages:
-      bot_opponent: "❌ No bot opponents!"
-      self_challenge: "❌ No self-challenges!"
-      not_your_turn: "❌ It's {player}'s turn!"
-      timeout: "⏰ Game timed out!"
-      tie: "🤝 It's a tie!"
-      win: "🎉 {player} wins with {symbol}!"
-      error: "❌ Error starting game!"
-
-  timeout:
-    color: '#ffcc00'
-    messages:
-      no_permission: "❌ You need 'Moderate Members' permission to use this command!"
-      no_bot_permission: "❌ I need 'Moderate Members' permission to timeout members!"
-      invalid_format: "❌ Invalid duration format! Use s (seconds), m (minutes), h (hours), or d (days)."
-      invalid_unit: "❌ Invalid duration unit!"
-      not_moderatable: "❌ I cannot timeout this member!"
-      success_title: "✅ Member Timed Out"
-      success_desc: "{user} has been timed out for **{duration}**."
-      error: "❌ Failed to timeout the member."
-
-  pat:
-    color: '#add8e6'
-    messages:
-      self_pat: "You can't pat yourself! 🫶"
-      success_title: "🫶 Pat Time!"
-      success_desc: "**{sender}** gently pats **{receiver}**! That's adorable!"
-
-  hug:
-    color: '#ffb6c1'
-    messages:
-      self_hug: "You can't hug yourself! 🤗"
-      success_title: "🤗 Hug Time!"
-      success_desc: "**{sender}** gives a warm hug to **{receiver}**! How sweet!"
-
-  joke:
-    color: '#ff1493'
-    messages:
-      api_error: "The joke API returned an error. Please try again later."
-      decode_error: "Could not decode the joke format. Please try again!"
-      fetch_error: "Oops! There was a problem fetching the joke from the API. Please try again later."
-      unexpected_error: "An unexpected error occurred while fetching the joke. Please contact an administrator."
-      title: "😂 Here's a Joke for You! 😂"
-
-  ship:
-    color: '#ff69b4'
-    messages:
-      self_ship: "You can't ship yourself with yourself! 💔"
-      title: "🚢 Shipping Result!"
-      description: "{emoji} **{user1}** + **{user2}** = **{shipName}**\nCompatibility: **{percentage}%**"
-
-  rate:
-    color: '#0099ff'
-    messages:
-      title: "⭐ Rate Result"
-      description: "I rate **{thing}** a **{rating}/10**"
 
   marry:
     color: '#ffb347'
@@ -423,46 +462,139 @@ commands:
         - "🎇 **{proposer}** and **{target}**: Let the wedding bells ring!"
         - "💍 **{proposer}** and **{target}**: Happily ever after starts now!"
 
-  divorce:
-    color: '#808080'
+  meme:
+    color: '#FF4500'  # Reddit orange
     messages:
-      self_divorce: "You can't divorce yourself! 💔"
-      title: "💔 Divorce"
-      responses:
-        - "💔 **{initiator}** has filed for divorce from **{target}**. It's over!"
-        - "😢 **{initiator}** and **{target}** are no longer together."
-        - "📄 **{initiator}** handed divorce papers to **{target}**."
-        - "💔 After a long talk, **{initiator}** and **{target}** decided to part ways."
-        - "😭 **{initiator}** left **{target}**. Sometimes love just isn't enough."
-        - "🧾 **{initiator}** and **{target}** signed the divorce papers."
-        - "💔 **{initiator}** broke the bond with **{target}**. Single life, here we come!"
-        - "😔 **{initiator}** and **{target}** are officially divorced."
-        - "📉 The relationship between **{initiator}** and **{target}** has ended."
-        - "💔 **{initiator}** couldn't take it anymore and divorced **{target}**."
-        - "🕊️ **{initiator}** and **{target}** have gone their separate ways."
-        - "😢 **{initiator}** whispered goodbye to **{target}**."
-        - "📬 **{initiator}** sent **{target}** a breakup letter."
-        - "💔 **{initiator}** and **{target}**: It was good while it lasted."
-        - "🗑️ **{initiator}** threw away the wedding ring from **{target}**."
-        - "😶‍🌫️ **{initiator}** and **{target}** are now strangers again."
-        - "💔 **{initiator}** and **{target}**: The end of an era."
-        - "📦 **{initiator}** packed up and left **{target}**."
-        - "🧹 **{initiator}** swept away the memories with **{target}**."
-        - "💔 **{initiator}** and **{target}**: No more 'us', just 'me'."
-        - "🕳️ **{initiator}** fell out of love with **{target}**."
-        - "📉 The love between **{initiator}** and **{target}** hit rock bottom."
-        - "💔 **{initiator}** and **{target}**: Love lost, lessons learned."
-        - "🧊 **{initiator}** gave **{target}** the cold shoulder... forever."
-        - "🚪 **{initiator}** walked out on **{target}**."
-        - "💔 **{initiator}** and **{target}**: The story ends here."
-        - "🪦 The marriage of **{initiator}** and **{target}** is now history."
-        - "🧾 **{initiator}** and **{target}**: Signed, sealed, divorced."
-        - "💔 **{initiator}** and **{target}**: No more happy endings."
-        - "🧳 **{initiator}** packed their bags and left **{target}** behind."
+      cooldown: "⏳ Wait {remaining} seconds."
+      error: "❌ Failed to fetch meme!"
+
+  pat:
+    color: '#add8e6'
+    messages:
+      self_pat: "You can't pat yourself! 🫶"
+      success_title: "🫶 Pat Time!"
+      success_desc: "**{sender}** gently pats **{receiver}**! That's adorable!"
+
+  pay:
+    color_error: '#e74c3c'
+    color_hacked: '#8e44ad'
+    color_success: '#2ecc71'
+    messages:
+      self_payment_title: "❌ Transaction Error: Self-Payment"
+      self_payment_desc: "You cannot send money to yourself. Please choose another member."
+      invalid_amount_title: "❌ Transaction Error: Invalid Amount"
+      invalid_amount_desc: "The amount must be a positive number greater than 0."
+      insufficient_funds_title: "🏦 Transaction Error: Insufficient Funds"
+      insufficient_funds_desc: "You currently have **💵 ${balance}**, which is not enough to send **💵 ${amount}**."
+      hacked_title: "💀 Transaction Hacked! 💀"
+      hacked_desc: "Oh no! Your transaction was intercepted by a rogue hacker!"
+      hacked_field_sender: "Sender"
+      hacked_field_amount_lost: "Amount Lost"
+      hacked_field_recipient: "Recipient"
+      hacked_field_new_balance: "Your New Balance"
+      success_title: "✅ Transaction Successful! ✅"
+      success_desc: "You have successfully transferred **💵 ${amount}** to {receiver}!"
+      success_field_sender: "Sender"
+      success_field_recipient: "Recipient"
+
+  rate:
+    color: '#0099ff'
+    messages:
+      title: "⭐ Rate Result"
+      description: "I rate **{thing}** a **{rating}/10**"
+
+  react:
+    color_success: '#00b300'
+    color_error: '#ff0000'
+    messages:
+      channel_not_found: "Channel not found or not a text channel."
+      title: "Reaction Results"
+      field_success: "Reactions Added"
+      field_failed: "Failed"
+      field_failures: "Failures"
+
+  send:
+    color: '#0099ff'
+    messages:
+      no_permission: "❌ You need the 'Manage Messages' permission to use this command!"
+      success: "✅ Message successfully sent to {user}."
+      success_all: "Successfully sent a DM to {count} users."
+      error: "❌ Could not process the send command for {user}."
+      error_generic: "❌ An unexpected error occurred."
+      cannot_dm_user: "❌ Could not send a DM to {user}. They may have DMs disabled, server privacy settings, or the bot is blocked."
+      dm_fail: "❌ Failed to send the DM to {user} due to an unknown issue."
+      user_not_found: "❌ The specified user could not be found."
+
+  serverinfo:
+    color: '#5865F2'
+    messages:
+      title: "🌐 {servername}"
+      description: "**Server Information**"
+      fields:
+        server_id: "🆔 Server ID"
+        owner: "👑 Owner"
+        created: "📆 Created"
+        members: "👥 Members"
+        text_channels: "💬 Text Channels"
+        voice_channels: "🔊 Voice Channels"
+        roles: "🎭 Roles"
+        boost_level: "🚀 Boost Level"
+        boosts: "✨ Boosts"
+        invites: "Open Invites"
+      footer: "Requested by {user}"
+
+  ship:
+    color: '#ff69b4'
+    messages:
+      self_ship: "You can't ship yourself with yourself! 💔"
+      title: "🚢 Shipping Result!"
+      description: "{emoji} **{user1}** + **{user2}** = **{shipName}**\nCompatibility: **{percentage}%**"
+
+  timeout:
+    color: '#ffcc00'
+    messages:
+      no_permission: "❌ You need 'Moderate Members' permission to use this command!"
+      no_bot_permission: "❌ I need 'Moderate Members' permission to timeout members!"
+      invalid_format: "❌ Invalid duration format! Use s (seconds), m (minutes), h (hours), or d (days)."
+      max_duration_exceeded: "❌ Duration cannot exceed 28 days."
+      not_moderatable: "❌ I cannot timeout this member!"
+      cannot_timeout_self: "❌ You cannot time out yourself."
+      cannot_timeout_bot: "❌ I cannot time myself out."
+      success_title: "✅ Member Timed Out"
+      success_desc: "{user} has been timed out for **{duration}**."
+      error: "❌ Failed to timeout the member."
+
+  top:
+    color: '#0099ff'
+    messages:
+      calculating_title: "🔍 Calculating Activity..."
+      calculating_desc: "Please wait. I am analyzing activity from the last **{days} days**. This might take a moment."
+      error: "❌ Error fetching leaderboard!"
+      no_activity: "I couldn't find any recent activity in the last {days} days to create a leaderboard."
+      title: "🏆 Top {count} {type} Members"
+      description: "Based on message activity in the last **{days} days** on **{servername}**."
+      leaderboard_field: "Leaderboard"
+      leaderboard_empty: "No activity found."
+      footer: "Requested by {user}"
+
+  tp:
+    color: '#9B59B6'
+    messages:
+      cooldown: "⏳ Teleporter recharging for {remaining} seconds!"
+      not_found: "❌ Member not found!"
+      self_tp: "❌ No teleporting to yourself!"
+      bot_tp: "❌ Cannot teleport to bots!"
+      error: "❌ Teleportation failed!"
+      teleport:
+        - "🌟 *WHOOSH!* A shimmering portal slices through reality..."
+        - "⚡ *ZAP!* You're dematerialized and rematerialized in a flash of light!"
+        - "🌀 *VWOORP!* The very fabric of space-time bends around you..."
+        - "🌌 *STRETCH!* You're pulled through a cosmic string to your destination!"
+        - "✨ *TWINKLE!* With a sprinkle of quantum dust, you've arrived!"
 
   truthordare:
-    color_truth: '#3498db'      # Albastru pentru Truth
-    color_dare: '#e67e22'       # Portocaliu pentru Dare
+    color_truth: '#3498db'
+    color_dare: '#e67e22'
     messages:
       truth_title: "Truth 🧐"
       dare_title: "Dare 🎲"
@@ -509,7 +641,6 @@ commands:
       - "If you could be any animal, what would you be and why?"
       - "What’s the most embarrassing thing you’ve posted online?"
       - "What’s your weirdest habit?"
-      - "What’s the most childish thing you still do?"
       - "Have you ever stalked someone on social media?"
       - "What’s the worst date you’ve ever been on?"
       - "What’s your biggest pet peeve?"
@@ -518,7 +649,6 @@ commands:
       - "What’s the most embarrassing nickname you’ve ever had?"
       - "What’s the weirdest thing you’ve done in public?"
       - "If you could only eat one food for the rest of your life, what would it be?"
-
     dares:
       - "Send a funny emoji in the chat."
       - "Say the alphabet backwards."
@@ -570,47 +700,16 @@ commands:
       - "Say something in a made-up language."
       - "Let someone else choose your next profile picture."
 
-  gender:
-    title: "🌈 Gender & Sexuality Check!"
-    description: "{member} is **{percentage}% {identity}**!"
-    identities:
-      - label: "Gay 🏳️‍🌈"
-        color: "#ff69b4"
-      - label: "Straight 🏳️‍⚧️"
-        color: "#3498db"
-      - label: "Bisexual 💜💙💖"
-        color: "#8e44ad"
-      - label: "Pansexual 💛💗💙"
-        color: "#f1c40f"
-      - label: "Asexual 🖤🤍💜"
-        color: "#2c3e50"
-      - label: "Lesbian 🧡🤍💗"
-        color: "#e67e22"
-      - label: "Transgender 💙🤍💗"
-        color: "#5dade2"
-      - label: "Non-binary 💛🤍💜🖤"
-        color: "#f7ca18"
-      - label: "Queer 🌈"
-        color: "#16a085"
+  ttt:
+    color: '#0099ff'
     messages:
-      not_found: "Member not found."
-
-  serverinfo:
-    color: '#5865F2'
-    messages:
-      title: "🌐 {servername}"
-      description: "**Server Information**"
-      fields:
-        server_id: "🆔 Server ID"
-        owner: "👑 Owner"
-        created: "📆 Created"
-        members: "👥 Members"
-        text_channels: "💬 Text Channels"
-        voice_channels: "🔊 Voice Channels"
-        roles: "🎭 Roles"
-        boost_level: "🚀 Boost Level"
-        boosts: "✨ Boosts"
-      footer: "Requested by {user}"
+      bot_opponent: "❌ No bot opponents!"
+      self_challenge: "❌ No self-challenges!"
+      not_your_turn: "❌ It's {player}'s turn!"
+      timeout: "⏰ Game timed out!"
+      tie: "🤝 It's a tie!"
+      win: "🎉 {player} wins with {symbol}!"
+      error: "❌ Error starting game!"
 
   userinfo:
     color: '#3498db'
@@ -625,34 +724,43 @@ commands:
         account_created: "📆 Account Created"
         joined_server: "📅 Joined Server"
         roles: "🎨 Roles"
+        security: "🔒 Security"
+        invited_by: "Invited by"
       yes: "Yes"
       no: "No"
       none: "None"
       footer: "Requested by {user}"
 
-  giveaway:
-    color: '#00FF00'
+  work:
+    color_success: '#2ecc71'
+    color_neutral: '#f1c40f'
+    color_loss: '#e74c3c'
     messages:
-      calculating_title: "🔍 Calculating Activity..."
-      calculating_desc: "Please wait while I analyze server activity from the last **{days} days**. This might take a moment."
-      error: "❌ An error occurred while fetching activity data. Please ensure I have the correct permissions to read message history in relevant channels."
-      no_active: "Oops! No active members found in the last {days} days. 😔"
-      winner_title: "🎉 Giveaway Winner! 🎉"
-      winner_desc: "Congratulations, {winner}! You've won the **{prize}**! 🎁\n\nHere are the top active members who were in the running:"
-      prize_field: "🏆 Prize"
-      winner_field: "🎊 Winner"
-      top_field: "🌟 Top {count} Active Members"
-      top_field_empty: "No active members found."
-      footer: "Activity based on the last {days} days."
-      image: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWthODZwa2Y0MXEyajAxOXFubDJ4b3lnaWdsbDhza3B1cTJxcm9naSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif"
+      title: "⛏️ Mining Session Report"
+      success_desc: "Congratulations on your find!"
+      neutral_desc: "You searched but found nothing of value this time."
+      loss_desc: "Oh no! Your mining trip resulted in a loss."
+      field_ore: "Ore Found"
+      field_value: "Value"
+      field_result: "Result"
+      field_incident: "Incident"
+      incident_text: "Mining accident"
 
 # Event-specific configurations
 events:
+  ai:
+    messages:
+      unsure: "I... I'm not sure what to say, hooman. Can you ask again?"
+      error_generic: "Oh no, my brain-fluff isn't working! I had a problem thinking of a response."
+      error_connection: " Is the Ollama server running, hooman?"
+      error_api: " The thinking-machine gave me an error."
+
   interactionCreate:
     messages:
       command_not_found: "⚠️ Command {command} not found."
       execution_error: "❌ Error executing command!"
       handler_error: "❌ Error processing interaction!"
+
   messageCreate:
     guild_id: '1217588804328620163'
     greetings:
@@ -775,7 +883,6 @@ events:
         - "*wags tail* Welcome to the server, {user}! 🎉"
         - "*howls with excitement* Let's have a great day, {user}! 🌞"
         - "*smiles with a wag* Happy to see you, {user}! 🐺"
-        # New responses added
         - "* bounds forward* Yo, {user}, you’re in the pack now! 🐺"
         - "*tilts head* Hey {user}, ready to howl with us? 🌟"
         - "*chases tail* Hiya, {user}! Let’s make some noise! 🐾"
@@ -793,6 +900,7 @@ events:
         - "*spins in excitement* Hey {user}, let’s run under the stars! 🌠"
       messages:
         error: "❌ Error sending greeting!"
+
   ready:
     messages:
       login_success: "✅ Logged in as {tag}"
