@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const ms = require('ms'); // Make sure to install 'ms' package for period parsing
+const ms = require('ms');
 
 module.exports = {
     category: 'Admin',
@@ -19,45 +19,51 @@ module.exports = {
                 .setDescription('Reason for the ban')
                 .setRequired(false)),
     async execute(interaction) {
+        const config = interaction.client.config.commands.ban || {};
         const member = interaction.options.getMember('member');
         const period = interaction.options.getString('period');
-        const reason = interaction.options.getString('reason') || 'No reason provided';
+        const reason = interaction.options.getString('reason') || (config.messages?.no_reason || 'No reason provided');
 
         if (!member || !member.bannable) {
-            return interaction.reply({ content: 'I cannot ban this member.', ephemeral: true });
+            return interaction.reply({ content: config.messages?.cannot_ban || 'I cannot ban this member.', ephemeral: true });
         }
 
         let deleteDays = 0;
-        let unbanTimeout = null;
         let periodText = period;
 
         if (period.toLowerCase() !== 'permanent') {
-            const msPeriod = ms(period);
-            if (!msPeriod || msPeriod < 1000) {
-                return interaction.reply({ content: 'Invalid period format. Use formats like 1d, 7d, 1h, or "permanent".', ephemeral: true });
-            }
-            periodText = ms(msPeriod, { long: true });
-
-            // Schedule unban
-            unbanTimeout = setTimeout(async () => {
-                try {
-                    await interaction.guild.members.unban(member.id, 'Temporary ban expired');
-                } catch (e) {
-                    // Ignore if already unbanned or error
+            try {
+                const msPeriod = ms(period);
+                if (!msPeriod || msPeriod < 1000) {
+                    return interaction.reply({ content: config.messages?.invalid_period || 'Invalid period format.', ephemeral: true });
                 }
-            }, msPeriod);
+                periodText = ms(msPeriod, { long: true });
+
+                // Schedule unban
+                setTimeout(async () => {
+                    try {
+                        await interaction.guild.members.unban(member.id, 'Temporary ban expired');
+                    } catch (e) {
+                        // Ignore if already unbanned or error
+                    }
+                }, msPeriod);
+            } catch (e) {
+                return interaction.reply({ content: config.messages?.invalid_period || 'Invalid period format.', ephemeral: true });
+            }
+        } else {
+            periodText = config.messages?.permanent || 'Permanent';
         }
 
         await member.ban({ reason, deleteMessageDays: deleteDays });
 
         const embed = new EmbedBuilder()
-            .setTitle('Member Banned')
-            .setColor(0x8b0000)
+            .setTitle(config.messages?.success_title || 'Member Banned')
+            .setColor(config.color || 0x8b0000)
             .addFields(
-                { name: 'User', value: `${member.user.tag} (${member.id})`, inline: true },
-                { name: 'Banned by', value: `${interaction.user.tag}`, inline: true },
-                { name: 'Duration', value: periodText, inline: true },
-                { name: 'Reason', value: reason, inline: false }
+                { name: config.messages?.field_user || 'User', value: `${member.user.tag} (${member.id})`, inline: true },
+                { name: config.messages?.field_banned_by || 'Banned by', value: `${interaction.user.tag}`, inline: true },
+                { name: config.messages?.field_duration || 'Duration', value: periodText, inline: true },
+                { name: config.messages?.field_reason || 'Reason', value: reason, inline: false }
             )
             .setTimestamp();
 

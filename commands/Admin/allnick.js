@@ -6,14 +6,14 @@ module.exports = {
         .setName('allnick')
         .setDescription('Change or reset the nickname of all server members (including bots and admins, if possible)')
         .addStringOption(option =>
-            option.setName('nicknamne')
+            option.setName('nickname') // Am corectat 'nicknamne' in 'nickname'
                 .setDescription('The nickname to set for all members (leave empty to reset)')
                 .setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames),
 
     async execute(interaction) {
         const config = interaction.client.config.commands.allnick || {};
-        const newNick = interaction.options.getString('nicknamne');
+        const newNick = interaction.options.getString('nickname');
         const guild = interaction.guild;
 
         // Verifică permisiuni
@@ -21,15 +21,15 @@ module.exports = {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()
-                        .setColor(config.color || '#ff0000')
+                        .setColor(config.colors?.error || '#ff0000')
                         .setTitle('⛔ No Permission')
-                        .setDescription('You need the "Manage Nicknames" permission to use this command.')
+                        .setDescription(config.messages?.no_permission || 'You need the "Manage Nicknames" permission to use this command.')
                 ],
-                flags: 64
+                ephemeral: true // Am schimbat `flags: 64` in `ephemeral: true` pentru claritate
             });
         }
 
-        await interaction.deferReply({ flags: 64 });
+        await interaction.deferReply({ ephemeral: true });
 
         const members = await guild.members.fetch();
         let changed = 0, failed = 0, skipped = 0;
@@ -53,13 +53,17 @@ module.exports = {
             }
         }
 
+        const successMessage = newNick
+            ? (config.messages?.success || 'Changed nickname for **{changed}** members to: `{newNick}`.').replace('{changed}', changed).replace('{newNick}', newNick)
+            : (config.messages?.reset_success || 'Reset nickname for **{changed}** members.').replace('{changed}', changed);
+
         const embed = new EmbedBuilder()
             .setColor(config.color || '#00ff00')
-            .setTitle(newNick ? 'Nicknames Changed' : 'Nicknames Reset')
+            .setTitle(newNick ? (config.messages?.title_changed || 'Nicknames Changed') : (config.messages?.title_reset || 'Nicknames Reset'))
             .setDescription(
-                `${newNick ? `Changed nickname for **${changed}** members to: \`${newNick}\`.` : `Reset nickname for **${changed}** members.`}\n`
-                + (failed ? `❌ Failed for ${failed} members.\n` : '')
-                + (skipped ? `⚠️ Skipped ${skipped} members (owner or higher/equal role than bot).` : '')
+                `${successMessage}\n`
+                + (failed > 0 ? `❌ ${(config.messages?.failed || 'Failed for {failed} members.').replace('{failed}', failed)}\n` : '')
+                + (skipped > 0 ? `⚠️ ${(config.messages?.skipped || 'Skipped {skipped} members (owner or higher/equal role).').replace('{skipped}', skipped)}` : '')
             );
 
         await interaction.editReply({ embeds: [embed] });
