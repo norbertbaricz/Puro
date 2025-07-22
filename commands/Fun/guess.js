@@ -19,9 +19,8 @@ module.exports = {
                 .setRequired(true)),
 
     async execute(interaction) {
-        // Access config from the client object, assuming it's attached in your main bot file
         const config = interaction.client.config;
-        const guessConfig = config.commands.guess; // Shorthand for guess command config
+        const guessConfig = config.commands.guess;
 
         const min = interaction.options.getInteger('min');
         const max = interaction.options.getInteger('max');
@@ -57,10 +56,12 @@ module.exports = {
             .setFooter({ text: guessConfig.messages.footer.replace('{userTag}', player.tag) })
             .setTimestamp();
 
-        await interaction.reply({ embeds: [gameEmbed] });
+        // MODIFICARE AICI: Am adăugat fetchReply: true și am stocat răspunsul
+        const gameMessage = await interaction.reply({ embeds: [gameEmbed], fetchReply: true });
 
         const filter = m => m.author.id === player.id;
-        const collector = interaction.channel.createMessageCollector({ filter, time: 120000 }); // 2-minute timer
+        // MODIFICARE AICI: Am folosit canalul din mesajul obținut
+        const collector = gameMessage.channel.createMessageCollector({ filter, time: 120000 });
 
         collector.on('collect', m => {
             const guess = parseInt(m.content);
@@ -77,7 +78,7 @@ module.exports = {
 
             if (guess === secretNumber) {
                 const winEmbed = new EmbedBuilder()
-                    .setColor(config.colors.success) // Use global success color
+                    .setColor(config.colors.success)
                     .setTitle(guessConfig.messages.win_title)
                     .setDescription(guessConfig.messages.win_description.replace('{secretNumber}', secretNumber));
                 
@@ -92,7 +93,7 @@ module.exports = {
 
             if (chances <= 0) {
                 const loseEmbed = new EmbedBuilder()
-                    .setColor(config.colors.error) // Use global error color
+                    .setColor(config.colors.error)
                     .setTitle(guessConfig.messages.lose_title)
                     .setDescription(guessConfig.messages.lose_description.replace('{secretNumber}', secretNumber));
 
