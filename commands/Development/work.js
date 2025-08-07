@@ -72,7 +72,7 @@ function getOreEmoji(oreName) {
 }
 
 module.exports = {
-    category: 'Economy', // Changed category to be more specific
+    category: 'Development', // Changed category to be more specific
     data: new SlashCommandBuilder()
         .setName('work')
         .setDescription('Go mining for valuable ores and gems!'),

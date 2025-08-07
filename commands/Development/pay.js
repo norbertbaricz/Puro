@@ -49,7 +49,7 @@ function ensureUser(db, userId) {
 
 
 module.exports = {
-    category: 'Economy',
+    category: 'Development',
     data: new SlashCommandBuilder()
         .setName('pay')
         .setDescription('Send money to another member (with taxes and risks!).')

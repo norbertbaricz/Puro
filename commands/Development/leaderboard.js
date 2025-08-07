@@ -37,7 +37,7 @@ function readDB() {
 }
 
 module.exports = {
-    category: 'Economy',
+    category: 'Development',
     data: new SlashCommandBuilder()
         .setName('leaderboard')
         .setDescription('Displays the global top 10 richest members!'), // <-- Aici am făcut modificarea
