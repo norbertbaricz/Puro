@@ -37,7 +37,7 @@ function readDB() {
 }
 
 module.exports = {
-    category: 'Economy',
+    category: 'Development',
     data: new SlashCommandBuilder()
         .setName('balance')
         .setDescription("Check your or another member's wallet balance!")

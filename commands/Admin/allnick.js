@@ -16,14 +16,14 @@ module.exports = {
         const newNick = interaction.options.getString('nickname');
         const guild = interaction.guild;
 
-        // MODIFICARE AICI: Am corectat verificarea permisiunilor
+        // Verificare suplimentară a permisiunilor (bună practică)
         if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageNicknames)) {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()
                         .setColor(config.color || '#ff0000')
                         .setTitle('⛔ No Permission')
-                        .setDescription(config.messages?.no_permission || 'You need "Manage Nicknames" permission.')
+                        .setDescription(config.messages?.no_permission || 'You need "Manage Nicknames" permission to use this command.')
                 ],
                 ephemeral: true
             });
@@ -35,27 +35,40 @@ module.exports = {
         let changed = 0, failed = 0, skipped = 0;
 
         for (const member of members.values()) {
-            if (member.id === guild.ownerId || !member.manageable) {
+            // MODIFICARE AICI:
+            // Botul nu poate schimba NICIODATĂ porecla deținătorului serverului. Acesta este singurul caz pe care îl sărim.
+            if (member.id === guild.ownerId) {
                 skipped++;
                 continue;
             }
+
+            // Pentru toți ceilalți membri (inclusiv admini și boți), vom ÎNCERCA să schimbăm porecla.
+            // Dacă botul nu are permisiunea (ex: rolul unui admin e mai mare), operațiunea va eșua și va fi prinsă în `catch`.
             try {
-                await member.setNickname(newNick || null, `Changed by /allnick command`);
+                await member.setNickname(newNick || null, `Action by /allnick used by ${interaction.user.tag}`);
                 changed++;
-            } catch {
+            } catch (err) {
+                // Eșecul este înregistrat fără a opri comanda.
                 failed++;
             }
         }
 
         const embed = new EmbedBuilder()
             .setColor(config.color || '#00ff00')
-            .setTitle(newNick ? (config.messages?.title_changed || 'Nicknames Changed') : (config.messages?.title_reset || 'Nicknames Reset'))
+            .setTitle(newNick ? (config.messages?.title_changed || '✅ Nicknames Changed') : (config.messages?.title_reset || '✅ Nicknames Reset'))
             .setDescription(
-                (newNick ? (config.messages?.success || 'Changed nickname for **{changed}** members to: `{newNick}`.').replace('{changed}', changed).replace('{newNick}', newNick) 
-                         : (config.messages?.reset_success || 'Reset nickname for **{changed}** members.').replace('{changed}', changed)) + '\n'
-                + (failed > 0 ? `❌ ${(config.messages?.failed || 'Failed for {failed} members.').replace('{failed}', failed)}\n` : '')
-                + (skipped > 0 ? `⚠️ ${(config.messages?.skipped || 'Skipped {skipped} members.').replace('{skipped}', skipped)}` : '')
-            );
+                (newNick ?
+                    (config.messages?.success || 'Changed nickname for **{changed}** members to: `{newNick}`.').replace('{changed}', changed).replace('{newNick}', newNick) :
+                    (config.messages?.reset_success || 'Reset nickname for **{changed}** members.').replace('{changed}', changed)
+                )
+            )
+            .addFields(
+                { name: 'Succeeded', value: `**${changed}**`, inline: true },
+                { name: 'Failed', value: `**${failed}**`, inline: true },
+                { name: 'Skipped (Owner)', value: `**${skipped}**`, inline: true }
+            )
+            .setFooter({ text: `Requested by ${interaction.user.tag}`})
+            .setTimestamp();
 
         await interaction.editReply({ embeds: [embed] });
     },
