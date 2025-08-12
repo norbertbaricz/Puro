@@ -1,27 +1,9 @@
-const { Events } = require('discord.js');
+const { Events, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 
-const CHANNEL_ID = '1385157083959398522';
-const MODEL = 'gemma3:4b';
+const CHANNEL_ID = '1229630651536375899';
+const MODEL = 'gemma3:4b'; // You can change the model if you wish
 const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
-
-function splitMessage(text, { maxLength = 2000 } = {}) {
-    if (text.length <= maxLength) return [text];
-    const chunks = [];
-    let currentChunk = "";
-    const sentences = text.match(/[^.!?]+[.!?]+|\S+/g) || [];
-
-    for (const sentence of sentences) {
-        if (currentChunk.length + sentence.length + 1 <= maxLength) {
-            currentChunk += sentence + " ";
-        } else {
-            chunks.push(currentChunk.trim());
-            currentChunk = sentence + " ";
-        }
-    }
-    if (currentChunk) chunks.push(currentChunk.trim());
-    return chunks;
-}
 
 module.exports = {
     name: Events.MessageCreate,
@@ -30,54 +12,57 @@ module.exports = {
             return;
         }
 
-        let typingInterval;
         try {
-            await message.channel.sendTyping();
-            typingInterval = setInterval(() => {
-                message.channel.sendTyping().catch(console.error);
-            }, 8000); // Send typing status every 8 seconds
+            // Linia pentru "typing..." a fost eliminată de aici
 
-            const prompt = `You are Puro, a friendly black latex wolf from the game "Changed". Your personality is innocent, curious, and sometimes a bit naive. You are very friendly and kind. You often refer to humans as "hooman". Avoid complex sentences. User: ${message.content}\nPuro:`;
+            // This is the specialized prompt for moderation, now targeting English.
+            // We give the AI clear instructions to reply only with "true" or "false".
+            const prompt = `You are a strict content moderation expert. Your task is to analyze the following text written in English and determine if it contains any profanity, insults, hate speech, or toxicity.
+You must respond with only one single word: 'true' if the text contains such content, or 'false' if it does not. Do not add any explanation, punctuation, or any other words.
+
+Text to analyze: "${message.content}"
+
+Answer (only 'true' or 'false'):`;
 
             const response = await axios.post(OLLAMA_API_URL, {
                 model: MODEL,
                 prompt: prompt,
-                stream: false,
+                stream: false, // We don't need a stream for a short response
             }, {
                 headers: { 'Content-Type': 'application/json' },
-                timeout: 30000 // 30 second timeout
+                timeout: 30000 // 30-second timeout
             });
 
-            const puroResponse = response.data?.response?.trim();
+            // Process the response from the AI
+            const aiResponse = response.data?.response?.trim().toLowerCase();
 
-            if (!puroResponse) {
-                await message.reply("I... I'm not sure what to say, hooman. Can you ask again?");
-                return;
+            const embed = new EmbedBuilder();
+            if (aiResponse === 'true') {
+                embed.setTitle('Moderation Result: True')
+                     .setDescription('The AI has detected content that may violate moderation guidelines.')
+                     .setColor('Red'); // Red for true/violation
+            } else {
+                embed.setTitle('Moderation Result: False')
+                     .setDescription('The AI has not detected any content violating moderation guidelines.')
+                     .setColor('Green'); // Green for false/no violation
             }
-
-            const messages = splitMessage(puroResponse, { maxLength: 2000 });
-            for (const chunk of messages) {
-                await message.reply(chunk);
-            }
+            await message.reply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Error communicating with Ollama:', error.message);
-            let replyMessage = 'Oh no, my brain-fluff isn\'t working! I had a problem thinking of a response.';
+            let replyMessage = 'Oh no! My moderation AI is not working correctly.';
             if (error.code === 'ECONNREFUSED') {
-                replyMessage += ' Is the Ollama server running, hooman?';
+                replyMessage += ' Is the Ollama server running?';
             } else if (error.response) {
                 console.error('Ollama API Response Error:', error.response.data);
-                replyMessage += ' The thinking-machine gave me an error.';
+                replyMessage += ' I received an error from the API.';
             }
             
             try {
+                // Send an error message to Discord if something went wrong
                 await message.reply(replyMessage);
             } catch (replyError) {
                 console.error("Failed to send error reply:", replyError);
-            }
-        } finally {
-            if (typingInterval) {
-                clearInterval(typingInterval);
             }
         }
     },
