@@ -25,11 +25,11 @@ module.exports = {
                         .setTitle('⛔ No Permission')
                         .setDescription(config.messages?.no_permission || 'You need "Manage Nicknames" permission to use this command.')
                 ],
-                ephemeral: true
+                flags: 64
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         const members = await guild.members.fetch();
         let changed = 0, failed = 0, skipped = 0;
