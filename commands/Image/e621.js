@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const axios = require('axios');
 
 module.exports = {
@@ -26,15 +26,19 @@ module.exports = {
         const config = interaction.client.config.commands.e621;
         try {
             if (!interaction.channel) {
-                return interaction.reply({ content: "❌ This command can only be used in a server channel.", ephemeral: true });
+                return interaction.reply({ content: "❌ This command can only be used in a server channel.", flags: MessageFlags.Ephemeral });
             }
             const ratingOpt = interaction.options.getString('rating');
             const isPrivate = interaction.options.getBoolean('private') || false;
             if ((ratingOpt === 'e') && !interaction.channel.nsfw) {
-                return interaction.reply({ content: config.messages.nsfw_required, ephemeral: true });
+                return interaction.reply({ content: config.messages.nsfw_required, flags: MessageFlags.Ephemeral });
             }
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            if (isPrivate) {
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+            } else {
+                await interaction.deferReply();
+            }
 
             const rawQuery = interaction.options.getString('search') || '';
             const searchTags = rawQuery
@@ -95,7 +99,7 @@ module.exports = {
                 const collector = msg.createMessageComponentCollector({ time: 30000 });
                 collector.on('collect', async i => {
                     if (i.user.id !== interaction.user.id) {
-                        await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                        await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                         return;
                     }
                     if (i.customId === 'e621_close') {
@@ -126,7 +130,7 @@ module.exports = {
             console.error('e621 error:', error);
             const errorMessage = error.response?.status === 404 ? config.messages.no_results : config.messages.error;
             const already = interaction.deferred || interaction.replied;
-            const payload = { content: errorMessage, ephemeral: true };
+            const payload = { content: errorMessage, flags: MessageFlags.Ephemeral };
             already ? await interaction.editReply(payload) : await interaction.reply(payload);
         }
     },

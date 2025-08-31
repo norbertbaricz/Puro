@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 // --- Database Functions ---
 const dbPath = path.join(__dirname, '../../database.json');
@@ -55,7 +55,11 @@ module.exports = {
         const targetUser = interaction.options.getUser('member') || interaction.user;
         const conf = interaction.client.config.commands.balance || {};
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        if (isPrivate) {
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        } else {
+            await interaction.deferReply();
+        }
 
         const render = async () => {
             const db = readDB();
@@ -91,7 +95,7 @@ module.exports = {
             const collector = msg.createMessageComponentCollector({ time: 30000 });
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only you can control your view.', ephemeral: true });
+                    await i.reply({ content: 'Only you can control your view.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'bal_close') {
@@ -106,7 +110,7 @@ module.exports = {
                     return;
                 }
                 if (i.customId === 'bal_tips') {
-                    await i.reply({ content: 'Try /work to earn, /pay to transfer, and /leaderboard to see the richest!', ephemeral: true });
+                    await i.reply({ content: 'Try /work to earn, /pay to transfer, and /leaderboard to see the richest!', flags: MessageFlags.Ephemeral });
                     return;
                 }
             });

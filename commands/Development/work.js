@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 // --- Database Functions ---
 // It's good practice to keep these, but for larger bots, consider a more robust database like SQLite or a database service.
@@ -107,11 +107,15 @@ module.exports = {
         const remainingMs = last + cooldownSeconds * 1000 - now;
         if (remainingMs > 0) {
             const remaining = Math.ceil(remainingMs / 1000);
-            return interaction.reply({ content: `⏳ You are tired. Try again in ${remaining}s.`, ephemeral: true });
+            return interaction.reply({ content: `⏳ You are tired. Try again in ${remaining}s.`, flags: MessageFlags.Ephemeral });
         }
         global.__workCooldowns.set(userId, now);
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        if (isPrivate) {
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        } else {
+            await interaction.deferReply();
+        }
 
         // --- Expanded Ore & Event List ---
         // This list is now more diverse, with varying chances and values for a more dynamic experience.
@@ -253,7 +257,7 @@ module.exports = {
             const collector = msg.createMessageComponentCollector({ time: 30000 });
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'work_close') {
