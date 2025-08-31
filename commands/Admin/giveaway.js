@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
 
 module.exports = {
   category: 'Admin',
@@ -17,6 +17,35 @@ module.exports = {
         .setDescription('For how many days should activity be considered? (Default: 7)')
         .setMinValue(1)
         .setMaxValue(30)
+    )
+    .addIntegerOption(option =>
+      option
+        .setName('top')
+        .setDescription('How many top members to consider (3-25, default 5)')
+        .setMinValue(3)
+        .setMaxValue(25)
+        .setRequired(false)
+    )
+    .addIntegerOption(option =>
+      option
+        .setName('min_messages')
+        .setDescription('Minimum messages to qualify (default 1)')
+        .setMinValue(1)
+        .setMaxValue(10000)
+        .setRequired(false)
+    )
+    .addChannelOption(option =>
+      option
+        .setName('announce_channel')
+        .setDescription('Channel to post the final result')
+        .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+        .setRequired(false)
+    )
+    .addBooleanOption(option =>
+      option
+        .setName('private')
+        .setDescription('Reply privately with preview and buttons')
+        .setRequired(false)
     ),
   async execute(interaction) {
     const config = interaction.client.config;
@@ -32,11 +61,14 @@ module.exports = {
         });
     }
 
-    await interaction.deferReply();
+    const isPrivate = interaction.options.getBoolean('private') || false;
+    await interaction.deferReply({ ephemeral: isPrivate });
 
     const prize = interaction.options.getString('prize');
     const durationDays = interaction.options.getInteger('duration_days') || 7;
-    const topMemberCount = 5;
+    const topMemberCount = interaction.options.getInteger('top') || 5;
+    const minMessages = interaction.options.getInteger('min_messages') || 1;
+    const announceChannel = interaction.options.getChannel('announce_channel') || null;
 
     const messageCounts = new Map();
     // Calculate the start timestamp (now - `durationDays`)
@@ -59,6 +91,8 @@ module.exports = {
     await interaction.editReply({ embeds: [waitingEmbed] });
 
     try {
+        let processed = 0;
+        const total = channels.size;
         for (const channel of channels.values()) {
             let lastId;
             // Fetch messages in pages of 100
@@ -84,13 +118,24 @@ module.exports = {
                 
                 lastId = messages.last().id;
             }
+            processed++;
+            if (processed % 3 === 0) {
+              const progress = EmbedBuilder.from(waitingEmbed)
+                .setDescription(
+                  (giveawayMsg.calculating_desc || 'Please wait while I analyze server activity from the last **{days} days**. This might take a moment.')
+                    .replace('{days}', durationDays)
+                )
+                .addFields({ name: 'Progress', value: `${processed}/${total} channels`, inline: false });
+              await interaction.editReply({ embeds: [progress] }).catch(() => {});
+            }
         }
     } catch (error) {
         console.error('Error fetching messages for giveaway:', error);
         return interaction.editReply({ content: giveawayMsg.error || 'An error occurred while fetching activity data. Please ensure I have the correct permissions to read message history in relevant channels.' });
     }
 
-    const sortedMembers = [...messageCounts.entries()]
+    let sortedMembers = [...messageCounts.entries()]
+      .filter(([, count]) => count >= minMessages)
       .sort((a, b) => b[1] - a[1])
       .slice(0, topMemberCount)
       .map(([userId, count]) => ({ userId, count }));
@@ -101,48 +146,97 @@ module.exports = {
       });
     }
 
-    // Pick a random winner from the top active members
-    const winnerEntry = sortedMembers[Math.floor(Math.random() * sortedMembers.length)];
-    const winner = await interaction.client.users.fetch(winnerEntry.userId);
+    const buildEmbed = async (winnerUser) => {
+      const topMembersList = await Promise.all(
+        sortedMembers.map(async ({ userId, count }, index) => {
+          try {
+              const user = await interaction.client.users.fetch(userId);
+              return `**${index + 1}. ${user.tag}** - ${count} messages`;
+          } catch {
+              return `**${index + 1}.** Unknown User - ${count} messages`;
+          }
+        })
+      );
 
-    // Top members list
-    const topMembersList = await Promise.all(
-      sortedMembers.map(async ({ userId, count }, index) => {
-        try {
-            const user = await interaction.client.users.fetch(userId);
-            return `**${index + 1}. ${user.tag}** - ${count} messages`;
-        } catch {
-            return `**${index + 1}.** Unknown User - ${count} messages`;
-        }
-      })
+      const embed = new EmbedBuilder()
+        .setTitle(giveawayMsg.winner_title || '🎉 Giveaway Winner! 🎉')
+        .setColor(giveawayColor)
+        .setDescription(
+          (giveawayMsg.winner_desc || "Congratulations, {winner}! You've won the **{prize}**! 🎁\n\nHere are the top active members who were in the running:")
+            .replace('{winner}', winnerUser)
+            .replace('{prize}', prize)
+        )
+        .setThumbnail(winnerUser.displayAvatarURL({ dynamic: true, size: 256 }))
+        .addFields(
+          { name: giveawayMsg.prize_field || '🏆 Prize', value: `**${prize}**`, inline: true },
+          { name: giveawayMsg.winner_field || '🎊 Winner', value: `${winnerUser}`, inline: true },
+          { name: (giveawayMsg.top_field || `🌟 Top {count} Active Members`).replace('{count}', sortedMembers.length), value: topMembersList.join('\n') || (giveawayMsg.top_field_empty || 'No active members found.') }
+        )
+        .setImage(giveawayMsg.image || 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWthODZwa2Y0MXEyajAxOXFubDJ4b3lnaWdsbDhza3B1cTJxcm9naSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif')
+        .setTimestamp()
+        .setFooter({
+          text: (giveawayMsg.footer || 'Activity based on the last {days} days.').replace('{days}', durationDays),
+          iconURL: interaction.guild.iconURL()
+        });
+      return embed;
+    };
+
+    let currentWinner = sortedMembers[Math.floor(Math.random() * sortedMembers.length)];
+    let winnerUser = await interaction.client.users.fetch(currentWinner.userId);
+    let embed = await buildEmbed(winnerUser);
+
+    const controls = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('ga_reroll').setLabel('Reroll').setStyle(ButtonStyle.Secondary).setEmoji('🔄').setDisabled(sortedMembers.length <= 1),
+      ...(announceChannel ? [new ButtonBuilder().setCustomId('ga_post').setLabel(`Post to #${announceChannel.name}`).setStyle(ButtonStyle.Success).setEmoji('📣')] : []),
+      new ButtonBuilder().setCustomId('ga_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
     );
 
-    // Create the final embed
-    const embed = new EmbedBuilder()
-      .setTitle(giveawayMsg.winner_title || '🎉 Giveaway Winner! 🎉')
-      .setColor(giveawayColor) // Folosește culoarea din config
-      .setDescription(
-        (giveawayMsg.winner_desc || "Congratulations, {winner}! You've won the **{prize}**! 🎁\n\nHere are the top active members who were in the running:")
-          .replace('{winner}', winner)
-          .replace('{prize}', prize)
-      )
-      .setThumbnail(winner.displayAvatarURL({ dynamic: true, size: 256 }))
-      .addFields(
-        { name: giveawayMsg.prize_field || '🏆 Prize', value: `**${prize}**`, inline: true },
-        { name: giveawayMsg.winner_field || '🎊 Winner', value: `${winner}`, inline: true }
-      )
-      .setImage(giveawayMsg.image || 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWthODZwa2Y0MXEyajAxOXFubDJ4b3lnaWdsbDhza3B1cTJxcm9naSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif')
-      .setTimestamp()
-      .setFooter({ 
-        text: (giveawayMsg.footer || 'Activity based on the last {days} days.').replace('{days}', durationDays), 
-        iconURL: interaction.guild.iconURL() 
-      });
+    await interaction.editReply({ embeds: [embed], components: [controls] });
 
-    embed.addFields({
-      name: (giveawayMsg.top_field || `🌟 Top {count} Active Members`).replace('{count}', sortedMembers.length),
-      value: topMembersList.join('\n') || (giveawayMsg.top_field_empty || 'No active members found.'),
+    const reply = await interaction.fetchReply();
+    const collector = reply.createMessageComponentCollector({ time: 60000 });
+    collector.on('collect', async i => {
+      if (i.user.id !== interaction.user.id) {
+        await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+        return;
+      }
+      if (i.customId === 'ga_close') {
+        collector.stop('closed');
+        const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+        await i.update({ components: [disabled] });
+        return;
+      }
+      if (i.customId === 'ga_reroll') {
+        // pick a different winner if possible
+        let next = currentWinner;
+        if (sortedMembers.length > 1) {
+          while (next.userId === currentWinner.userId) {
+            next = sortedMembers[Math.floor(Math.random() * sortedMembers.length)];
+          }
+        }
+        currentWinner = next;
+        winnerUser = await interaction.client.users.fetch(currentWinner.userId);
+        embed = await buildEmbed(winnerUser);
+        await i.update({ embeds: [embed] });
+        return;
+      }
+      if (i.customId === 'ga_post' && announceChannel) {
+        try {
+          const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+          await announceChannel.send({ embeds: [embed] });
+          await i.update({ components: [disabled] });
+        } catch (e) {
+          await i.reply({ content: 'Failed to post to the selected channel. Check my permissions.', ephemeral: true });
+        }
+        return;
+      }
     });
 
-    await interaction.editReply({ embeds: [embed] });
+    collector.on('end', async (_c, reason) => {
+      if (reason === 'time') {
+        const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+        await interaction.editReply({ components: [disabled] }).catch(() => {});
+      }
+    });
   },
 };

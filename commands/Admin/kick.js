@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -13,6 +13,16 @@ module.exports = {
             option.setName('reason')
                 .setDescription('Reason for the kick')
                 .setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('silent')
+                .setDescription("Don't DM the user about the kick")
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('Reply privately with confirmation')
+                .setRequired(false)
+        )
         .setDefaultMemberPermissions(PermissionsBitField.Flags.KickMembers),
 
     async execute(interaction) {
@@ -28,7 +38,10 @@ module.exports = {
         }
 
         const member = interaction.options.getMember('member');
-        const reason = interaction.options.getString('reason') || messages.no_reason || 'No reason provided';
+        const reasonRaw = interaction.options.getString('reason');
+        const silent = interaction.options.getBoolean('silent') || false;
+        const isPrivate = interaction.options.getBoolean('private') || false;
+        const reason = (reasonRaw && reasonRaw.trim()) || messages.no_reason || 'No reason provided';
 
         if (!member) {
             return interaction.reply({ content: messages.user_not_found || 'That user is not in this server.', ephemeral: true });
@@ -42,29 +55,96 @@ module.exports = {
             return interaction.reply({ content: messages.cannot_kick_bot || 'I cannot kick myself.', ephemeral: true });
         }
 
-        if (!member.kickable) {
+        const me = await interaction.guild.members.fetch(interaction.client.user.id);
+        if (!member.kickable || me.roles.highest.comparePositionTo(member.roles.highest) <= 0) {
             return interaction.reply({ content: messages.cannot_kick_member || 'I cannot kick this member.', ephemeral: true });
         }
-
         try {
-            await member.kick(reason);
+            await interaction.deferReply({ ephemeral: isPrivate });
 
-            const embed = new EmbedBuilder()
-                .setTitle(messages.success_title || 'Member Kicked')
+            // Preview + confirmation
+            const preview = new EmbedBuilder()
+                .setTitle('Confirm Kick')
                 .setColor(config.color || 0xff0000)
+                .setDescription(`Are you sure you want to kick ${member} (${member.user.tag})?`)
                 .addFields(
-                    { name: messages.field_user || 'User', value: `${member.user.tag} (${member.id})`, inline: true },
+                    { name: messages.field_user || 'User', value: `${member.user.tag} (${member.id})`, inline: false },
                     { name: messages.field_kicked_by || 'Kicked by', value: `${interaction.user.tag}`, inline: true },
-                    { name: messages.field_reason || 'Reason', value: reason, inline: false }
+                    { name: messages.field_reason || 'Reason', value: reason, inline: true }
                 )
-                .setTimestamp()
-                .setFooter({ text: (messages.footer || 'Guild: {guildName}').replace('{guildName}', interaction.guild.name) });
+                .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            const controls = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('kick_confirm').setLabel('Confirm').setStyle(ButtonStyle.Danger).setEmoji('👢'),
+                new ButtonBuilder().setCustomId('kick_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary).setEmoji('🛑')
+            );
+            await interaction.editReply({ embeds: [preview], components: [controls] });
+
+            const reply = await interaction.fetchReply();
+            const collector = reply.createMessageComponentCollector({ time: 30000 });
+            let proceed = false;
+            collector.on('collect', async i => {
+                if (i.user.id !== interaction.user.id) {
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    return;
+                }
+                if (i.customId === 'kick_cancel') {
+                    collector.stop('cancelled');
+                    const cancelled = new EmbedBuilder().setColor('#ff6666').setTitle('Cancelled').setDescription('No action taken.');
+                    const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ embeds: [cancelled], components: [disabled] });
+                    return;
+                }
+                if (i.customId === 'kick_confirm') {
+                    proceed = true;
+                    collector.stop('confirmed');
+                    const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ components: [disabled] });
+
+                    // Try DM unless silent
+                    if (!silent) {
+                        member.send({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setColor(0xff0000)
+                                    .setTitle('You have been kicked')
+                                    .setDescription(`Server: **${interaction.guild.name}**`)
+                                    .addFields({ name: messages.field_reason || 'Reason', value: reason, inline: true })
+                                    .setTimestamp()
+                            ]
+                        }).catch(() => {});
+                    }
+
+                    await member.kick(reason);
+
+                    const embed = new EmbedBuilder()
+                        .setTitle(messages.success_title || 'Member Kicked')
+                        .setColor(config.color || 0xff0000)
+                        .addFields(
+                            { name: messages.field_user || 'User', value: `${member.user.tag} (${member.id})`, inline: true },
+                            { name: messages.field_kicked_by || 'Kicked by', value: `${interaction.user.tag}`, inline: true },
+                            { name: messages.field_reason || 'Reason', value: reason, inline: false }
+                        )
+                        .setTimestamp()
+                        .setFooter({ text: (messages.footer || 'Guild: {guildName}').replace('{guildName}', interaction.guild.name) });
+
+                    await interaction.editReply({ embeds: [embed] });
+                }
+            });
+
+            collector.on('end', async (_c, reason) => {
+                if (!proceed && reason === 'time') {
+                    const timed = new EmbedBuilder().setColor('#ffcc00').setTitle('Timed out').setDescription('No action taken.');
+                    const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await interaction.editReply({ embeds: [timed], components: [disabled] }).catch(() => {});
+                }
+            });
 
         } catch (error) {
-            console.error(`Failed to kick member ${member.user.tag}:`, error);
-            await interaction.reply({ content: (messages.error || 'An error occurred: {error}').replace('{error}', error.message), ephemeral: true });
+            console.error(`Failed to kick member ${member?.user?.tag || member?.id}:`, error);
+            const already = interaction.replied || interaction.deferred;
+            const payload = { content: (messages.error || 'An error occurred: {error}').replace('{error}', error.message), ephemeral: true };
+            if (already) await interaction.editReply(payload); else await interaction.reply(payload);
         }
     }
 };

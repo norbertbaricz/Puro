@@ -54,12 +54,69 @@ module.exports = {
     category: 'General',
     data: new SlashCommandBuilder()
         .setName('help')
-        .setDescription('Displays all commands sorted by category.'),
+        .setDescription('Displays all commands sorted by category, with search.')
+        .addStringOption(option =>
+            option.setName('category')
+                .setDescription('Show commands from this category')
+                .setRequired(false)
+        )
+        .addStringOption(option =>
+            option.setName('search')
+                .setDescription('Search by command name/description')
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('Reply privately (only you can see)')
+                .setRequired(false)
+        ),
 
     async execute(interaction) {
         try {
+            const categoryOpt = interaction.options.getString('category');
+            const searchOpt = interaction.options.getString('search');
+            const isPrivate = interaction.options.getBoolean('private') || false;
+
+            // Direct category view via option
+            if (categoryOpt) {
+                const config = interaction.client.config?.commands?.help || { color: '#0099ff' };
+                const commands = Array.from(interaction.client.commands.values())
+                    .filter(cmd => (cmd.category || 'General').toLowerCase() === categoryOpt.toLowerCase())
+                    .map(cmd => ({ name: cmd.data.name, description: cmd.data.description }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+                const embed = new EmbedBuilder()
+                    .setColor(config.color)
+                    .setTitle(`📂 ${categoryOpt} Commands`)
+                    .setFooter({ text: `${commands.length} commands available` })
+                    .setTimestamp();
+                const commandsList = commands.map(cmd => `\`/${cmd.name}\`\n↳ ${cmd.description}`).join('\n\n') || 'This category currently has no commands.';
+                embed.setDescription(commandsList);
+
+                return await interaction.reply({ embeds: [embed], ephemeral: isPrivate });
+            }
+
+            // Search by name/description
+            if (searchOpt) {
+                const query = searchOpt.toLowerCase();
+                const results = Array.from(interaction.client.commands.values())
+                    .map(cmd => ({ name: cmd.data.name, description: cmd.data.description, category: cmd.category || 'General' }))
+                    .filter(c => c.name.toLowerCase().includes(query) || (c.description || '').toLowerCase().includes(query))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+                const embed = new EmbedBuilder()
+                    .setColor('#00bcd4')
+                    .setTitle(`🔎 Search: "${searchOpt}" (${results.length})`)
+                    .setTimestamp();
+                const body = results.slice(0, 20).map(r => `\`/${r.name}\` — ${r.category}\n↳ ${r.description}`).join('\n\n') || 'No matching commands found.';
+                embed.setDescription(body);
+                if (results.length > 20) embed.setFooter({ text: `Showing first 20 of ${results.length} results` });
+                return await interaction.reply({ embeds: [embed], ephemeral: isPrivate });
+            }
+
+            // Default: interactive menu
             const menu = await createMainMenu(interaction);
-            await interaction.reply(menu);
+            await interaction.reply({ ...menu, ephemeral: isPrivate });
         } catch (error) {
             console.error('Help command execute error:', error);
             await interaction.reply({

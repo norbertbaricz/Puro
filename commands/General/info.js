@@ -1,225 +1,193 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { exec } = require('child_process'); // Used for running system commands
-const os = require('os'); // Node.js built-in OS module
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { exec } = require('child_process');
+const os = require('os');
 
-/**
- * Helper function to execute a shell command and return its stdout.
- * @param {string} command The shell command to execute.
- * @returns {Promise<string>} A promise that resolves with the command's stdout, or rejects with an error.
- */
 function executeCommand(command) {
-    return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                // Log stderr for debugging purposes, but don't necessarily reject if stderr is just warnings
-                if (stderr) console.warn(`Stderr from command "${command}": ${stderr}`);
-                reject(new Error(`Command failed: ${error.message}`));
-                return;
-            }
-            resolve(stdout.trim()); // Trim whitespace from the output
-        });
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        if (stderr) console.warn(`Stderr from command "${command}": ${stderr}`);
+        reject(new Error(`Command failed: ${error.message}`));
+        return;
+      }
+      resolve(stdout.trim());
     });
+  });
 }
 
-/**
- * Fetches system hardware information like CPU temperature and battery percentage.
- * This function assumes a Linux environment with 'sensors' and 'acpi' installed.
- * It will return 'N/A' for values it cannot retrieve or if on a different OS.
- * @returns {Promise<{cpuTemperature: string, batteryPercentage: string}>}
- */
 async function getSystemHardwareInfo() {
-    let cpuTemperature = 'N/A';
-    let batteryPercentage = 'N/A';
-
-    // Attempt to get CPU temperature (Linux specific, requires lm-sensors)
-    if (os.type() === 'Linux') {
-        try {
-            // This command tries to get temperature from 'Core 0'.
-            // You might need to adjust 'grep "Core 0"' to 'grep "Package id 0"'
-            // or another label based on your 'sensors' output for better accuracy.
-            const tempOutput = await executeCommand('sensors | grep "Core 0" | awk \'{print $3}\'');
-            const temperatureMatch = tempOutput.match(/\+([\d.]+)°C/);
-            if (temperatureMatch && temperatureMatch[1]) {
-                cpuTemperature = `${temperatureMatch[1]}°C`;
-            }
-        } catch (error) {
-            console.warn(`Could not get CPU temperature (lm-sensors might not be installed or configured): ${error.message}`);
-        }
-
-        // Attempt to get battery percentage (Linux specific, requires acpi)
-        try {
-            const batteryOutput = await executeCommand('acpi -b');
-            const batteryMatch = batteryOutput.match(/(\d+)%/);
-            if (batteryMatch && batteryMatch[1]) {
-                batteryPercentage = `${batteryMatch[1]}%`;
-            }
-        } catch (error) {
-            console.warn(`Could not get battery percentage (acpi might not be installed): ${error.message}`);
-        }
-    } else {
-        // Placeholder for other OS, you'd need different commands here
-        console.info('System temperature and battery percentage retrieval is currently implemented for Linux only.');
+  let cpuTemperature = 'N/A';
+  let batteryPercentage = 'N/A';
+  if (os.type() === 'Linux') {
+    try {
+      const tempOutput = await executeCommand("sensors | grep 'Core 0' | awk '{print $3}'");
+      const m = tempOutput.match(/\+([\d.]+)°C/);
+      if (m && m[1]) cpuTemperature = `${m[1]}°C`;
+    } catch (e) {
+      console.warn('CPU temp unavailable:', e.message);
     }
-
-    return { cpuTemperature, batteryPercentage };
+    try {
+      const batteryOutput = await executeCommand('acpi -b');
+      const b = batteryOutput.match(/(\d+)%/);
+      if (b && b[1]) batteryPercentage = `${b[1]}%`;
+    } catch (e) {
+      console.warn('Battery percent unavailable:', e.message);
+    }
+  }
+  return { cpuTemperature, batteryPercentage };
 }
-
 
 module.exports = {
-    category: 'General',
-    data: new SlashCommandBuilder()
-        .setName('info')
-        .setDescription('Displays various information about the bot.')
-        .addStringOption(option =>
-            option
-                .setName('type')
-                .setDescription('Which information to display?')
-                .setRequired(false)
-                .addChoices(
-                    { name: 'Creator', value: 'creator' },
-                    { name: 'Status', value: 'status' },
-                    { name: 'System', value: 'system' },
-                    { name: 'Uptime', value: 'uptime' }
-                )
-        ),
+  category: 'General',
+  data: new SlashCommandBuilder()
+    .setName('info')
+    .setDescription('Displays various information about the bot.')
+    .addStringOption(option =>
+      option.setName('type').setDescription('Which information to display?').setRequired(false).addChoices(
+        { name: 'Creator', value: 'creator' },
+        { name: 'Status', value: 'status' },
+        { name: 'System', value: 'system' },
+        { name: 'Uptime', value: 'uptime' }
+      )
+    )
+    .addBooleanOption(option =>
+      option.setName('private').setDescription('Reply privately (only you can see)').setRequired(false)
+    ),
 
-    async execute(interaction) {
-        const infoType = interaction.options.getString('type', false);
-        const client = interaction.client;
-        const config = client.config?.commands?.info || {};
-        const content = config.content || {};
+  async execute(interaction) {
+    const selected = interaction.options.getString('type') || null;
+    const isPrivate = interaction.options.getBoolean('private') || false;
+    const client = interaction.client;
+    const cfg = client.config?.commands?.info || {};
+    const content = cfg.content || {};
 
-        try {
-            await interaction.deferReply();
+    try {
+      await interaction.deferReply({ ephemeral: isPrivate });
 
-            // Fetch system hardware info upfront
-            const { cpuTemperature, batteryPercentage } = await getSystemHardwareInfo();
+      const build = async (type) => {
+        const { cpuTemperature, batteryPercentage } = await getSystemHardwareInfo();
+        const base = new EmbedBuilder()
+          .setColor(cfg.color || '#0099ff')
+          .setFooter({ text: `Bot ID: ${client.user.id}` })
+          .setTimestamp()
+          .setThumbnail(client.user.displayAvatarURL());
 
-            const embed = new EmbedBuilder()
-                .setColor(config.color || '#0099ff')
-                .setFooter({ text: `Bot ID: ${client.user.id}` })
-                .setTimestamp()
-                .setThumbnail(client.user.displayAvatarURL());
+        const guilds = client.guilds.cache;
+        const totalMembers = guilds.reduce((acc, g) => acc + g.memberCount, 0);
+        const eventsCount = client.events ? client.events.size : 0;
 
-            if (!infoType) {
-                // Display all information
-                embed.setTitle(config.all?.title || 'Bot Information');
+        const uptime = process.uptime();
+        const days = Math.floor(uptime / 86400);
+        const hours = Math.floor((uptime % 86400) / 3600);
+        const minutes = Math.floor((uptime % 3600) / 60);
+        const seconds = Math.floor(uptime % 60);
 
-                const creatorContent = content.creator || {};
-                embed.addFields({
-                    name: creatorContent.title || 'Creator Information',
-                    value: `${creatorContent.creator_name_label || 'Creator'}: \`${creatorContent.creator_name_value || 'Unknown'}\`\n${creatorContent.creation_date_label || 'Creation Date'}: <t:${creatorContent.creation_date_value || '0'}:D>`,
-                    inline: false
-                });
-
-                const statusContent = content.status || {};
-                const guilds = client.guilds.cache;
-                const totalMembers = guilds.reduce((acc, guild) => acc + guild.memberCount, 0);
-                // Adaugă numărul de eventuri încărcate
-                const eventsCount = client.events ? client.events.size : 0;
-
-                embed.addFields({
-                    name: statusContent.title || 'Bot Status',
-                    value: `${statusContent.servers_label || 'Servers'}: \`${guilds.size}\`\n${statusContent.members_label || 'Members'}: \`${totalMembers}\`\n${statusContent.commands_label || 'Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || 'Latency'}: \`${client.ws.ping}ms\`\n${'Events'}: \`${eventsCount}\``,
-                    inline: false
-                });
-
-                const systemContent = content.system || {};
-                const memoryUsage = process.memoryUsage();
-                embed.addFields({
-                    name: systemContent.title || 'System Information',
-                    value: `${systemContent.os_label || 'Operating System'}: \`${os.type()} ${os.release()}\`\n${systemContent.cpu_label || 'CPU'}: \`${os.cpus()[0]?.model || 'Unknown'}\`\n${systemContent.mem_usage_label || 'Memory Usage'}: \`${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.total_mem_label || 'Total Memory'}: \`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.node_label || 'Node.js Version'}: \`${process.version}\`\n${systemContent.djs_label || 'Discord.js Version'}: \`v${require('discord.js').version}\`\n${systemContent.cpu_temp_label || 'CPU Temperature'}: \`${cpuTemperature}\`\n${systemContent.battery_label || 'Battery'}: \`${batteryPercentage}\``,
-                    inline: false
-                });
-
-                const uptimeContent = content.uptime || {};
-                const uptime = process.uptime();
-                const days = Math.floor(uptime / 86400);
-                const hours = Math.floor((uptime % 86400) / 3600);
-                const minutes = Math.floor((uptime % 3600) / 60);
-                const seconds = Math.floor(uptime % 60);
-                const uptimeString = (uptimeContent.time_format || '{days}d {hours}h {minutes}m {seconds}s')
-                    .replace('{days}', days)
-                    .replace('{hours}', hours)
-                    .replace('{minutes}', minutes)
-                    .replace('{seconds}', seconds);
-                const description = (uptimeContent.description || 'The bot has been online for {uptimeString}.').replace('{uptimeString}', uptimeString);
-                embed.addFields({
-                    name: uptimeContent.title || 'Bot Uptime',
-                    value: description,
-                    inline: false
-                });
-            } else {
-                // Display specific information type
-                if (infoType === 'creator') {
-                    const creatorContent = content.creator || {};
-                    embed
-                        .setTitle(creatorContent.title || 'Creator Information')
-                        .addFields(
-                            { name: creatorContent.creator_name_label || 'Creator', value: `\`${creatorContent.creator_name_value || 'Unknown'}\``, inline: true },
-                            { name: creatorContent.creation_date_label || 'Creation Date', value: `<t:${creatorContent.creation_date_value || '0'}:D>`, inline: true }
-                        );
-                } else if (infoType === 'status') {
-                    const statusContent = content.status || {};
-                    const guilds = client.guilds.cache;
-                    const totalMembers = guilds.reduce((acc, guild) => acc + guild.memberCount, 0);
-                    // Adaugă numărul de eventuri încărcate
-                    const eventsCount = client.events ? client.events.size : 0;
-
-                    embed
-                        .setTitle(statusContent.title || 'Bot Status')
-                        .addFields(
-                            { name: statusContent.servers_label || 'Servers', value: `\`${guilds.size}\``, inline: true },
-                            { name: statusContent.members_label || 'Members', value: `\`${totalMembers}\``, inline: true },
-                            { name: statusContent.commands_label || 'Commands', value: `\`${client.commands?.size || 0}\``, inline: true },
-                            { name: 'Events', value: `\`${eventsCount}\``, inline: true },
-                            { name: statusContent.latency_label || 'Latency', value: `\`${client.ws.ping}ms\``, inline: true }
-                        );
-                } else if (infoType === 'system') {
-                    const systemContent = content.system || {};
-                    const memoryUsage = process.memoryUsage();
-                    embed
-                        .setTitle(systemContent.title || 'System Information')
-                        .addFields(
-                            { name: systemContent.os_label || 'Operating System', value: `\`${os.type()} ${os.release()}\``, inline: false },
-                            { name: systemContent.cpu_label || 'CPU', value: `\`${os.cpus()[0]?.model || 'Unknown'}\``, inline: false },
-                            { name: systemContent.mem_usage_label || 'Memory Usage', value: `\`${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB\``, inline: true },
-                            { name: systemContent.total_mem_label || 'Total Memory', value: `\`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\``, inline: true },
-                            { name: systemContent.node_label || 'Node.js Version', value: `\`${process.version}\``, inline: true },
-                            { name: systemContent.djs_label || 'Discord.js Version', value: `\`v${require('discord.js').version}\``, inline: true },
-                            { name: systemContent.cpu_temp_label || 'CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
-                            { name: systemContent.battery_label || 'Battery', value: `\`${batteryPercentage}\``, inline: true }
-                        );
-                } else if (infoType === 'uptime') {
-                    const uptimeContent = content.uptime || {};
-                    const uptime = process.uptime();
-                    const days = Math.floor(uptime / 86400);
-                    const hours = Math.floor((uptime % 86400) / 3600);
-                    const minutes = Math.floor((uptime % 3600) / 60);
-                    const seconds = Math.floor(uptime % 60);
-                    const uptimeString = (uptimeContent.time_format || '{days}d {hours}h {minutes}m {seconds}s')
-                        .replace('{days}', days)
-                        .replace('{hours}', hours)
-                        .replace('{minutes}', minutes)
-                        .replace('{seconds}', seconds);
-                    const description = (uptimeContent.description || 'The bot has been online for {uptimeString}.').replace('{uptimeString}', uptimeString);
-
-                    embed
-                        .setTitle(uptimeContent.title || 'Bot Uptime')
-                        .setDescription(description);
-                }
-            }
-
-            await interaction.editReply({ embeds: [embed] });
-
-        } catch (error) {
-            console.error(`Error executing /info command (type: ${infoType || 'all'}):`, error);
-            const errorMessage = { content: config.messages?.error || 'An error occurred while executing the command.' };
-            if (interaction.deferred || interaction.replied) {
-                await interaction.followUp({ ...errorMessage, flags: 64 });
-            } else {
-                await interaction.reply({ ...errorMessage, flags: 64 });
-            }
+        if (!type) {
+          base.setTitle(cfg.all?.title || 'Bot Information');
+          const creatorContent = content.creator || {};
+          base.addFields({
+            name: creatorContent.title || 'Creator Information',
+            value: `${creatorContent.creator_name_label || 'Creator'}: \`${creatorContent.creator_name_value || 'Unknown'}\`\n${creatorContent.creation_date_label || 'Creation Date'}: <t:${creatorContent.creation_date_value || '0'}:D>`,
+            inline: false,
+          });
+          const statusContent = content.status || {};
+          base.addFields({
+            name: statusContent.title || 'Bot Status & Statistics',
+            value: `${statusContent.servers_label || 'Servers'}: \`${guilds.size}\`\n${statusContent.members_label || 'Members'}: \`${totalMembers}\`\n${statusContent.commands_label || 'Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || 'Latency'}: \`${client.ws.ping}ms\`\nEvents: \`${eventsCount}\``,
+            inline: false,
+          });
+          const systemContent = content.system || {};
+          const mem = process.memoryUsage();
+          base.addFields({
+            name: systemContent.title || 'System Information',
+            value: `${systemContent.os_label || 'Operating System'}: \`${os.type()} ${os.release()}\`\n${systemContent.cpu_label || 'CPU'}: \`${os.cpus()[0]?.model || 'Unknown'}\`\n${systemContent.mem_usage_label || 'Memory Usage'}: \`${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.total_mem_label || 'Total Memory'}: \`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.node_label || 'Node.js Version'}: \`${process.version}\`\n${systemContent.djs_label || 'Discord.js Version'}: \`v${require('discord.js').version}\`\n${systemContent.cpu_temp_label || 'CPU Temperature'}: \`${cpuTemperature}\`\n${systemContent.battery_label || 'Battery'}: \`${batteryPercentage}\``,
+            inline: false,
+          });
+          const uptimeContent = content.uptime || {};
+          const upStr = (uptimeContent.time_format || '{days}d {hours}h {minutes}m {seconds}s')
+            .replace('{days}', days).replace('{hours}', hours).replace('{minutes}', minutes).replace('{seconds}', seconds);
+          const desc = (uptimeContent.description || 'The bot has been online for {uptimeString}.').replace('{uptimeString}', upStr);
+          base.addFields({ name: uptimeContent.title || 'Uptime', value: desc, inline: false });
+        } else if (type === 'creator') {
+          const c = content.creator || {};
+          base.setTitle(c.title || 'Creator Information')
+            .addFields(
+              { name: c.creator_name_label || 'Creator', value: `\`${c.creator_name_value || 'Unknown'}\``, inline: true },
+              { name: c.creation_date_label || 'Creation Date', value: `<t:${c.creation_date_value || '0'}:D>`, inline: true }
+            );
+        } else if (type === 'status') {
+          const s = content.status || {};
+          base.setTitle(s.title || 'Bot Status')
+            .addFields(
+              { name: s.servers_label || 'Servers', value: `\`${guilds.size}\``, inline: true },
+              { name: s.members_label || 'Members', value: `\`${totalMembers}\``, inline: true },
+              { name: s.commands_label || 'Commands', value: `\`${client.commands?.size || 0}\``, inline: true },
+              { name: 'Events', value: `\`${eventsCount}\``, inline: true },
+              { name: s.latency_label || 'Latency', value: `\`${client.ws.ping}ms\``, inline: true }
+            );
+        } else if (type === 'system') {
+          const s = content.system || {};
+          const mem = process.memoryUsage();
+          base.setTitle(s.title || 'System Information')
+            .addFields(
+              { name: s.os_label || 'Operating System', value: `\`${os.type()} ${os.release()}\``, inline: false },
+              { name: s.cpu_label || 'CPU', value: `\`${os.cpus()[0]?.model || 'Unknown'}\``, inline: false },
+              { name: s.mem_usage_label || 'Memory Usage', value: `\`${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB\``, inline: true },
+              { name: s.total_mem_label || 'Total Memory', value: `\`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\``, inline: true },
+              { name: s.node_label || 'Node.js Version', value: `\`${process.version}\``, inline: true },
+              { name: s.djs_label || 'Discord.js Version', value: `\`v${require('discord.js').version}\``, inline: true },
+              { name: s.cpu_temp_label || 'CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
+              { name: s.battery_label || 'Battery', value: `\`${batteryPercentage}\``, inline: true }
+            );
+        } else if (type === 'uptime') {
+          const u = content.uptime || {};
+          const upStr = (u.time_format || '{days}d {hours}h {minutes}m {seconds}s')
+            .replace('{days}', days).replace('{hours}', hours).replace('{minutes}', minutes).replace('{seconds}', seconds);
+          const desc = (u.description || 'The bot has been online for {uptimeString}.').replace('{uptimeString}', upStr);
+          base.setTitle(u.title || 'Bot Uptime').setDescription(desc);
         }
-    },
+        return base;
+      };
+
+      const buttons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('info_all').setLabel('All').setStyle(ButtonStyle.Secondary).setEmoji('📚'),
+        new ButtonBuilder().setCustomId('info_creator').setLabel('Creator').setStyle(ButtonStyle.Secondary).setEmoji('👤'),
+        new ButtonBuilder().setCustomId('info_status').setLabel('Status').setStyle(ButtonStyle.Secondary).setEmoji('📊'),
+        new ButtonBuilder().setCustomId('info_system').setLabel('System').setStyle(ButtonStyle.Secondary).setEmoji('💻'),
+        new ButtonBuilder().setCustomId('info_uptime').setLabel('Uptime').setStyle(ButtonStyle.Secondary).setEmoji('⏱️')
+      );
+
+      let current = selected;
+      const first = await build(current);
+      await interaction.editReply({ embeds: [first], components: [buttons] });
+
+      const msg = await interaction.fetchReply();
+      const collector = msg.createMessageComponentCollector({ time: 30000 });
+      collector.on('collect', async i => {
+        if (i.user.id !== interaction.user.id) {
+          await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+          return;
+        }
+        if (i.customId === 'info_all') current = null;
+        if (i.customId === 'info_creator') current = 'creator';
+        if (i.customId === 'info_status') current = 'status';
+        if (i.customId === 'info_system') current = 'system';
+        if (i.customId === 'info_uptime') current = 'uptime';
+        const fresh = await build(current);
+        await i.update({ embeds: [fresh] });
+      });
+      collector.on('end', async () => {
+        const disabled = new ActionRowBuilder().addComponents(
+          buttons.components.map(b => ButtonBuilder.from(b).setDisabled(true))
+        );
+        await interaction.editReply({ components: [disabled] }).catch(() => {});
+      });
+
+    } catch (error) {
+      console.error(`Error executing /info command (type: ${selected || 'all'}):`, error);
+      const payload = { content: cfg.messages?.error || 'An error occurred while executing the command.', ephemeral: true };
+      if (interaction.deferred || interaction.replied) await interaction.followUp(payload); else await interaction.reply(payload);
+    }
+  },
 };
+

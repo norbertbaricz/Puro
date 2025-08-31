@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // Stocăm jocurile active într-o Mapă, folosind ID-ul canalului ca cheie.
 const activeGames = new Map();
@@ -40,6 +40,7 @@ const hangmanStages = [
 function createGameEmbed(game, config) {
     const lives = config.max_errors - game.mistakes;
     const description = config.messages.description.replace('{lives}', lives);
+    const hearts = '❤️'.repeat(Math.max(0, lives)) + '🖤'.repeat(Math.max(0, config.max_errors - lives));
 
     return new EmbedBuilder()
         .setColor(config.color)
@@ -55,9 +56,43 @@ function createGameEmbed(game, config) {
             { 
                 name: config.messages.guessed_letters, 
                 value: game.guessedLetters.length > 0 ? game.guessedLetters.join(', ').toUpperCase() : config.messages.no_letters_guessed 
+            },
+            {
+                name: 'Lives',
+                value: `${hearts} (${lives}/${config.max_errors})`,
+                inline: false
+            },
+            {
+                name: 'Difficulty',
+                value: `\`${game.difficulty}\``,
+                inline: true
+            },
+            {
+                name: 'Hints Used',
+                value: `\`${game.hintsUsed}/2\``,
+                inline: true
             }
         )
         .setFooter({ text: config.messages.footer.replace('{userTag}', game.player.tag) });
+}
+
+function createControls(game) {
+    const canHint = game.hintsUsed < 2 && game.wordGuessed.includes('_');
+    return [
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId('hangman_hint')
+                .setLabel('Hint (-1 life)')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('💡')
+                .setDisabled(!canHint),
+            new ButtonBuilder()
+                .setCustomId('hangman_giveup')
+                .setLabel('Give up')
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('🏳️')
+        )
+    ];
 }
 
 module.exports = {
@@ -107,14 +142,70 @@ module.exports = {
             player: interaction.user,
             collector: null,
             gameMessage: null,
+            buttonCollector: null,
+            difficulty,
+            hintsUsed: 0,
         };
         activeGames.set(channelId, game);
 
         const embed = createGameEmbed(game, config);
-        game.gameMessage = await interaction.editReply({ embeds: [embed] });
+        game.gameMessage = await interaction.editReply({ embeds: [embed], components: createControls(game) });
+
+        // Info ghid pentru jucător (ephemeral)
+        await interaction.followUp({ content: 'Type letters or the full word in chat. Use the buttons for a hint or to give up. Good luck!', ephemeral: true }).catch(() => {});
 
         const filter = m => m.author.id === interaction.user.id;
         game.collector = interaction.channel.createMessageCollector({ filter, time: 300000 }); // 5 minute
+
+        // Collector pentru butoane
+        game.buttonCollector = game.gameMessage.createMessageComponentCollector({ time: 300000 });
+
+        game.buttonCollector.on('collect', async i => {
+            if (i.user.id !== game.player.id) {
+                await i.reply({ content: 'Only the game owner can use these buttons.', ephemeral: true });
+                return;
+            }
+            if (i.customId === 'hangman_giveup') {
+                game.buttonCollector.stop('lose');
+                game.collector.stop('lose');
+                await i.deferUpdate();
+                return;
+            }
+            if (i.customId === 'hangman_hint') {
+                if (game.hintsUsed >= 2 || !game.wordGuessed.includes('_')) {
+                    await i.deferUpdate();
+                    return;
+                }
+                // Penalizare: -1 viață
+                game.hintsUsed += 1;
+                game.mistakes += 1;
+                // Dezvăluim o literă aleatorie neghicită
+                const hiddenIndexes = game.wordGuessed
+                    .map((ch, idx) => ch === '_' ? idx : -1)
+                    .filter(idx => idx !== -1);
+                if (hiddenIndexes.length > 0) {
+                    const revealIndex = hiddenIndexes[Math.floor(Math.random() * hiddenIndexes.length)];
+                    const letter = game.word[revealIndex];
+                    for (let i2 = 0; i2 < game.word.length; i2++) {
+                        if (game.word[i2] === letter) game.wordGuessed[i2] = letter.toUpperCase();
+                    }
+                }
+                const updatedEmbed = createGameEmbed(game, config);
+                const components = createControls(game);
+                await i.update({ embeds: [updatedEmbed], components });
+
+                if (!game.wordGuessed.includes('_')) {
+                    game.buttonCollector.stop('win');
+                    game.collector.stop('win');
+                    return;
+                }
+                if (game.mistakes >= config.max_errors) {
+                    game.buttonCollector.stop('lose');
+                    game.collector.stop('lose');
+                    return;
+                }
+            }
+        });
 
         game.collector.on('collect', async m => {
             const guess = m.content.toLowerCase().trim();
@@ -166,10 +257,10 @@ module.exports = {
             }
             
             const updatedEmbed = createGameEmbed(game, config);
-            await game.gameMessage.edit({ embeds: [updatedEmbed] });
+            await game.gameMessage.edit({ embeds: [updatedEmbed], components: createControls(game) });
         });
 
-        game.collector.on('end', async (collected, reason) => {
+        const finalize = async (reason) => {
             // FIX: Verificăm dacă jocul încă există în mapă. Dacă nu, înseamnă că logica de finalizare a rulat deja.
             if (!activeGames.has(channelId)) {
                 return;
@@ -204,6 +295,16 @@ module.exports = {
             }
             
             await game.gameMessage.edit({ embeds: [finalEmbed], components: [] });
+        };
+
+        game.collector.on('end', async (_collected, reason) => {
+            if (game.buttonCollector) game.buttonCollector.stop(reason);
+            await finalize(reason);
+        });
+
+        game.buttonCollector.on('end', async (_collected, reason) => {
+            if (game.collector) game.collector.stop(reason);
+            await finalize(reason);
         });
     },
 };

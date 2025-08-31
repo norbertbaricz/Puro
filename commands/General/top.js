@@ -28,6 +28,37 @@ module.exports = {
                 .setDescription('For how many days should activity be measured? (Default: 7)')
                 .setMinValue(1)
                 .setMaxValue(7)
+        )
+        .addChannelOption(option =>
+            option
+                .setName('channel')
+                .setDescription('Limit analysis to a single channel')
+                .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+                .setRequired(false)
+        )
+        .addRoleOption(option =>
+            option
+                .setName('role')
+                .setDescription('Only include members with this role')
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option
+                .setName('include_bots')
+                .setDescription('Include bots in the leaderboard')
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option
+                .setName('hide_zero')
+                .setDescription('Hide members with zero messages')
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option
+                .setName('private')
+                .setDescription('Reply privately (only you can see)')
+                .setRequired(false)
         ),
 
     async execute(interaction) {
@@ -38,12 +69,17 @@ module.exports = {
         const topColor = topConfig.color || '#0099ff';
 
         try {
-            await interaction.deferReply();
+            const isPrivate = interaction.options.getBoolean('private') || false;
+            await interaction.deferReply({ ephemeral: isPrivate });
 
             // --- Obținerea opțiunilor ---
             const type = interaction.options.getString('type');
             const count = interaction.options.getInteger('count') || 5;
             const durationDays = interaction.options.getInteger('duration') || 7;
+            const limitChannel = interaction.options.getChannel('channel') || null;
+            const onlyRole = interaction.options.getRole('role') || null;
+            const includeBots = interaction.options.getBoolean('include_bots') || false;
+            const hideZero = interaction.options.getBoolean('hide_zero') || false;
             const messageCount = new Map();
             const sinceTimestamp = Date.now() - (durationDays * 24 * 60 * 60 * 1000);
 
@@ -58,18 +94,22 @@ module.exports = {
             // --- Inițializarea membrilor ---
             const allMembers = await interaction.guild.members.fetch();
             for (const member of allMembers.values()) {
-                if (!member.user.bot) {
+                if ((includeBots || !member.user.bot) && (!onlyRole || member.roles.cache.has(onlyRole.id))) {
                     messageCount.set(member.id, 0); // Inițializăm cu 0 pentru toți membrii non-bot
                 }
             }
 
             // --- Colectarea mesajelor ---
-            const textChannels = interaction.guild.channels.cache.filter(ch =>
-                ch.type === ChannelType.GuildText &&
-                ch.permissionsFor(interaction.guild.members.me).has(PermissionsBitField.Flags.ReadMessageHistory)
-            );
+            const channelPool = limitChannel
+                ? new Map([[limitChannel.id, limitChannel]])
+                : interaction.guild.channels.cache.filter(ch =>
+                    [ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(ch.type) &&
+                    ch.permissionsFor(interaction.guild.members.me).has(PermissionsBitField.Flags.ReadMessageHistory)
+                );
 
-            for (const channel of textChannels.values()) {
+            let processed = 0;
+            const total = channelPool.size;
+            for (const channel of channelPool.values()) {
                 try {
                     let lastId;
                     while (true) {
@@ -82,7 +122,7 @@ module.exports = {
                                 shouldBreakOuter = true;
                                 break;
                             }
-                            if (!msg.author.bot && messageCount.has(msg.author.id)) {
+                            if ((includeBots || !msg.author.bot) && messageCount.has(msg.author.id)) {
                                 messageCount.set(msg.author.id, messageCount.get(msg.author.id) + 1);
                             }
                         }
@@ -92,11 +132,18 @@ module.exports = {
                 } catch (error) {
                     console.warn(`Could not fetch messages from ${channel.name}: ${error.message}`);
                 }
+                processed++;
+                if (processed % 3 === 0 && total > 1) {
+                    const progress = EmbedBuilder.from(processingEmbed)
+                        .addFields({ name: 'Progress', value: `${processed}/${total} channels`, inline: false });
+                    await interaction.editReply({ embeds: [progress] }).catch(() => {});
+                }
             }
 
             // --- Sortarea membrilor ---
-            const sortedMembers = [...messageCount.entries()]
-                .sort((a, b) => type === 'active' ? b[1] - a[1] : a[1] - b[1]) // active: desc, inactive: asc
+            let sortedMembers = [...messageCount.entries()]
+                .filter(([, c]) => (hideZero ? c > 0 : true))
+                .sort((a, b) => type === 'active' ? b[1] - a[1] : a[1] - b[1])
                 .slice(0, count);
 
             // --- Verificare dacă există membri pentru top ---
@@ -133,7 +180,7 @@ module.exports = {
                 const [userId, msgCount] = sortedMembers[i];
                 const member = await interaction.guild.members.fetch(userId).catch(() => null);
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-                const displayName = member ? member.user.displayName : (await interaction.client.users.fetch(userId)).tag;
+                const displayName = member ? (member.displayName || member.user.username) : (await interaction.client.users.fetch(userId)).tag;
                 leaderboardString += `${medal} **${displayName}** - \`${msgCount}\` messages\n`;
             }
 
