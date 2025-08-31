@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -28,7 +28,7 @@ module.exports = {
         const hugConfig = config.commands.hug;
 
         if (sender.id === receiver.id) {
-            return interaction.reply({ content: hugConfig.messages.self_hug, ephemeral: true });
+            return interaction.reply({ content: hugConfig.messages.self_hug, flags: MessageFlags.Ephemeral });
         }
 
         // Random hug GIFs
@@ -61,13 +61,14 @@ module.exports = {
             new ButtonBuilder().setCustomId('hug_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
         );
 
-        const message = await interaction.reply({ embeds: [hugEmbed], components: [row], ephemeral: isPrivate, fetchReply: true });
+        await interaction.reply({ embeds: [hugEmbed], components: [row], ...(isPrivate ? { flags: MessageFlags.Ephemeral } : {}) });
+        const message = await interaction.fetchReply();
 
         const collector = message.createMessageComponentCollector({ time: 30000 });
         collector.on('collect', async i => {
             if (i.customId === 'hug_close') {
                 if (i.user.id !== sender.id && i.user.id !== receiver.id) {
-                    await i.reply({ content: 'Only the sender or receiver can close this.', ephemeral: true });
+                    await i.reply({ content: 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 collector.stop('closed');
@@ -78,7 +79,7 @@ module.exports = {
 
             if (i.customId === 'hug_return') {
                 if (i.user.id !== receiver.id) {
-                    await i.reply({ content: 'Only the mentioned member can return the hug.', ephemeral: true });
+                    await i.reply({ content: 'Only the mentioned member can return the hug.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 collector.stop('returned');

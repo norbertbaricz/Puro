@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { exec } = require('child_process');
 const os = require('os');
 
@@ -62,7 +62,11 @@ module.exports = {
     const content = cfg.content || {};
 
     try {
-      await interaction.deferReply({ ephemeral: isPrivate });
+      if (isPrivate) {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      } else {
+        await interaction.deferReply();
+      }
 
       const build = async (type) => {
         const { cpuTemperature, batteryPercentage } = await getSystemHardwareInfo();
@@ -165,7 +169,7 @@ module.exports = {
       const collector = msg.createMessageComponentCollector({ time: 30000 });
       collector.on('collect', async i => {
         if (i.user.id !== interaction.user.id) {
-          await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+          await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
           return;
         }
         if (i.customId === 'info_all') current = null;
@@ -185,9 +189,8 @@ module.exports = {
 
     } catch (error) {
       console.error(`Error executing /info command (type: ${selected || 'all'}):`, error);
-      const payload = { content: cfg.messages?.error || 'An error occurred while executing the command.', ephemeral: true };
+      const payload = { content: cfg.messages?.error || 'An error occurred while executing the command.', flags: MessageFlags.Ephemeral };
       if (interaction.deferred || interaction.replied) await interaction.followUp(payload); else await interaction.reply(payload);
     }
   },
 };
-

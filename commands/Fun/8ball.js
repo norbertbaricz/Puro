@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -45,7 +45,11 @@ module.exports = {
             };
 
             // Suspans: arătăm „shake” înainte de rezultat
-            await interaction.deferReply({ ephemeral: isPrivate });
+            if (isPrivate) {
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+            } else {
+                await interaction.deferReply();
+            }
 
             const loadingEmbed = new EmbedBuilder()
                 .setColor(config.color)
@@ -143,7 +147,7 @@ module.exports = {
 
         } catch (error) {
             console.error('8ball command error:', error);
-            await interaction.reply({ content: config.messages.error, ephemeral: true });
+            await interaction.reply({ content: config.messages.error, flags: MessageFlags.Ephemeral });
         }
     },
 };
