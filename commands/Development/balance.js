@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // --- Database Functions ---
 const dbPath = path.join(__dirname, '../../database.json');
@@ -44,42 +44,81 @@ module.exports = {
         .addUserOption(option =>
             option.setName('member')
                 .setDescription("The member whose balance you want to check")
-                .setRequired(false) // Optional, defaults to the command user
+                .setRequired(false)) // Optional, defaults to the command user
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('Reply only to you')
+                .setRequired(false)
         ),
     async execute(interaction) {
-        const db = readDB();
-        
-        // Determine the target user: either the one specified in the option or the user who ran the command.
+        const isPrivate = interaction.options.getBoolean('private') || false;
         const targetUser = interaction.options.getUser('member') || interaction.user;
-        
-        // Correctly retrieve the balance from the user's data object.
-        const balance = db[targetUser.id]?.balance || 0;
+        const conf = interaction.client.config.commands.balance || {};
 
-        // --- New, Refined Embed Creation ---
-        const embed = new EmbedBuilder()
-            .setColor(0x2ECC71) // A rich, professional green
-            .setAuthor({ name: `${targetUser.username}'s Bank Account`, iconURL: targetUser.displayAvatarURL() })
-            .addFields(
-                { 
-                    name: 'Available Funds', 
-                    // Using a 'diff' code block to make the text green and stand out
-                    value: `\`\`\`diff\n+ $${balance.toLocaleString()}\`\`\`` 
-                },
-                {
-                    name: 'Account Status',
-                    value: '✅ Active',
-                    inline: true
-                },
-                {
-                    name: 'Account Holder',
-                    // Mentioning the user makes it easy to click their profile
-                    value: `<@${targetUser.id}>`,
-                    inline: true
+        await interaction.deferReply({ ephemeral: isPrivate });
+
+        const render = async () => {
+            const db = readDB();
+            const balance = db[targetUser.id]?.balance || 0;
+            const color = conf.color || 0x2ECC71;
+            const title = conf.messages?.title || '💰 Wallet Balance Inquiry';
+            const descSelf = conf.messages?.description_self || 'Here is your current wallet balance:';
+            const descOther = conf.messages?.description_other || 'Here is the wallet balance for {user}:';
+            const fieldUser = conf.messages?.field_user || 'User';
+            const fieldBalance = conf.messages?.field_balance || 'Balance';
+
+            const embed = new EmbedBuilder()
+                .setColor(color)
+                .setTitle(title)
+                .setDescription((targetUser.id === interaction.user.id ? descSelf : descOther).replace('{user}', `${targetUser}`))
+                .addFields(
+                    { name: fieldUser, value: `${targetUser}`, inline: true },
+                    { name: fieldBalance, value: `\`$${balance.toLocaleString()}\``, inline: true }
+                )
+                .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
+                .setFooter({ text: 'Puro Bank | Official Statement' })
+                .setTimestamp();
+
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('bal_refresh').setLabel('Refresh').setStyle(ButtonStyle.Secondary).setEmoji('🔁'),
+                new ButtonBuilder().setCustomId('bal_tips').setLabel('How to earn?').setStyle(ButtonStyle.Primary).setEmoji('💡'),
+                new ButtonBuilder().setCustomId('bal_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+            );
+
+            await interaction.editReply({ embeds: [embed], components: [row] });
+
+            const msg = await interaction.fetchReply();
+            const collector = msg.createMessageComponentCollector({ time: 30000 });
+            collector.on('collect', async i => {
+                if (i.user.id !== interaction.user.id) {
+                    await i.reply({ content: 'Only you can control your view.', ephemeral: true });
+                    return;
                 }
-            )
-            .setTimestamp()
-            .setFooter({ text: `Puro Bank | Official Statement` });
+                if (i.customId === 'bal_close') {
+                    collector.stop('closed');
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ components: [disabled] });
+                    return;
+                }
+                if (i.customId === 'bal_refresh') {
+                    await i.deferUpdate();
+                    await render();
+                    return;
+                }
+                if (i.customId === 'bal_tips') {
+                    await i.reply({ content: 'Try /work to earn, /pay to transfer, and /leaderboard to see the richest!', ephemeral: true });
+                    return;
+                }
+            });
 
-        await interaction.reply({ embeds: [embed] });
+            collector.on('end', async (c, reason) => {
+                if (reason === 'time') {
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await interaction.editReply({ components: [disabled] }).catch(() => {});
+                }
+            });
+        };
+
+        await render();
     }
 };

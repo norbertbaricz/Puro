@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // --- Database Functions ---
 // It's good practice to keep these, but for larger bots, consider a more robust database like SQLite or a database service.
@@ -75,10 +75,43 @@ module.exports = {
     category: 'Development', // Changed category to be more specific
     data: new SlashCommandBuilder()
         .setName('work')
-        .setDescription('Go mining for valuable ores and gems!'),
+        .setDescription('Go mining for valuable ores and gems!')
+        .addStringOption(option =>
+            option.setName('risk')
+                .setDescription('Choose your risk level')
+                .addChoices(
+                    { name: 'Safe (lower rewards)', value: 'safe' },
+                    { name: 'Normal', value: 'normal' },
+                    { name: 'Risky (higher rewards)', value: 'risky' }
+                )
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('Reply only to you')
+                .setRequired(false)
+        ),
     async execute(interaction) {
         const userId = interaction.user.id;
         let db = readDB();
+
+        const workCfg = interaction.client.config.commands?.work || {};
+        const cooldownSeconds = Number(workCfg.cooldown_seconds) || 60;
+        const isPrivate = interaction.options.getBoolean('private') || false;
+        const risk = interaction.options.getString('risk') || 'normal';
+
+        // Simple in-memory cooldown map
+        if (!global.__workCooldowns) global.__workCooldowns = new Map();
+        const now = Date.now();
+        const last = global.__workCooldowns.get(userId) || 0;
+        const remainingMs = last + cooldownSeconds * 1000 - now;
+        if (remainingMs > 0) {
+            const remaining = Math.ceil(remainingMs / 1000);
+            return interaction.reply({ content: `⏳ You are tired. Try again in ${remaining}s.`, ephemeral: true });
+        }
+        global.__workCooldowns.set(userId, now);
+
+        await interaction.deferReply({ ephemeral: isPrivate });
 
         // --- Expanded Ore & Event List ---
         // This list is now more diverse, with varying chances and values for a more dynamic experience.
@@ -128,7 +161,18 @@ module.exports = {
             return outcomes.find(o => o.name === 'Nothing');
         }
 
-        const result = pickOutcome();
+        let result = pickOutcome();
+
+        // Adjust based on risk
+        const risky = risk === 'risky';
+        const safe = risk === 'safe';
+        if (risky) {
+            if (result.value > 0) result = { ...result, value: Math.round(result.value * 1.5) };
+            else if (result.name === 'Loss') result = { ...result, value: Math.round(result.value * 1.5) };
+        } else if (safe) {
+            if (result.value > 0) result = { ...result, value: Math.max(1, Math.round(result.value * 0.75)) };
+            else if (result.name === 'Loss') result = { ...result, value: Math.round(result.value * 0.5) };
+        }
 
         // Initialize user in DB if they don't exist.
         if (!db[userId]) {
@@ -169,7 +213,8 @@ module.exports = {
                 .addFields(
                     { name: 'Material Found', value: `${getOreEmoji(result.name)} **${result.name}**`, inline: true },
                     { name: 'Market Value', value: `\`+$${result.value.toLocaleString()}\``, inline: true },
-                    { name: 'New Balance', value: `💰 **$${newBalance.toLocaleString()}**`, inline: true }
+                    { name: 'New Balance', value: `💰 **$${newBalance.toLocaleString()}**`, inline: true },
+                    { name: 'Risk', value: `\`${risk}\``, inline: true }
                 );
         } else if (result.value === 0) {
             // NEUTRAL EMBED
@@ -179,7 +224,8 @@ module.exports = {
                 .setDescription("It was a long day of hard work, but you came back with empty hands. The mountain keeps its secrets for now.")
                 .addFields(
                     { name: 'Result', value: `${getOreEmoji(result.name)} Found nothing of value`, inline: true },
-                    { name: 'New Balance', value: `💰 **$${newBalance.toLocaleString()}**`, inline: true }
+                    { name: 'New Balance', value: `💰 **$${newBalance.toLocaleString()}**`, inline: true },
+                    { name: 'Risk', value: `\`${risk}\``, inline: true }
                 );
         } else {
             // LOSS EMBED
@@ -190,10 +236,75 @@ module.exports = {
                 .addFields(
                     { name: 'Incident', value: `${getOreEmoji(result.name)} Cave-in`, inline: true },
                     { name: 'Damages', value: `\`-$${Math.abs(result.value).toLocaleString()}\``, inline: true },
-                    { name: 'New Balance', value: `💰 **$${newBalance.toLocaleString()}**`, inline: true }
+                    { name: 'New Balance', value: `💰 **$${newBalance.toLocaleString()}**`, inline: true },
+                    { name: 'Risk', value: `\`${risk}\``, inline: true }
                 );
         }
 
-        await interaction.reply({ embeds: [embed] });
+        // Double-or-nothing option for positive results
+        if (result.value > 0) {
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('work_double').setLabel('Double or nothing').setStyle(ButtonStyle.Primary).setEmoji('🎲'),
+                new ButtonBuilder().setCustomId('work_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+            );
+            await interaction.editReply({ embeds: [embed], components: [row] });
+
+            const msg = await interaction.fetchReply();
+            const collector = msg.createMessageComponentCollector({ time: 30000 });
+            collector.on('collect', async i => {
+                if (i.user.id !== interaction.user.id) {
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    return;
+                }
+                if (i.customId === 'work_close') {
+                    collector.stop('closed');
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ components: [disabled] });
+                    return;
+                }
+                if (i.customId === 'work_double') {
+                    collector.stop('rolled');
+                    // 50/50 outcome: win -> +result.value; lose -> -result.value (reverts the win)
+                    const win = Math.random() < 0.5;
+                    const db2 = readDB();
+                    if (!db2[userId] || typeof db2[userId] !== 'object') db2[userId] = { balance: 0 };
+                    if (win) {
+                        db2[userId].balance += result.value;
+                        writeDB(db2);
+                        const updated = EmbedBuilder.from(embed)
+                            .setTitle('🎉 Double!')
+                            .setDescription('Fortune favors the bold. Your find has doubled!')
+                            .setColor(0x57F287);
+                        updated.spliceFields(2, 1, { name: 'New Balance', value: `💰 **$${db2[userId].balance.toLocaleString()}**`, inline: true });
+                        const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                        await i.update({ embeds: [updated], components: [disabled] });
+                    } else {
+                        db2[userId].balance = Math.max(0, db2[userId].balance - result.value);
+                        writeDB(db2);
+                        const updated = EmbedBuilder.from(embed)
+                            .setTitle('💀 Nothing!')
+                            .setDescription('The gamble failed. You lost the find from this trip.')
+                            .setColor(0xED4245);
+                        updated.spliceFields(2, 1, { name: 'New Balance', value: `💰 **$${db2[userId].balance.toLocaleString()}**`, inline: true });
+                        const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                        await i.update({ embeds: [updated], components: [disabled] });
+                    }
+                    return;
+                }
+            });
+            collector.on('end', async (_c, reason) => {
+                if (reason === 'time') {
+                    const disabled = new ActionRowBuilder().addComponents(
+                        [
+                            new ButtonBuilder().setCustomId('work_double').setLabel('Double or nothing').setStyle(ButtonStyle.Primary).setEmoji('🎲').setDisabled(true),
+                            new ButtonBuilder().setCustomId('work_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️').setDisabled(true)
+                        ]
+                    );
+                    await interaction.editReply({ components: [disabled] }).catch(() => {});
+                }
+            });
+        } else {
+            await interaction.editReply({ embeds: [embed], components: [] });
+        }
     }
 };

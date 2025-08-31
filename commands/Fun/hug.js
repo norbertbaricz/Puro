@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -8,10 +8,22 @@ module.exports = {
         .addUserOption(option =>
             option.setName('member')
                 .setDescription('The member you want to hug')
-                .setRequired(true)),
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('note')
+                .setDescription('Add a short note (optional)')
+                .setMaxLength(100)
+                .setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('If enabled, only you will see the message')
+                .setRequired(false)
+        ),
     async execute(interaction) {
         const sender = interaction.user;
         const receiver = interaction.options.getUser('member');
+        const note = (interaction.options.getString('note') || '').trim();
+        const isPrivate = interaction.options.getBoolean('private') || false;
         const config = interaction.client.config;
         const hugConfig = config.commands.hug;
 
@@ -41,6 +53,54 @@ module.exports = {
             .setFooter({ text: `Requested by ${sender.username}`, iconURL: sender.displayAvatarURL() })
             .setTimestamp();
 
-        await interaction.reply({ embeds: [hugEmbed] });
+        if (note) {
+            hugEmbed.addFields({ name: 'Note', value: `> ${note}` });
+        }
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('hug_return').setLabel('Return hug').setStyle(ButtonStyle.Secondary).setEmoji('🤗'),
+            new ButtonBuilder().setCustomId('hug_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+        );
+
+        const message = await interaction.reply({ embeds: [hugEmbed], components: [row], ephemeral: isPrivate, fetchReply: true });
+
+        const collector = message.createMessageComponentCollector({ time: 30000 });
+        collector.on('collect', async i => {
+            if (i.customId === 'hug_close') {
+                if (i.user.id !== sender.id && i.user.id !== receiver.id) {
+                    await i.reply({ content: 'Only the sender or receiver can close this.', ephemeral: true });
+                    return;
+                }
+                collector.stop('closed');
+                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                await i.update({ components: [disabled] });
+                return;
+            }
+
+            if (i.customId === 'hug_return') {
+                if (i.user.id !== receiver.id) {
+                    await i.reply({ content: 'Only the mentioned member can return the hug.', ephemeral: true });
+                    return;
+                }
+                collector.stop('returned');
+                const newGif = hugGifs[Math.floor(Math.random() * hugGifs.length)];
+                const returned = new EmbedBuilder()
+                    .setColor(hugConfig.color)
+                    .setTitle('🤗 Hug Returned!')
+                    .setDescription(`**${receiver.username}** returns a warm hug to **${sender.username}**!`)
+                    .setImage(newGif)
+                    .setFooter({ text: `Started by ${sender.username}`, iconURL: sender.displayAvatarURL() })
+                    .setTimestamp();
+                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                await i.update({ embeds: [returned], components: [disabled] });
+                return;
+            }
+        });
+
+        collector.on('end', async (_c, reason) => {
+            if (reason === 'time') {
+                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                await interaction.editReply({ components: [disabled] }).catch(() => {});
+            }
+        });
     }
 };

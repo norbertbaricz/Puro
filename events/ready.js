@@ -7,12 +7,17 @@ module.exports = {
         const config = client.config.events.ready;
         console.log(config.messages.login_success.replace('{tag}', client.user.tag));
 
-        let totalMembers = 0, totalChannels = 0;
-        client.guilds.cache.each(guild => {
-            totalMembers += guild.memberCount;
-            totalChannels += guild.channels.cache.size;
-        });
+        const computeStats = () => {
+            let members = 0, channels = 0;
+            client.guilds.cache.each(guild => {
+                members += guild.memberCount;
+                channels += guild.channels.cache.size;
+            });
+            return { members, channels };
+        };
 
+        // Log stats once on ready
+        const { members: totalMembers, channels: totalChannels } = computeStats();
         console.log(config.messages.stats.servers.replace('{count}', client.guilds.cache.size));
         console.log(config.messages.stats.members.replace('{count}', totalMembers));
         console.log(config.messages.stats.channels.replace('{count}', totalChannels));
@@ -36,36 +41,55 @@ module.exports = {
             'Competing': ActivityType.Competing
         };
 
+        let idx = 0;
+        const formatUptime = () => {
+            const s = Math.floor(process.uptime());
+            const d = Math.floor(s / 86400);
+            const h = Math.floor((s % 86400) / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            return `${d}d ${h}h ${m}m`;
+        };
+
         const setRandomActivity = async () => {
-            const randomText = statusConfig.texts[Math.floor(Math.random() * statusConfig.texts.length)];
+            const { members } = computeStats();
+            const servers = client.guilds.cache.size;
+            const uptime = formatUptime();
+            const textRaw = statusConfig.texts[idx % statusConfig.texts.length];
+            idx++;
+            const text = textRaw
+                .replace('{servers}', String(servers))
+                .replace('{members}', String(members))
+                .replace('{uptime}', uptime)
+                .slice(0, 128);
             let activity;
 
             if (statusConfig.type === 'Custom') {
                 activity = {
-                    name: randomText,
+                    name: text,
                     type: ActivityType.Custom,
                 };
             } else if (statusConfig.type === 'Streaming') {
                 activity = {
-                    name: randomText,
+                    name: text,
                     type: ActivityType.Streaming,
                     url: statusConfig.url || "https://www.twitch.tv/insym", // Adaugă un URL implicit pentru streaming
                 };
             } else {
                 activity = {
-                    name: randomText,
+                    name: text,
                     type: activityTypes[statusConfig.type] || ActivityType.Playing,
                 };
             }
 
             try {
-                await client.user.setPresence({ activities: [activity], status: statusConfig.status || 'dnd' });
+                await client.user.setPresence({ activities: [activity], status: statusConfig.status || 'online' });
             } catch (error) {
                 console.error(config.messages.status_error, error);
             }
         };
 
         setRandomActivity();
-        setInterval(setRandomActivity, 10000);
+        const intervalMs = Math.max(5000, Number(statusConfig.interval_ms) || 10000);
+        setInterval(setRandomActivity, intervalMs);
     },
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     category: 'Development',
@@ -13,27 +13,63 @@ module.exports = {
             option.setName('emojis')
                 .setDescription('Emoji(s), separated by spaces or commas')
                 .setRequired(true))
-        .addStringOption(option =>
-            option.setName('channel_id')
-                .setDescription('Channel ID (optional, if messages are not in this channel)')
-                .setRequired(false)),
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('Channel (if messages are not in this channel)')
+                .addChannelTypes(ChannelType.GuildText, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildAnnouncement)
+                .setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('remove')
+                .setDescription("Remove the bot's reactions instead of adding")
+                .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('Reply privately')
+                .setRequired(false)
+        ),
     async execute(interaction) {
-        await interaction.deferReply({ flags: 64 }); // răspunde rapid, ca să nu expire
+        const cfg = interaction.client.config.commands.react || {};
+        const msgs = cfg.messages || {};
+
+        const isPrivate = interaction.options.getBoolean('private') || false;
+        await interaction.deferReply({ ephemeral: isPrivate });
 
         const messageIdsRaw = interaction.options.getString('message_ids');
         const emojisRaw = interaction.options.getString('emojis');
-        const channelId = interaction.options.getString('channel_id');
+        const selectedChannel = interaction.options.getChannel('channel');
+        const remove = interaction.options.getBoolean('remove') || false;
 
-        const messageIds = messageIdsRaw.split(/[\s,]+/).filter(Boolean);
-        const emojis = emojisRaw.split(/[\s,]+/).filter(Boolean);
+        const linkOrIdToId = (token) => {
+            // Accept message links of the form https://discord.com/channels/guild/channel/message
+            const match = token.match(/\/(\d+)$/);
+            return match ? match[1] : token;
+        };
+
+        const messageIds = messageIdsRaw.split(/[\s,]+/).filter(Boolean).map(linkOrIdToId);
+
+        // Normalize emojis: support unicode or custom <a:name:id>/<:name:id>
+        const normalizeEmoji = (e) => {
+            const m = e.match(/^<a?:\w+:(\d+)>$/);
+            return m ? m[1] : e; // use id for custom, unicode as-is
+        };
+        const emojis = emojisRaw.split(/[\s,]+/).filter(Boolean).map(normalizeEmoji);
 
         // Use specified channel or current channel
-        const channel = channelId
-            ? await interaction.guild.channels.fetch(channelId).catch(() => null)
-            : interaction.channel;
+        const channel = selectedChannel || interaction.channel;
 
         if (!channel || !channel.isTextBased()) {
-            return interaction.editReply({ content: 'Channel not found or not a text channel.' });
+            return interaction.editReply({ content: msgs.channel_not_found || 'Channel not found or not a text channel.' });
+        }
+
+        // Permission checks for bot
+        const botMember = interaction.guild.members.me;
+        const perms = channel.permissionsFor(botMember);
+        if (!perms?.has(PermissionFlagsBits.ReadMessageHistory)) {
+            return interaction.editReply({ content: 'I need Read Message History in that channel.' });
+        }
+        if (!perms?.has(PermissionFlagsBits.AddReactions) && !remove) {
+            return interaction.editReply({ content: 'I need Add Reactions permission in that channel.' });
         }
 
         let successCount = 0;
@@ -45,8 +81,19 @@ module.exports = {
                 const message = await channel.messages.fetch(messageId);
                 for (const emoji of emojis) {
                     try {
-                        await message.react(emoji);
-                        successCount++;
+                        if (remove) {
+                            const reaction = message.reactions.cache.get(emoji) || message.reactions.cache.find(r => r.emoji.id === emoji || r.emoji.name === emoji);
+                            if (reaction) {
+                                await reaction.users.remove(interaction.client.user.id);
+                                successCount++;
+                            } else {
+                                failCount++;
+                                failedMessages.push(`Message \`${messageId}\`: Emoji \`${emoji}\``);
+                            }
+                        } else {
+                            await message.react(emoji);
+                            successCount++;
+                        }
                     } catch {
                         failCount++;
                         failedMessages.push(`Message \`${messageId}\`: Emoji \`${emoji}\``);
@@ -59,16 +106,16 @@ module.exports = {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle('Reaction Results')
-            .setColor(successCount > 0 ? 0x00b300 : 0xff0000)
+            .setTitle(msgs.title || 'Reaction Results')
+            .setColor(successCount > 0 ? (interaction.client.config.commands.react?.color_success || 0x00b300) : (interaction.client.config.commands.react?.color_error || 0xff0000))
             .addFields(
-                { name: 'Reactions Added', value: `${successCount}`, inline: true },
-                { name: 'Failed', value: `${failCount}`, inline: true }
+                { name: msgs.field_success || 'Reactions Added', value: `${successCount}`, inline: true },
+                { name: msgs.field_failed || 'Failed', value: `${failCount}`, inline: true }
             )
             .setTimestamp();
 
         if (failedMessages.length > 0) {
-            embed.addFields({ name: 'Failures', value: failedMessages.join('\n').slice(0, 1024) });
+            embed.addFields({ name: msgs.field_failures || 'Failures', value: failedMessages.join('\n').slice(0, 1024) });
         }
 
         await interaction.editReply({ embeds: [embed] });

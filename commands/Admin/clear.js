@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -8,7 +8,17 @@ module.exports = {
         .addIntegerOption(option =>
             option.setName('amount').setDescription('Number (1-100)').setMinValue(1).setMaxValue(100).setRequired(true))
         .addUserOption(option =>
-            option.setName('user').setDescription('Delete user messages').setRequired(false)),
+            option.setName('user').setDescription('Only delete messages from this user').setRequired(false))
+        .addStringOption(option =>
+            option.setName('contains').setDescription('Only delete messages containing this text').setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('bots_only').setDescription('Only delete messages from bots').setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('attachments_only').setDescription('Only delete messages with attachments').setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('include_pinned').setDescription('Include pinned messages (default: no)').setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('private').setDescription('Reply privately').setRequired(false)),
 
     async execute(interaction) {
         const config = interaction.client.config.commands.clear;
@@ -18,7 +28,7 @@ module.exports = {
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ No Permission')
                     .setDescription(config.messages.no_permission);
-                return interaction.reply({ embeds: [embed] });
+                return interaction.reply({ embeds: [embed], ephemeral: true });
             }
 
             if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {
@@ -26,22 +36,39 @@ module.exports = {
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ Missing Bot Permission')
                     .setDescription(config.messages.no_bot_permission);
-                return interaction.reply({ embeds: [embed] });
+                return interaction.reply({ embeds: [embed], ephemeral: true });
             }
 
             const amount = interaction.options.getInteger('amount');
             const targetUser = interaction.options.getUser('user');
+            const contains = interaction.options.getString('contains');
+            const botsOnly = interaction.options.getBoolean('bots_only') || false;
+            const attachmentsOnly = interaction.options.getBoolean('attachments_only') || false;
+            const includePinned = interaction.options.getBoolean('include_pinned') || false;
+            const isPrivate = interaction.options.getBoolean('private') || false;
 
-            // Folosește flags pentru ephemeral (fără warning)
-            await interaction.deferReply({ flags: 64 });
+            await interaction.deferReply({ ephemeral: isPrivate });
 
-            const messages = await interaction.channel.messages.fetch({ limit: amount });
-            const filteredMessages = messages.filter(msg => {
+            // Fetch up to 100 recent messages for filtering (bulkDelete limit anyway)
+            const messages = await interaction.channel.messages.fetch({ limit: 100 });
+            const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+            const containsLower = contains ? contains.toLowerCase() : null;
+
+            const matched = messages.filter(msg => {
                 const age = Date.now() - msg.createdTimestamp;
-                return age < 1209600000 && (!targetUser || msg.author.id === targetUser.id);
+                if (age >= 1209600000) return false; // bulkDelete can't delete >= 14 days
+                if (!includePinned && msg.pinned) return false;
+                if (targetUser && msg.author.id !== targetUser.id) return false;
+                if (botsOnly && !msg.author.bot) return false;
+                if (attachmentsOnly && msg.attachments.size === 0) return false;
+                if (containsLower && !(msg.content || '').toLowerCase().includes(containsLower)) return false;
+                return true;
             });
 
-            if (filteredMessages.size === 0) {
+            const toDelete = matched.first(amount);
+            const toDeleteCount = toDelete ? toDelete.length : 0;
+
+            if (!toDeleteCount) {
                 const embed = new EmbedBuilder()
                     .setColor(config.color || '#ffcc00')
                     .setTitle('⚠️ No Messages')
@@ -49,18 +76,75 @@ module.exports = {
                 return interaction.editReply({ embeds: [embed] });
             }
 
-            const deletedMessages = await interaction.channel.bulkDelete(filteredMessages, true);
+            // Preview + confirm
+            const preview = new EmbedBuilder()
+                .setColor('#0099ff')
+                .setTitle('Confirm Clear')
+                .setDescription(`Found ${matched.size} matching messages. Will delete the latest ${toDeleteCount}.`)
+                .addFields(
+                    { name: 'Filters', value: [
+                        targetUser ? `user:${targetUser.tag}` : null,
+                        contains ? `contains:"${contains}"` : null,
+                        botsOnly ? 'bots_only:true' : null,
+                        attachmentsOnly ? 'attachments_only:true' : null,
+                        includePinned ? 'include_pinned:true' : null
+                    ].filter(Boolean).join(' | ') || 'none', inline: false },
+                    { name: 'Note', value: 'Messages older than 14 days cannot be bulk deleted.', inline: false }
+                )
+                .setTimestamp();
 
-            const embed = new EmbedBuilder()
-                .setColor(config.color || '#00ff00')
-                .setTitle('✅ Messages Deleted')
-                .setDescription(
-                    config.messages.success
-                        .replace('{count}', deletedMessages.size)
-                        .replace('{s}', deletedMessages.size === 1 ? '' : 's')
-                );
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('clear_confirm').setLabel('Confirm').setStyle(ButtonStyle.Danger).setEmoji('🧹'),
+                new ButtonBuilder().setCustomId('clear_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary).setEmoji('🛑')
+            );
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [preview], components: [row] });
+
+            const reply = await interaction.fetchReply();
+            const collector = reply.createMessageComponentCollector({ time: 30000 });
+            let proceed = false;
+            collector.on('collect', async i => {
+                if (i.user.id !== interaction.user.id) {
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    return;
+                }
+                if (i.customId === 'clear_cancel') {
+                    collector.stop('cancelled');
+                    const cancelled = new EmbedBuilder().setColor('#ff6666').setTitle('Cancelled').setDescription('No messages were deleted.');
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ embeds: [cancelled], components: [disabled] });
+                    return;
+                }
+                if (i.customId === 'clear_confirm') {
+                    proceed = true;
+                    collector.stop('confirmed');
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ components: [disabled] });
+
+                    // Convert array back to collection for bulkDelete
+                    const collection = matched.clone().clear();
+                    for (const m of toDelete) collection.set(m.id, m);
+                    const deleted = await interaction.channel.bulkDelete(collection, true);
+
+                    const done = new EmbedBuilder()
+                        .setColor(config.color || '#00ff00')
+                        .setTitle('✅ Messages Deleted')
+                        .setDescription(
+                            config.messages.success
+                                .replace('{count}', deleted.size)
+                                .replace('{s}', deleted.size === 1 ? '' : 's')
+                        );
+                    await interaction.editReply({ embeds: [done] });
+                }
+            });
+
+            collector.on('end', async (_c, reason) => {
+                if (!proceed && reason === 'time') {
+                    const timed = new EmbedBuilder().setColor('#ffcc00').setTitle('Timed out').setDescription('No action taken.');
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await interaction.editReply({ embeds: [timed], components: [disabled] }).catch(() => {});
+                }
+            });
         } catch (error) {
             console.error('Clear error:', error);
             const embed = new EmbedBuilder()

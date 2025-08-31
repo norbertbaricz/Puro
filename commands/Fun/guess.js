@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -16,7 +16,12 @@ module.exports = {
         .addIntegerOption(option =>
             option.setName('chances')
                 .setDescription('The number of attempts you have.')
-                .setRequired(true)),
+                .setRequired(true))
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('If enabled, only you will see the game')
+                .setRequired(false)
+        ),
 
     async execute(interaction) {
         const config = interaction.client.config;
@@ -25,6 +30,7 @@ module.exports = {
         const min = interaction.options.getInteger('min');
         const max = interaction.options.getInteger('max');
         let chances = interaction.options.getInteger('chances');
+        const isPrivate = interaction.options.getBoolean('private') || false;
 
         if (min >= max) {
             return interaction.reply({
@@ -42,38 +48,109 @@ module.exports = {
         const secretNumber = Math.floor(Math.random() * (max - min + 1)) + min;
         const player = interaction.user;
 
-        const gameEmbed = new EmbedBuilder()
+        // State for dynamic range and hints
+        let rangeMin = min;
+        let rangeMax = max;
+        let hintsUsed = 0;
+        const maxHints = 2;
+
+        const bar = (left, total) => {
+            const blocks = 10;
+            const filled = Math.max(0, Math.min(blocks, Math.round((left / total) * blocks)));
+            return '█'.repeat(filled) + '░'.repeat(blocks - filled) + ` ${left}/${total}`;
+        };
+
+        const buildEmbed = (feedback = null, rerolls = 0) => new EmbedBuilder()
             .setColor(guessConfig.color)
             .setTitle(guessConfig.messages.title)
             .setDescription(
                 guessConfig.messages.description
                     .replace('{user}', player.username)
-                    .replace('{min}', min)
-                    .replace('{max}', max)
+                    .replace('{min}', rangeMin)
+                    .replace('{max}', rangeMax)
                     .replace('{chances}', chances)
             )
-            .addFields({ name: guessConfig.messages.prompt, value: guessConfig.messages.prompt_value })
+            .addFields(
+                { name: 'Attempts', value: bar(chances, interaction.options.getInteger('chances')), inline: false },
+                { name: guessConfig.messages.prompt, value: guessConfig.messages.prompt_value, inline: false },
+                ...(feedback ? [{ name: 'Hint', value: feedback, inline: false }] : []),
+                { name: 'Hints used', value: `\`${hintsUsed}/${maxHints}\``, inline: true }
+            )
             .setFooter({ text: guessConfig.messages.footer.replace('{userTag}', player.tag) })
             .setTimestamp();
 
-        // MODIFICARE AICI: Am adăugat fetchReply: true și am stocat răspunsul
-        const gameMessage = await interaction.reply({ embeds: [gameEmbed], fetchReply: true });
+        const row = () => new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('guess_hint').setLabel('Hint (-1 attempt)').setStyle(ButtonStyle.Secondary).setEmoji('💡').setDisabled(hintsUsed >= maxHints || chances <= 1),
+            new ButtonBuilder().setCustomId('guess_giveup').setLabel('Give up').setStyle(ButtonStyle.Danger).setEmoji('🏳️')
+        );
+
+        await interaction.deferReply({ ephemeral: isPrivate });
+        let gameEmbed = buildEmbed();
+        const reply = await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
 
         const filter = m => m.author.id === player.id;
-        // MODIFICARE AICI: Am folosit canalul din mesajul obținut
-        const collector = gameMessage.channel.createMessageCollector({ filter, time: 120000 });
+        const collector = reply.channel.createMessageCollector({ filter, time: 120000 });
 
-        collector.on('collect', m => {
+        const updateGame = async (feedback = null) => {
+            gameEmbed = buildEmbed(feedback);
+            await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
+        };
+
+        // Button collector
+        const btnCollector = (await interaction.fetchReply()).createMessageComponentCollector({ time: 120000 });
+        btnCollector.on('collect', async i => {
+            if (i.user.id !== player.id) {
+                await i.reply({ content: 'Only the game owner can use these buttons.', ephemeral: true });
+                return;
+            }
+            if (i.customId === 'guess_giveup') {
+                collector.stop('giveup');
+                btnCollector.stop('giveup');
+                const loseEmbed = new EmbedBuilder()
+                    .setColor(config.colors.error)
+                    .setTitle(guessConfig.messages.lose_title)
+                    .setDescription(guessConfig.messages.lose_description.replace('{secretNumber}', secretNumber));
+                await i.update({ embeds: [loseEmbed], components: [] });
+                return;
+            }
+            if (i.customId === 'guess_hint') {
+                if (hintsUsed >= maxHints || chances <= 1) {
+                    await i.deferUpdate();
+                    return;
+                }
+                hintsUsed += 1;
+                chances -= 1;
+                const mid = Math.floor((rangeMin + rangeMax) / 2);
+                let feedback;
+                if (secretNumber > mid) {
+                    rangeMin = mid + 1;
+                    feedback = `Try higher than ${mid}.`;
+                } else {
+                    rangeMax = mid;
+                    feedback = `Try lower than ${mid + 1}.`;
+                }
+                await i.deferUpdate();
+                await updateGame(feedback);
+                if (chances <= 0) {
+                    collector.stop('depleted');
+                    btnCollector.stop('depleted');
+                }
+            }
+        });
+
+        collector.on('collect', async m => {
             const guess = parseInt(m.content);
+            await m.delete().catch(() => {});
 
             if (isNaN(guess)) {
-                interaction.followUp({ 
+                const msg = await interaction.followUp({ 
                     content: guessConfig.messages.invalid_guess.replace('{guess}', m.content), 
                     ephemeral: true 
                 });
+                setTimeout(() => msg.delete?.().catch(() => {}), 2500);
                 return;
             }
-            
+
             chances--;
 
             if (guess === secretNumber) {
@@ -81,14 +158,16 @@ module.exports = {
                     .setColor(config.colors.success)
                     .setTitle(guessConfig.messages.win_title)
                     .setDescription(guessConfig.messages.win_description.replace('{secretNumber}', secretNumber));
-                
-                interaction.followUp({ embeds: [winEmbed] });
+                await interaction.editReply({ embeds: [winEmbed], components: [] });
                 collector.stop('guessed');
+                btnCollector.stop('guessed');
                 return;
             } else if (guess < secretNumber) {
-                interaction.followUp(guessConfig.messages.hint_higher.replace('{chances}', chances));
+                rangeMin = Math.max(rangeMin, guess + 1);
+                await updateGame(guessConfig.messages.hint_higher.replace('{chances}', chances));
             } else {
-                interaction.followUp(guessConfig.messages.hint_lower.replace('{chances}', chances));
+                rangeMax = Math.min(rangeMax, guess - 1);
+                await updateGame(guessConfig.messages.hint_lower.replace('{chances}', chances));
             }
 
             if (chances <= 0) {
@@ -96,16 +175,25 @@ module.exports = {
                     .setColor(config.colors.error)
                     .setTitle(guessConfig.messages.lose_title)
                     .setDescription(guessConfig.messages.lose_description.replace('{secretNumber}', secretNumber));
-
-                interaction.followUp({ embeds: [loseEmbed] });
+                await interaction.editReply({ embeds: [loseEmbed], components: [] });
                 collector.stop('depleted');
+                btnCollector.stop('depleted');
             }
         });
 
-        collector.on('end', (collected, reason) => {
-            if (reason === 'time') {
-                interaction.followUp({ content: guessConfig.messages.timeout });
-            }
+        const endGameTimeout = async () => {
+            const timeoutEmbed = new EmbedBuilder()
+                .setColor('#FFA500')
+                .setTitle(guessConfig.messages.timeout)
+                .setDescription(`The number was: **${secretNumber}**`);
+            await interaction.editReply({ embeds: [timeoutEmbed], components: [] }).catch(() => {});
+        };
+
+        collector.on('end', async (_collected, reason) => {
+            if (reason === 'time') await endGameTimeout();
+        });
+        btnCollector.on('end', async (_c, reason) => {
+            if (reason === 'time') await endGameTimeout();
         });
     },
 };

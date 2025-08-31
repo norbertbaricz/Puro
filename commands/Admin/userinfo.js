@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -8,7 +8,12 @@ module.exports = {
         .addUserOption(option =>
             option.setName('member')
                 .setDescription('The member to get information about')
-                .setRequired(true)),
+                .setRequired(true))
+        .addBooleanOption(option =>
+            option.setName('private')
+                .setDescription('Reply privately (only you can see)')
+                .setRequired(false)
+        ),
     async execute(interaction) {
         const config = interaction.client.config;
         const userinfoConfig = config.commands.userinfo;
@@ -19,6 +24,9 @@ module.exports = {
 
         // Always resolve the target user first
         const targetUser = interaction.options.getUser('member', true);
+        const isPrivate = interaction.options.getBoolean('private') || false;
+
+        await interaction.deferReply({ ephemeral: isPrivate });
 
         // Try to get a full GuildMember; fall back to fetching if uncached
         let member = interaction.options.getMember('member');
@@ -39,6 +47,12 @@ module.exports = {
             : userinfoConfig.messages.none;
 
         const avatarUrl = (member ? member.user : targetUser).displayAvatarURL({ dynamic: true, size: 4096 });
+        // Try to fetch banner
+        let bannerUrl = null;
+        try {
+            const fetched = await interaction.client.users.fetch(targetUser.id, { force: true });
+            bannerUrl = fetched.bannerURL({ size: 1024 });
+        } catch {}
 
         // Calculate account age in milliseconds
         const accountCreatedTimestamp = (member ? member.user : targetUser).createdTimestamp;
@@ -65,12 +79,21 @@ module.exports = {
             inviterTag = 'NaN';
         }
 
+        // Presence and timeout info
+        const presence = member?.presence?.status ? member.presence.status : userinfoConfig.messages.none;
+        const timeoutUntil = member?.communicationDisabledUntilTimestamp
+            ? `<t:${Math.floor(member.communicationDisabledUntilTimestamp / 1000)}:R>`
+            : userinfoConfig.messages.none;
+        const highestRole = member?.roles?.highest ? `${member.roles.highest} (${member.roles.highest.id})` : userinfoConfig.messages.none;
+        const permissions = member?.permissions?.toArray?.() || [];
+        const badges = (await interaction.client.users.fetch(targetUser.id, { force: true }).catch(() => null))?.flags?.toArray?.() || [];
+
         const embed = new EmbedBuilder()
             .setColor(userinfoConfig.color)
             .setTitle(userinfoConfig.messages.title.replace('{tag}', (member ? member.user : targetUser).tag))
             .setDescription(userinfoConfig.messages.description)
             .setThumbnail(avatarUrl)
-            .setImage(avatarUrl)
+            .setImage(bannerUrl || avatarUrl)
             .addFields(
                 { name: userinfoConfig.messages.fields.user_id, value: (member ? member.id : targetUser.id), inline: true },
                 { name: userinfoConfig.messages.fields.bot, value: ((member ? member.user : targetUser).bot ? userinfoConfig.messages.yes : userinfoConfig.messages.no), inline: true },
@@ -79,11 +102,61 @@ module.exports = {
                 { name: userinfoConfig.messages.fields.joined_server, value: member && member.joinedTimestamp ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>` : userinfoConfig.messages.none, inline: false },
                 { name: userinfoConfig.messages.fields.roles, value: roles, inline: false },
                 { name: `🔒 ${userinfoConfig.messages.fields.security || 'Security'}`, value: securityStatus, inline: true },
-                { name: 'Invited by', value: inviterTag, inline: true } // Show who invited the user
+                { name: 'Invited by', value: inviterTag, inline: true },
+                { name: 'Presence', value: presence, inline: true },
+                { name: 'Highest Role', value: highestRole, inline: true },
+                { name: 'Timeout until', value: timeoutUntil, inline: true },
+                { name: 'Badges', value: badges.length ? badges.join(', ') : userinfoConfig.messages.none, inline: false }
             )
             .setFooter({ text: userinfoConfig.messages.footer.replace('{user}', interaction.user.tag), iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('ui_roles').setLabel('Show roles').setStyle(ButtonStyle.Secondary).setEmoji('📜'),
+            new ButtonBuilder().setCustomId('ui_perms').setLabel('Show permissions').setStyle(ButtonStyle.Primary).setEmoji('🛡️'),
+            new ButtonBuilder().setCustomId('ui_avatar').setLabel('Avatar').setStyle(ButtonStyle.Secondary).setEmoji('🖼️'),
+            new ButtonBuilder().setCustomId('ui_banner').setLabel('Banner').setStyle(ButtonStyle.Secondary).setEmoji('🖼️').setDisabled(!bannerUrl)
+        );
+
+        await interaction.editReply({ embeds: [embed], components: [row] });
+
+        const msg = await interaction.fetchReply();
+        const collector = msg.createMessageComponentCollector({ time: 30000 });
+        collector.on('collect', async i => {
+            if (i.user.id !== interaction.user.id) {
+                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                return;
+            }
+            if (i.customId === 'ui_roles') {
+                const roleList = member?.roles?.cache
+                    ?.filter(r => r.id !== interaction.guild.id)
+                    ?.sort((a,b) => b.position - a.position)
+                    ?.map(r => `${r}`)
+                    ?.join('\n') || userinfoConfig.messages.none;
+                await i.reply({ content: roleList.slice(0, 1900), ephemeral: true });
+                return;
+            }
+            if (i.customId === 'ui_perms') {
+                const permList = permissions.length ? permissions.join(', ') : userinfoConfig.messages.none;
+                await i.reply({ content: permList.slice(0, 1900), ephemeral: true });
+                return;
+            }
+            if (i.customId === 'ui_avatar') {
+                await i.reply({ content: avatarUrl, ephemeral: true });
+                return;
+            }
+            if (i.customId === 'ui_banner') {
+                if (bannerUrl) await i.reply({ content: bannerUrl, ephemeral: true });
+                else await i.reply({ content: 'No banner set.', ephemeral: true });
+                return;
+            }
+        });
+
+        collector.on('end', async () => {
+            const disabled = new ActionRowBuilder().addComponents(
+                row.components.map(c => ButtonBuilder.from(c).setDisabled(true))
+            );
+            await interaction.editReply({ components: [disabled] }).catch(() => {});
+        });
     }
 };
