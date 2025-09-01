@@ -955,3 +955,14 @@ api:
 database:
   path: 'database.json'
   auto_repair: true
+  thread:
+    color: '#5865F2'
+    messages:
+      created: '🧵 Thread created: {thread}'
+      created_title: '🧵 Thread Created'
+      forum_post_message: 'Thread created via /thread.'
+      seed_message: 'Creating a new thread…'
+      invited_some: 'Invited {count} members.'
+      no_permission: "❌ I don't have permission to create threads in that channel."
+      invalid_channel: '❌ Please select a text or forum channel.'
+      error_create: '❌ Could not create the thread.'
