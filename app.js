@@ -182,7 +182,7 @@ async function loadEvents() {
 // Main function to start the bot
 async function main() {
     try {
-        console.log("\n🛠️ Boot sequence initiated...");
+        console.log("\n🛠️  Boot sequence initiated...");
         console.log("🔧 Loading events...");
         await loadEvents();
         console.log("✅ Events loaded.");
