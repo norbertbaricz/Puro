@@ -71,6 +71,31 @@ async function getAllJsFiles(dir) {
     return Array.prototype.concat(...files);
 }
 
+// Ensure database.json exists and is readable/writable; auto-heal if corrupted
+function ensureDatabase() {
+    const dbPath = path.join(__dirname, 'database.json');
+    if (!fs.existsSync(dbPath)) {
+        fs.writeFileSync(dbPath, '{}\n');
+        return { created: true, path: dbPath };
+    }
+    fs.accessSync(dbPath, fs.constants.R_OK | fs.constants.W_OK);
+    const raw = fs.readFileSync(dbPath, 'utf8');
+    if (raw.trim() === '') {
+        fs.writeFileSync(dbPath, '{}\n');
+        return { resetEmpty: true, path: dbPath };
+    }
+    try {
+        JSON.parse(raw);
+        return { ok: true, path: dbPath };
+    } catch (e) {
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backup = path.join(__dirname, `database.bak.${stamp}.json`);
+        fs.copyFileSync(dbPath, backup);
+        fs.writeFileSync(dbPath, '{}\n');
+        return { repaired: true, backup, path: dbPath };
+    }
+}
+
 // Function to load and register slash commands
 async function loadAndRegisterCommands() {
     verboseLog('\n🤖 Starting command registration...');
@@ -182,7 +207,21 @@ async function loadEvents() {
 // Main function to start the bot
 async function main() {
     try {
+        // Mark precise boot start for duration measurement
+        client.bootStartedAt = process.hrtime.bigint();
+
         console.log("\n🛠️  Boot sequence initiated...");
+        console.log("🗄️  Validating database.json...");
+        try {
+            const dbStatus = ensureDatabase();
+            if (dbStatus.created) console.log(`✅ Database ready (created new at ${path.basename(dbStatus.path)}).`);
+            else if (dbStatus.resetEmpty) console.log('✅ Database ready (reset empty file to valid JSON).');
+            else if (dbStatus.repaired) console.log(`⚠️  Database was corrupted. Backed up to ${path.basename(dbStatus.backup)} and reset.`);
+            else console.log('✅ Database ready.');
+        } catch (dbErr) {
+            console.error('❌ Database validation failed:', dbErr.message);
+            process.exit(1);
+        }
         console.log("🔧 Loading events...");
         await loadEvents();
         console.log("✅ Events loaded.");

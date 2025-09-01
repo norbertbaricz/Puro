@@ -105,13 +105,21 @@ module.exports = {
                 const servers = client.guilds.cache.size;
                 const { members } = computeStats();
                 const ping = Math.max(0, client.ws.ping);
+                let bootSeconds = null;
+                try {
+                    if (client.bootStartedAt) {
+                        const now = process.hrtime.bigint();
+                        const ms = Number(now - client.bootStartedAt) / 1e6;
+                        bootSeconds = (ms / 1000).toFixed(2);
+                    }
+                } catch {}
 
                 const lines = [
-                    '\n══════════════════════════════════════════════════════',
+                    '\n══════════════════════════════════════════════════════════════════════════',
                     '🚀 Puro is online and ready!',
                     `🧠 Commands: ${commandsLoaded} loaded  •  🧩 Events: ${eventsLoaded} active`,
-                    `🌐 Servers: ${servers}  •  👥 Members: ${members}  •  📡 Ping: ${ping}ms`,
-                    '══════════════════════════════════════════════════════\n',
+                    `🌐 Servers: ${servers}  •  👥 Members: ${members}  •  📡 Ping: ${ping}ms` + (bootSeconds ? `  •  ⏱️  Boot: ${bootSeconds}s` : ''),
+                    '══════════════════════════════════════════════════════════════════════════\n',
                 ];
                 console.log(lines.join('\n'));
             } catch {}
