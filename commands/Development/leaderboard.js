@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 // Database path
 const dbPath = path.join(__dirname, '../../database.json');
@@ -55,7 +55,7 @@ module.exports = {
         const guildOnly = interaction.options.getBoolean('guild_only') || false;
         const isPrivate = interaction.options.getBoolean('private') || false;
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         let sortedUsers = Object.entries(db)
             .filter(([, data]) => data && typeof data.balance === 'number')
@@ -114,7 +114,7 @@ module.exports = {
         const collector = msg.createMessageComponentCollector({ time: 60000 });
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'lb_close') {
@@ -137,4 +137,3 @@ module.exports = {
         });
     }
 };
-

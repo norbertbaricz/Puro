@@ -40,7 +40,7 @@ module.exports = {
                     .setTitle('No Permission')
                     .setDescription(config.messages.no_permission)
                     .setColor(0xff0000);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
             const channel = interaction.options.getChannel('channel');
@@ -62,7 +62,7 @@ module.exports = {
                     .setTitle('Invalid Channel')
                     .setDescription(config.messages.invalid_channel)
                     .setColor(0xffa500);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
             
             // MODIFICARE AICI: Am corectat modul de a obține bot-ul și permisiunile lui
@@ -75,7 +75,7 @@ module.exports = {
                 return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
             if (allowEveryone && !channel.permissionsFor(botMember).has(PermissionFlagsBits.MentionEveryone)) {
-                return interaction.reply({ content: 'I lack the Mention Everyone permission in that channel.', ephemeral: true });
+                return interaction.reply({ content: 'I lack the Mention Everyone permission in that channel.', flags: MessageFlags.Ephemeral });
             }
 
             if (message.length > interaction.client.config.limits.message) {
@@ -83,10 +83,10 @@ module.exports = {
                     .setTitle('Message Too Long')
                     .setDescription(config.messages.too_long.replace('{maxLength}', interaction.client.config.limits.message))
                     .setColor(0xffa500);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             // Build preview payload
             let previewEmbed = null;
@@ -129,7 +129,7 @@ module.exports = {
             let proceed = false;
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'announce_cancel') {
@@ -184,7 +184,7 @@ module.exports = {
                 .setDescription(config.messages.error)
                 .setColor(0xff0000);
             const replyMethod = interaction.deferred || interaction.replied ? interaction.editReply : interaction.reply;
-            await replyMethod.call(interaction, { embeds: [embed], ephemeral: true });
+            await replyMethod.call(interaction, { embeds: [embed], flags: MessageFlags.Ephemeral });
         }
     },
 };

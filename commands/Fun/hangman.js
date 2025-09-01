@@ -124,7 +124,7 @@ module.exports = {
         const channelId = interaction.channel.id;
 
         if (activeGames.has(channelId)) {
-            return interaction.reply({ content: config.messages.game_already_running, ephemeral: true });
+            return interaction.reply({ content: config.messages.game_already_running, flags: 64 });
         }
 
         await interaction.deferReply();
@@ -162,7 +162,7 @@ module.exports = {
 
         game.buttonCollector.on('collect', async i => {
             if (i.user.id !== game.player.id) {
-                await i.reply({ content: 'Only the game owner can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the game owner can use these buttons.', flags: 64 });
                 return;
             }
             if (i.customId === 'hangman_giveup') {

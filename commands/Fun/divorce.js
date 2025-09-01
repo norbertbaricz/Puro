@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -23,10 +23,10 @@ module.exports = {
         const divorceConfig = config.commands.divorce;
 
         if (initiator.id === target.id) {
-            return interaction.reply({ content: divorceConfig.messages.self_divorce, ephemeral: true });
+            return interaction.reply({ content: divorceConfig.messages.self_divorce, flags: MessageFlags.Ephemeral });
         }
         if (target.bot) {
-            return interaction.reply({ content: 'You cannot divorce a bot. 🤖', ephemeral: true });
+            return interaction.reply({ content: 'You cannot divorce a bot. 🤖', flags: MessageFlags.Ephemeral });
         }
 
         const responses = divorceConfig.messages.responses;
@@ -54,7 +54,7 @@ module.exports = {
 
         collector.on('collect', async i => {
             if (i.user.id !== target.id) {
-                await i.reply({ content: 'Only the mentioned member can respond to this.', ephemeral: true });
+                await i.reply({ content: 'Only the mentioned member can respond to this.', flags: MessageFlags.Ephemeral });
                 return;
             }
 

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -35,13 +35,13 @@ module.exports = {
         if (min >= max) {
             return interaction.reply({
                 content: guessConfig.messages.invalid_range,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
         if (chances <= 0) {
             return interaction.reply({
                 content: guessConfig.messages.invalid_chances,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -84,7 +84,7 @@ module.exports = {
             new ButtonBuilder().setCustomId('guess_giveup').setLabel('Give up').setStyle(ButtonStyle.Danger).setEmoji('🏳️')
         );
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
         let gameEmbed = buildEmbed();
         const reply = await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
 
@@ -100,7 +100,7 @@ module.exports = {
         const btnCollector = (await interaction.fetchReply()).createMessageComponentCollector({ time: 120000 });
         btnCollector.on('collect', async i => {
             if (i.user.id !== player.id) {
-                await i.reply({ content: 'Only the game owner can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the game owner can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'guess_giveup') {
@@ -145,7 +145,7 @@ module.exports = {
             if (isNaN(guess)) {
                 const msg = await interaction.followUp({ 
                     content: guessConfig.messages.invalid_guess.replace('{guess}', m.content), 
-                    ephemeral: true 
+                    flags: MessageFlags.Ephemeral 
                 });
                 setTimeout(() => msg.delete?.().catch(() => {}), 2500);
                 return;

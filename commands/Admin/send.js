@@ -115,10 +115,10 @@ module.exports = {
             }
 
             if (targets.length === 0) {
-                return interaction.reply({ content: 'No eligible recipients were found.', ephemeral: true });
+                return interaction.reply({ content: 'No eligible recipients were found.', flags: MessageFlags.Ephemeral });
             }
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             // Preview + confirm for multi-recipient
             if (!targetUser) {

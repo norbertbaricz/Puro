@@ -40,16 +40,17 @@ const client = new Client({
     ]
 });
 
-// Tame listener warnings in dev (and avoid AsyncEventEmitter-like noise)
-EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, 25);
-client.setMaxListeners(25);
+// Tame listener warnings using config values
+const listenerMax = Number((client.config?.logging?.listener_max)) || 25;
+EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, listenerMax);
+client.setMaxListeners(listenerMax);
 // Also raise limits on Discord.js websocket layers to avoid AsyncEventEmitter warnings
 if (client.ws?.setMaxListeners) {
-    client.ws.setMaxListeners(25);
+    client.ws.setMaxListeners(listenerMax);
 }
 client.on('shardCreate', (shard) => {
     if (typeof shard?.setMaxListeners === 'function') {
-        shard.setMaxListeners(25);
+        shard.setMaxListeners(listenerMax);
     }
 });
 
@@ -80,28 +81,32 @@ async function getAllJsFiles(dir) {
     return Array.prototype.concat(...files);
 }
 
-// Ensure database.json exists and is readable/writable; auto-heal if corrupted
-function ensureDatabase() {
-    const dbPath = path.join(__dirname, 'database.json');
-    if (!fs.existsSync(dbPath)) {
-        fs.writeFileSync(dbPath, '{}\n');
-        return { created: true, path: dbPath };
+// Ensure database exists and is readable/writable; auto-heal if corrupted
+function ensureDatabase(dbPath, options = {}) {
+    const { autoRepair = true } = options;
+    const absPath = path.isAbsolute(dbPath) ? dbPath : path.join(__dirname, dbPath);
+    if (!fs.existsSync(absPath)) {
+        fs.writeFileSync(absPath, '{}\n');
+        return { created: true, path: absPath };
     }
-    fs.accessSync(dbPath, fs.constants.R_OK | fs.constants.W_OK);
-    const raw = fs.readFileSync(dbPath, 'utf8');
+    fs.accessSync(absPath, fs.constants.R_OK | fs.constants.W_OK);
+    const raw = fs.readFileSync(absPath, 'utf8');
     if (raw.trim() === '') {
-        fs.writeFileSync(dbPath, '{}\n');
-        return { resetEmpty: true, path: dbPath };
+        fs.writeFileSync(absPath, '{}\n');
+        return { resetEmpty: true, path: absPath };
     }
     try {
         JSON.parse(raw);
-        return { ok: true, path: dbPath };
+        return { ok: true, path: absPath };
     } catch (e) {
+        if (!autoRepair) {
+            throw new Error('Database JSON is invalid and autoRepair=false');
+        }
         const stamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backup = path.join(__dirname, `database.bak.${stamp}.json`);
-        fs.copyFileSync(dbPath, backup);
-        fs.writeFileSync(dbPath, '{}\n');
-        return { repaired: true, backup, path: dbPath };
+        fs.copyFileSync(absPath, backup);
+        fs.writeFileSync(absPath, '{}\n');
+        return { repaired: true, backup, path: absPath };
     }
 }
 
@@ -144,21 +149,30 @@ async function loadAndRegisterCommands() {
         }
     }
 
-    if (commandsToRegister.length > 0) {
+    // Respect config for registration mode
+    const refreshOnStart = client.config?.api?.refresh_on_start ?? true;
+    const regMode = (client.config?.api?.registration || 'global').toLowerCase();
+    const guildId = client.config?.api?.guild_id;
+
+    if (commandsToRegister.length > 0 && refreshOnStart) {
         const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
         verboseLog(`\n⚡ Refreshing ${commandsToRegister.length} application (/) commands...`);
 
         try {
-            const data = await rest.put(
-                Routes.applicationCommands(process.env.clientId),
-                { body: commandsToRegister },
-            );
-            const refreshMessage = `Successfully reloaded ${data.length} application (/) commands!`;
+            let route;
+            if (regMode === 'guild' && guildId) {
+                route = Routes.applicationGuildCommands(process.env.clientId, guildId);
+            } else {
+                route = Routes.applicationCommands(process.env.clientId);
+            }
+            const data = await rest.put(route, { body: commandsToRegister });
+            const scope = regMode === 'guild' && guildId ? `guild ${guildId}` : 'global';
+            const refreshMessage = `Successfully reloaded ${data.length} ${scope} application (/) commands!`;
             verboseLog(`\n✅ ${refreshMessage}`);
             client.commandLoadDetails.push({ type: 'summary', message: refreshMessage, status: 'success' });
         } catch (error) {
-             console.error('❌ Discord API command registration error:', error);
-             client.commandLoadDetails.push({ type: 'summary', message: `Discord API Error: ${error.message}`, status: 'error' });
+            console.error('❌ Discord API command registration error:', error);
+            client.commandLoadDetails.push({ type: 'summary', message: `Discord API Error: ${error.message}`, status: 'error' });
         }
     } else {
         verboseLog("\nℹ️ No valid commands to register with Discord API.");
@@ -220,9 +234,11 @@ async function main() {
         client.bootStartedAt = process.hrtime.bigint();
 
         console.log("\n🛠️  Boot sequence initiated...");
-        console.log("🗄️  Validating database.json...");
+        const dbPathCfg = client.config?.database?.path || 'database.json';
+        const autoRepair = client.config?.database?.auto_repair !== false;
+        console.log("🗄️  Validating database...");
         try {
-            const dbStatus = ensureDatabase();
+            const dbStatus = ensureDatabase(dbPathCfg, { autoRepair });
             if (dbStatus.created) console.log(`✅ Database ready (created new at ${path.basename(dbStatus.path)}).`);
             else if (dbStatus.resetEmpty) console.log('✅ Database ready (reset empty file to valid JSON).');
             else if (dbStatus.repaired) console.log(`⚠️  Database was corrupted. Backed up to ${path.basename(dbStatus.backup)} and reset.`);

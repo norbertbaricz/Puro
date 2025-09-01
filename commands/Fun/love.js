@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 function calculateLoveScore(user1Id, user2Id) {
     const seed = parseInt(user1Id) + parseInt(user2Id);
@@ -76,10 +76,10 @@ module.exports = {
             const isPrivate = interaction.options.getBoolean('private') || false;
 
             if (user1.id === user2.id) {
-                return interaction.reply({ content: config.messages.self_love, ephemeral: true });
+                return interaction.reply({ content: config.messages.self_love, flags: MessageFlags.Ephemeral });
             }
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             const build = (u1, u2, pct, tip, rerolls) => {
                 const loveMessage = getLoveMessage(pct, config.messages.results);
@@ -120,7 +120,7 @@ module.exports = {
 
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'love_close') {
@@ -157,7 +157,7 @@ module.exports = {
             });
         } catch (error) {
             console.error('Love error:', error);
-            await interaction.reply({ content: config.messages.error, ephemeral: true });
+            await interaction.reply({ content: config.messages.error, flags: MessageFlags.Ephemeral });
         }
     },
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 // Folosim o Mapă globală pentru a stoca jocurile active, cheia fiind ID-ul canalului
 const activeGames = new Map();
@@ -73,7 +73,7 @@ module.exports = {
     async execute(interaction) {
         const channelId = interaction.channel.id;
         if (activeGames.has(channelId)) {
-            return interaction.reply({ content: 'A game is already in progress in this channel.', ephemeral: true });
+            return interaction.reply({ content: 'A game is already in progress in this channel.', flags: MessageFlags.Ephemeral });
         }
 
         try {
@@ -94,10 +94,10 @@ module.exports = {
             };
 
             if (opponent.bot) {
-                return interaction.reply({ content: cfg.messages.bot_opponent, ephemeral: true });
+                return interaction.reply({ content: cfg.messages.bot_opponent, flags: MessageFlags.Ephemeral });
             }
             if (opponent.id === challenger.id) {
-                return interaction.reply({ content: cfg.messages.self_challenge, ephemeral: true });
+                return interaction.reply({ content: cfg.messages.self_challenge, flags: MessageFlags.Ephemeral });
             }
 
             // Invitation step
@@ -121,7 +121,7 @@ module.exports = {
 
             inviteCollector.on('collect', async i => {
                 if (i.user.id !== opponent.id) {
-                    await i.reply({ content: 'Only the challenged opponent can respond.', ephemeral: true });
+                    await i.reply({ content: 'Only the challenged opponent can respond.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'ttt_decline') {
@@ -199,12 +199,12 @@ module.exports = {
                     collector.on('collect', async i => {
                         if (!i.customId.startsWith('ttt_')) return;
                         if (i.user.id !== players[game.currentPlayer].id) {
-                            await i.reply({ content: cfg.messages.not_your_turn.replace('{player}', players[game.currentPlayer]), ephemeral: true });
+                            await i.reply({ content: cfg.messages.not_your_turn.replace('{player}', players[game.currentPlayer]), flags: MessageFlags.Ephemeral });
                             return;
                         }
                         const position = parseInt(i.customId.split('_')[1]);
                         if (!game.makeMove(position)) {
-                            await i.reply({ content: 'That spot is already taken!', ephemeral: true });
+                            await i.reply({ content: 'That spot is already taken!', flags: MessageFlags.Ephemeral });
                             return;
                         }
                         const winner = game.checkWinner();
@@ -224,7 +224,7 @@ module.exports = {
                             const endCollector = endMsg.createMessageComponentCollector({ time: 60000 });
                             endCollector.on('collect', async btn => {
                                 if (![players.X.id, players.O.id].includes(btn.user.id)) {
-                                    await btn.reply({ content: 'Only players can use these buttons.', ephemeral: true });
+                                    await btn.reply({ content: 'Only players can use these buttons.', flags: MessageFlags.Ephemeral });
                                     return;
                                 }
                                 if (btn.customId === 'ttt_close') {
@@ -275,7 +275,7 @@ module.exports = {
             console.error("TicTacToe Error:", error);
             activeGames.delete(interaction.channel.id);
             if (!interaction.replied && !interaction.deferred) {
-                 await interaction.reply({ content: 'A critical error occurred while starting the game.', ephemeral: true });
+                 await interaction.reply({ content: 'A critical error occurred while starting the game.', flags: MessageFlags.Ephemeral });
             } else {
                  await interaction.editReply({ content: 'A critical error occurred, the game has been cancelled.', components: [] });
             }
