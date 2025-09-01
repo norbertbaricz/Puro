@@ -105,7 +105,7 @@ module.exports = {
 
                 collector.on('collect', async i => {
                     if (i.user.id !== interaction.user.id) {
-                        await i.reply({ content: 'Only the original asker can use these buttons.', ephemeral: true });
+                        await i.reply({ content: 'Only the original asker can use these buttons.', flags: MessageFlags.Ephemeral });
                         return;
                     }
                     if (i.customId === '8ball_close') {

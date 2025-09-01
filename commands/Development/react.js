@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Development',
@@ -33,7 +33,7 @@ module.exports = {
         const msgs = cfg.messages || {};
 
         const isPrivate = interaction.options.getBoolean('private') || false;
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         const messageIdsRaw = interaction.options.getString('message_ids');
         const emojisRaw = interaction.options.getString('emojis');

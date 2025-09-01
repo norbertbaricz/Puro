@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -19,14 +19,14 @@ module.exports = {
         const userinfoConfig = config.commands.userinfo;
 
         if (!interaction.guild) {
-            return interaction.reply({ content: '❌ This command can only be used in a server.', ephemeral: true });
+            return interaction.reply({ content: '❌ This command can only be used in a server.', flags: MessageFlags.Ephemeral });
         }
 
         // Always resolve the target user first
         const targetUser = interaction.options.getUser('member', true);
         const isPrivate = interaction.options.getBoolean('private') || false;
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         // Try to get a full GuildMember; fall back to fetching if uncached
         let member = interaction.options.getMember('member');
@@ -124,7 +124,7 @@ module.exports = {
         const collector = msg.createMessageComponentCollector({ time: 30000 });
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'ui_roles') {
@@ -133,21 +133,21 @@ module.exports = {
                     ?.sort((a,b) => b.position - a.position)
                     ?.map(r => `${r}`)
                     ?.join('\n') || userinfoConfig.messages.none;
-                await i.reply({ content: roleList.slice(0, 1900), ephemeral: true });
+                await i.reply({ content: roleList.slice(0, 1900), flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'ui_perms') {
                 const permList = permissions.length ? permissions.join(', ') : userinfoConfig.messages.none;
-                await i.reply({ content: permList.slice(0, 1900), ephemeral: true });
+                await i.reply({ content: permList.slice(0, 1900), flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'ui_avatar') {
-                await i.reply({ content: avatarUrl, ephemeral: true });
+                await i.reply({ content: avatarUrl, flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'ui_banner') {
-                if (bannerUrl) await i.reply({ content: bannerUrl, ephemeral: true });
-                else await i.reply({ content: 'No banner set.', ephemeral: true });
+                if (bannerUrl) await i.reply({ content: bannerUrl, flags: MessageFlags.Ephemeral });
+                else await i.reply({ content: 'No banner set.', flags: MessageFlags.Ephemeral });
                 return;
             }
         });

@@ -30,6 +30,7 @@ status:
   type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
   url: "https://thewolfdenvr.carrd.co/"  # URL pentru Streaming (opțional)
   status: "idle"  # Poate fi "online", "dnd", "idle" sau "invisible"
+  interval_ms: 10000  # Interval for rotating presence/status
 
 # General limits
 limits:
@@ -700,16 +701,7 @@ commands:
       - "Say something in a made-up language."
       - "Let someone else choose your next profile picture."
 
-  ttt:
-    color: '#0099ff'
-    messages:
-      bot_opponent: "❌ No bot opponents!"
-      self_challenge: "❌ No self-challenges!"
-      not_your_turn: "❌ It's {player}'s turn!"
-      timeout: "⏰ Game timed out!"
-      tie: "🤝 It's a tie!"
-      win: "🎉 {player} wins with {symbol}!"
-      error: "❌ Error starting game!"
+  # (see below for TicTacToe config)
 
   userinfo:
     color: '#3498db'
@@ -746,8 +738,41 @@ commands:
       field_incident: "Incident"
       incident_text: "Mining accident"
 
+  # TicTacToe command configuration
+  ttt:
+    color: '#5865F2'
+    messages:
+      bot_opponent: 'You cannot play against a bot.'
+      self_challenge: 'You cannot challenge yourself.'
+      not_your_turn: "It's not your turn! It's {player}'s turn."
+      tie: "It's a tie!"
+      win: '{player} wins as {symbol}! 🎉'
+      timeout: '⏳ The game timed out due to inactivity.'
+
+  # Adopt command configuration
+  adopt:
+    color: '#9b59b6'
+    messages:
+      title: 'Adoption Request'
+      prompt: '{adopter} wants to adopt {target}! 💖'
+      self_adopt: 'You cannot adopt yourself. Nice try! 😅'
+      bot_adopt: 'You cannot adopt a bot. 🤖'
+      accept_label: 'Accept'
+      decline_label: 'Decline'
+      accepted: '📜 Adoption papers signed! {target} has been adopted by {adopter}! 🎉'
+      declined: '❌ {target} politely declined the adoption from {adopter}.'
+      timeout: '⏳ No response in time. Adoption request expired.'
+      not_you: 'Only the requested member can respond to this.'
+
 # Event-specific configurations
 events:
+  voiceConnect:
+    lobby_channel_id: ''            # If empty, the default ID in code is used
+    bitrate: 64000                  # Default voice bitrate
+    user_limit: 5                   # Default user cap for temporary channels
+    rtc_region: 'rotterdam'         # Preferred RTC region
+    name_template: "{user}'s Channel" # Temporary channel name pattern
+    cooldown_seconds: 15            # Anti-spam cooldown between creations
   ai:
     messages:
       unsure: "I... I'm not sure what to say, hooman. Can you ask again?"
@@ -915,3 +940,18 @@ events:
 messages:
   environmentVariablesNotSet: "Environment variables TOKEN or clientId not set."
   errorLoggingIn: "Error logging in: "
+# Logging and runtime
+logging:
+  quiet_startup: true
+  listener_max: 25
+
+# Command registration/API
+api:
+  refresh_on_start: true   # Register slash commands on boot
+  registration: global     # global | guild
+  guild_id: ''             # If registration=guild, put guild ID here
+
+# Database options
+database:
+  path: 'database.json'
+  auto_repair: true

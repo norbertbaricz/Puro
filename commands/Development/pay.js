@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 // --- Database Functions ---
 const dbPath = path.join(__dirname, '../../database.json');
@@ -112,7 +112,7 @@ module.exports = {
                         .setDescription('You cannot send money to yourself. Please choose another member.')
                         .setColor(0xED4245) // Red
                 ],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
         
@@ -124,7 +124,7 @@ module.exports = {
                         .setDescription('You cannot send money to a bot.')
                         .setColor(0xED4245) // Red
                 ],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -136,7 +136,7 @@ module.exports = {
                         .setDescription('The amount must be a positive number greater than zero.')
                         .setColor(0xED4245) // Red
                 ],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
         
@@ -159,11 +159,11 @@ module.exports = {
                         )
                         .setColor(0xFEE75C) // Yellow
                 ],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
         // Preview and confirmation
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
         const preview = new EmbedBuilder()
             .setTitle('Confirm Transfer')
             .setDescription(`Send **$${amount.toLocaleString()}** to ${receiver}?`)
@@ -186,7 +186,7 @@ module.exports = {
             const collector = msg.createMessageComponentCollector({ time: 30000 });
             collector.on('collect', async i => {
                 if (i.user.id !== sender.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'pay_cancel') {

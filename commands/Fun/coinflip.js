@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -32,7 +32,7 @@ module.exports = {
 
             const doFlips = (n) => Array(n).fill(0).map(() => Math.random() < 0.5 ? 'Heads' : 'Tails');
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             const suspense = new EmbedBuilder()
                 .setColor(config.color)
@@ -92,7 +92,7 @@ module.exports = {
 
                 collector.on('collect', async i => {
                     if (i.user.id !== interaction.user.id) {
-                        await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                        await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                         return;
                     }
                     if (i.customId === 'coin_close') {
@@ -126,8 +126,7 @@ module.exports = {
             setTimeout(() => render(0), 800);
         } catch (error) {
             console.error('Coinflip error:', error);
-            await interaction.reply({ content: config.messages.error, ephemeral: true });
+            await interaction.reply({ content: config.messages.error, flags: MessageFlags.Ephemeral });
         }
     },
 };
-

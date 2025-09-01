@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -43,11 +43,11 @@ module.exports = {
         // Verificare dacă secțiunea de config există
         if (!timeoutConfig) {
             console.error("Eroare: Configurația pentru comanda 'timeout' nu a fost găsită.");
-            return interaction.reply({ content: '❌ A configuration error occurred. Please contact the bot administrator.', ephemeral: true });
+            return interaction.reply({ content: '❌ A configuration error occurred. Please contact the bot administrator.', flags: MessageFlags.Ephemeral });
         }
 
         if (!interaction.inGuild()) {
-            return interaction.reply({ content: '❌ This command can only be used in a server.', ephemeral: true });
+            return interaction.reply({ content: '❌ This command can only be used in a server.', flags: MessageFlags.Ephemeral });
         }
 
         const member = interaction.options.getMember('member');
@@ -58,16 +58,16 @@ module.exports = {
         const reason = interaction.options.getString('reason') || 'No reason provided';
 
         if (!member) {
-            return interaction.reply({ content: timeoutConfig.messages.user_not_found || 'User not found in this server.', ephemeral: true });
+            return interaction.reply({ content: timeoutConfig.messages.user_not_found || 'User not found in this server.', flags: MessageFlags.Ephemeral });
         }
         if (member.id === interaction.user.id) {
-             return interaction.reply({ content: timeoutConfig.messages.cannot_timeout_self || '❌ You cannot time out yourself.', ephemeral: true });
+             return interaction.reply({ content: timeoutConfig.messages.cannot_timeout_self || '❌ You cannot time out yourself.', flags: MessageFlags.Ephemeral });
         }
         if (member.id === interaction.client.user.id) {
-            return interaction.reply({ content: timeoutConfig.messages.cannot_timeout_bot || '❌ I cannot time myself out.', ephemeral: true });
+            return interaction.reply({ content: timeoutConfig.messages.cannot_timeout_bot || '❌ I cannot time myself out.', flags: MessageFlags.Ephemeral });
         }
         if (!member.moderatable) {
-            return interaction.reply({ content: timeoutConfig.messages.not_moderatable, ephemeral: true });
+            return interaction.reply({ content: timeoutConfig.messages.not_moderatable, flags: MessageFlags.Ephemeral });
         }
 
         // Parse duration if not clearing
@@ -76,7 +76,7 @@ module.exports = {
             const durationRegex = /^(\d+)([smhd])$/i;
             const match = durationStr.match(durationRegex);
             if (!match) {
-                return interaction.reply({ content: timeoutConfig.messages.invalid_format, ephemeral: true });
+                return interaction.reply({ content: timeoutConfig.messages.invalid_format, flags: MessageFlags.Ephemeral });
             }
             const value = parseInt(match[1]);
             const unit = match[2].toLowerCase();
@@ -88,11 +88,11 @@ module.exports = {
             }
             const maxDurationMs = 28 * 24 * 60 * 60 * 1000;
             if (durationMs > maxDurationMs) {
-                return interaction.reply({ content: timeoutConfig.messages.max_duration_exceeded, ephemeral: true });
+                return interaction.reply({ content: timeoutConfig.messages.max_duration_exceeded, flags: MessageFlags.Ephemeral });
             }
         }
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         const actionTitle = clear ? 'Confirm Clear Timeout' : 'Confirm Timeout';
         const actionDesc = clear
@@ -118,7 +118,7 @@ module.exports = {
         let proceed = false;
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'to_cancel') {

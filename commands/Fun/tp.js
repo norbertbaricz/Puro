@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 // Per-user cooldown map
 const tpCooldowns = new Map();
@@ -54,17 +54,17 @@ module.exports = {
             const targetUser = interaction.options.getUser('member');
 
             if (!targetUser) {
-                return interaction.reply({ content: getMessage('error'), ephemeral: true });
+                return interaction.reply({ content: getMessage('error'), flags: MessageFlags.Ephemeral });
             }
             if (targetUser.bot) {
-                return interaction.reply({ content: getMessage('bot_tp'), ephemeral: true });
+                return interaction.reply({ content: getMessage('bot_tp'), flags: MessageFlags.Ephemeral });
             }
             const memberToTeleport = interaction.options.getMember('member');
             if (!memberToTeleport) {
-                return interaction.reply({ content: getMessage('not_found'), ephemeral: true });
+                return interaction.reply({ content: getMessage('not_found'), flags: MessageFlags.Ephemeral });
             }
             if (memberToTeleport.id === interaction.user.id) {
-                return interaction.reply({ content: getMessage('self_tp'), ephemeral: true });
+                return interaction.reply({ content: getMessage('self_tp'), flags: MessageFlags.Ephemeral });
             }
 
             // Cooldown check
@@ -73,11 +73,11 @@ module.exports = {
             const remainingMs = last + cooldownSeconds * 1000 - now;
             if (remainingMs > 0) {
                 const remaining = Math.ceil(remainingMs / 1000);
-                return interaction.reply({ content: getMessage('cooldown', { remaining }), ephemeral: true });
+                return interaction.reply({ content: getMessage('cooldown', { remaining }), flags: MessageFlags.Ephemeral });
             }
             tpCooldowns.set(interaction.user.id, now);
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             const effects = Array.isArray(configMessages.teleport) && configMessages.teleport.length > 0
                 ? configMessages.teleport
@@ -114,7 +114,7 @@ module.exports = {
                 const collector = msg.createMessageComponentCollector({ time: 30000 });
                 collector.on('collect', async i => {
                     if (i.user.id !== interaction.user.id) {
-                        await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                        await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                         return;
                     }
                     if (i.customId === 'tp_close') {
@@ -151,7 +151,7 @@ module.exports = {
 
         } catch (error) {
             console.error('TP Command General Error:', error);
-            const payload = { content: getMessage('error'), ephemeral: true };
+            const payload = { content: getMessage('error'), flags: MessageFlags.Ephemeral };
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(payload);
             } else {
@@ -160,4 +160,3 @@ module.exports = {
         }
     },
 };
-

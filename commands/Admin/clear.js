@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -28,7 +28,7 @@ module.exports = {
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ No Permission')
                     .setDescription(config.messages.no_permission);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
             if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {
@@ -36,7 +36,7 @@ module.exports = {
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ Missing Bot Permission')
                     .setDescription(config.messages.no_bot_permission);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
             const amount = interaction.options.getInteger('amount');
@@ -47,7 +47,7 @@ module.exports = {
             const includePinned = interaction.options.getBoolean('include_pinned') || false;
             const isPrivate = interaction.options.getBoolean('private') || false;
 
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             // Fetch up to 100 recent messages for filtering (bulkDelete limit anyway)
             const messages = await interaction.channel.messages.fetch({ limit: 100 });
@@ -105,7 +105,7 @@ module.exports = {
             let proceed = false;
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'clear_cancel') {
