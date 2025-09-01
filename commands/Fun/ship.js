@@ -71,7 +71,11 @@ module.exports = {
             return hslToHex(hue, 70, 45);
         };
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        if (isPrivate) {
+            await interaction.deferReply({ flags: 64 });
+        } else {
+            await interaction.deferReply();
+        }
 
         let state = {
             a: user1,
@@ -112,7 +116,7 @@ module.exports = {
 
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: 64 });
                 return;
             }
             if (i.customId === 'ship_close') {
