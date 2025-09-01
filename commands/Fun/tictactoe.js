@@ -113,7 +113,8 @@ module.exports = {
                 new ButtonBuilder().setCustomId('ttt_decline').setLabel('Decline').setStyle(ButtonStyle.Danger).setEmoji('❌')
             );
 
-            const inviteMsg = await interaction.reply({ embeds: [invite], components: [inviteRow], fetchReply: true });
+            await interaction.reply({ embeds: [invite], components: [inviteRow] });
+            const inviteMsg = await interaction.fetchReply();
 
             const inviteCollector = inviteMsg.createMessageComponentCollector({ time: 30000 });
             let accepted = false;
