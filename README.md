@@ -4,6 +4,8 @@
 
 Puro is a modern, feature-rich Discord bot designed for community engagement, moderation, and entertainment. Built with Node.js and Discord.js, Puro offers a wide range of slash commands, interactive games, and event-driven features, all fully customizable via a single `config.yml` file. Whether you want to manage your server, boost activity, or just have fun, Puro is ready to help!
 
+Created by Skypixel Team. © Skypixel Team — all rights reserved. This project is open source under the ISC license; copyright remains with Skypixel Team.
+
 ---
 
 ## Features
@@ -52,8 +54,10 @@ Puro listens and responds to various Discord events:
 
 - **Ready**: Logs startup details and sets a custom status (from `config.yml`).
 - **Interaction Create**: Handles slash commands and button interactions.
-- **Message Create**: Responds to greetings (e.g., "hi", "hello") in a specific guild with wolf-themed replies.
+- **Message Create**: Responds to greetings (e.g., "hi", "hello") in a configured guild with customizable replies.
 - **Custom Events**: Easily add your own event handlers.
+
+> Optional AI moderation example: `events/ai.js` demonstrates an on-message moderation check using a local Ollama server. If you want to enable it, update `CHANNEL_ID`, `MODEL`, and `OLLAMA_API_URL` at the top of that file and ensure the server is running. If you don't need it, you can delete or ignore that file.
 
 ---
 
@@ -72,7 +76,7 @@ All commands and events are fully customizable via `config.yml`:
 
 ### Prerequisites
 
-- **Node.js** v16 or higher
+- **Node.js** v16.9+ (Node 18 LTS recommended)
 - **npm** (comes with Node.js)
 - A Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications))
 - Optional: e621 API credentials for `/e621`
@@ -93,7 +97,7 @@ All commands and events are fully customizable via `config.yml`:
 3. **Set up environment variables**:
    Create a `.env` file in the root directory and add:
    ```
-   DISCORD_TOKEN=your_discord_bot_token
+   TOKEN=your_discord_bot_token
    clientId=your_bot_client_id
    E621_USERNAME=your_e621_username
    E621_API_KEY=your_e621_api_key
@@ -105,10 +109,10 @@ All commands and events are fully customizable via `config.yml`:
    ```yaml
    status:
      texts:
-       - "Powered by Skypixel™️"
+       - "Powered by Skypixel"
        - "Ready to help ❤️"
      type: "Custom"
-     url: "https://thewolfdenvr.carrd.co/"
+     url: "https://example.com/"
    ```
 
 5. **Run the bot**:
@@ -129,7 +133,7 @@ All commands and events are fully customizable via `config.yml`:
    - Example: `/help` for all commands, `/flip 5` to flip five coins.
 
 3. **Interact with events**:
-   - In the configured guild, send greetings like "hi" or "hello" for a wolf-themed reply.
+   - In the configured guild, send greetings like "hi" or "hello" for the configured reply.
    - The bot sets its status automatically on startup.
 
 ---
@@ -152,6 +156,24 @@ commands:
     messages:
       self_love: "💝 No self-love checks!"
       error: "❌ Error calculating love!"
+```
+
+### Command Registration
+
+On startup, the bot automatically registers all valid slash commands it finds under `commands/` as global application commands. This can take a few minutes to propagate. If you prefer guild-only registration during development, adapt the call in `app.js` to use `Routes.applicationGuildCommands(clientId, guildId)`.
+
+### Ephemeral Replies (Discord.js v14)
+
+Discord.js deprecated the `ephemeral: true` option on interaction responses in favor of flags. The codebase now uses `flags: MessageFlags.Ephemeral` (or `64`) for ephemeral responses. If you add new commands, prefer:
+
+```js
+await interaction.reply({ content: 'Only you can see this', flags: 64 });
+```
+
+or, when deferring:
+
+```js
+await interaction.deferReply({ flags: isPrivate ? 64 : undefined });
 ```
 
 ---
@@ -177,8 +199,9 @@ Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and ensure your code adh
 
 - **Bot not responding**:
   - Check permissions.
-  - Verify `DISCORD_TOKEN` and `clientId` in `.env`.
+  - Verify `TOKEN` and `clientId` in `.env`.
   - Ensure commands are registered (re-run `npm start`).
+  - Note: environment variable is `TOKEN` in this project (not `DISCORD_TOKEN`).
 
 - **e621 command failing**:
   - Confirm `E621_USERNAME` and `E621_API_KEY` in `.env`.
@@ -188,13 +211,27 @@ Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and ensure your code adh
   - Check the guild ID in `config.yml`.
   - Ensure the message matches a greeting pattern.
 
+- **AsyncEventEmitter memory leak warnings**:
+  - The project increases listener limits on the client and shards to suppress benign warnings from the Discord.js websocket layer. This is expected and safe.
+
+- **database.json issues**:
+  - On boot, `database.json` is auto-created if missing and auto-healed if empty/corrupted (a backup is written when possible).
+
+---
+
+## Changelog (recent)
+
+- Migrate ephemeral responses to `flags: MessageFlags.Ephemeral` for Discord.js deprecation compliance.
+- Raise max listeners on client/shards to avoid benign AsyncEventEmitter warnings.
+- Auto-create/repair `database.json` on boot for smoother first-run and recovery.
+
 For help, open an issue on GitHub or contact the maintainer.
 
 ---
 
 ## License
 
-Puro is licensed under the [MIT License](LICENSE).
+Puro is licensed under the ISC License. © Skypixel Team. All rights reserved.
 
 ---
 
