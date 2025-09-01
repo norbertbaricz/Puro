@@ -68,7 +68,8 @@ module.exports = {
       new ButtonBuilder().setCustomId('adopt_decline').setLabel(messages.decline_label || 'Decline').setStyle(ButtonStyle.Danger).setEmoji('❌'),
     );
 
-    const msg = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
+    await interaction.reply({ embeds: [embed], components: [row] });
+    const msg = await interaction.fetchReply();
     const collector = msg.createMessageComponentCollector({ time: 30_000 });
 
     collector.on('collect', async i => {
@@ -121,4 +122,3 @@ module.exports = {
     });
   }
 };
-

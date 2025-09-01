@@ -47,7 +47,8 @@ module.exports = {
             new ButtonBuilder().setCustomId('divorce_cancel').setLabel('Stay Together').setStyle(ButtonStyle.Success).setEmoji('💞')
         );
 
-        const message = await interaction.reply({ embeds: [baseEmbed], components: [row], fetchReply: true });
+        await interaction.reply({ embeds: [baseEmbed], components: [row] });
+        const message = await interaction.fetchReply();
 
         const collector = message.createMessageComponentCollector({ time: 30_000 });
 

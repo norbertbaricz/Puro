@@ -48,8 +48,8 @@ module.exports = {
             new ButtonBuilder().setCustomId('marry_decline').setLabel('Decline').setStyle(ButtonStyle.Danger).setEmoji('💔')
         );
 
-        const msg = await interaction.reply({ embeds: [baseEmbed], components: [row], fetchReply: true });
-
+        await interaction.reply({ embeds: [baseEmbed], components: [row] });
+        const msg = await interaction.fetchReply();
         const collector = msg.createMessageComponentCollector({ time: 30_000 });
 
         collector.on('collect', async i => {
