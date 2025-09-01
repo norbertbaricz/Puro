@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const axios = require('axios');
 
 module.exports = {
@@ -80,7 +80,7 @@ module.exports = {
             .setFooter({ text: `${interaction.user.tag}${rerolls ? ` • Rerolls: ${rerolls}` : ''}`, iconURL: interaction.user.displayAvatarURL() });
 
         try {
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             const loading = new EmbedBuilder()
                 .setColor(jokeConfig.color)
@@ -125,7 +125,7 @@ module.exports = {
 
                 collector.on('collect', async i => {
                     if (i.user.id !== interaction.user.id) {
-                        await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                        await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                         return;
                     }
 
@@ -177,15 +177,14 @@ module.exports = {
             if (axios.isAxiosError(error) && error.response) {
                 console.error(`Axios API request error: ${error.response.status} ${error.response.statusText}`, error.response.data);
                 const alreadyReplied = interaction.replied || interaction.deferred;
-                const payload = { content: jokeConfig.messages.fetch_error, ephemeral: true };
+                const payload = { content: jokeConfig.messages.fetch_error, flags: MessageFlags.Ephemeral };
                 alreadyReplied ? await interaction.editReply(payload) : await interaction.reply(payload);
             } else {
                 console.error('An unexpected error occurred while executing the /joke command:', error);
                 const alreadyReplied = interaction.replied || interaction.deferred;
-                const payload = { content: jokeConfig.messages.unexpected_error, ephemeral: true };
+                const payload = { content: jokeConfig.messages.unexpected_error, flags: MessageFlags.Ephemeral };
                 alreadyReplied ? await interaction.editReply(payload) : await interaction.reply(payload);
             }
         }
     },
 };
-

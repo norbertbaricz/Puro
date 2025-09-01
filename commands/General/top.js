@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionsBitField, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'General',
@@ -70,7 +70,7 @@ module.exports = {
 
         try {
             const isPrivate = interaction.options.getBoolean('private') || false;
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             // --- Obținerea opțiunilor ---
             const type = interaction.options.getString('type');
@@ -202,7 +202,7 @@ module.exports = {
             if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({ content: errorMessage, embeds: [] });
             } else {
-                await interaction.reply({ content: errorMessage, ephemeral: true });
+                await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
             }
         }
     },

@@ -1,4 +1,4 @@
-const { Events } = require('discord.js');
+const { Events, MessageFlags } = require('discord.js');
 
 // Simple per-command cooldowns: Map<commandName, Map<userId, lastUsedMs>>
 const cooldowns = new Map();
@@ -19,7 +19,7 @@ module.exports = {
                     if (!interaction.replied && !interaction.deferred) {
                         await interaction.reply({
                             content: config.messages.command_not_found.replace('{command}', commandName),
-                            ephemeral: true
+                            flags: MessageFlags.Ephemeral,
                         });
                     }
                     return;
@@ -37,7 +37,7 @@ module.exports = {
                     if (remaining > 0) {
                         const seconds = Math.ceil(remaining / 1000);
                         const msg = (cmdCfg?.messages?.cooldown || '⏳ Please wait {remaining} seconds.').replace('{remaining}', String(seconds));
-                        await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+                        await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
                         return;
                     }
                     byUser.set(interaction.user.id, now);
@@ -92,7 +92,7 @@ module.exports = {
             
             const errorMessage = {
                 content: config.messages.handler_error || 'There was an error while processing this interaction!',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             };
 
             if (interaction.replied || interaction.deferred) {

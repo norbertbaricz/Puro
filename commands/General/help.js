@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -93,7 +93,7 @@ module.exports = {
                 const commandsList = commands.map(cmd => `\`/${cmd.name}\`\n↳ ${cmd.description}`).join('\n\n') || 'This category currently has no commands.';
                 embed.setDescription(commandsList);
 
-                return await interaction.reply({ embeds: [embed], ephemeral: isPrivate });
+                return await interaction.reply({ embeds: [embed], flags: isPrivate ? MessageFlags.Ephemeral : undefined });
             }
 
             // Search by name/description
@@ -111,17 +111,17 @@ module.exports = {
                 const body = results.slice(0, 20).map(r => `\`/${r.name}\` — ${r.category}\n↳ ${r.description}`).join('\n\n') || 'No matching commands found.';
                 embed.setDescription(body);
                 if (results.length > 20) embed.setFooter({ text: `Showing first 20 of ${results.length} results` });
-                return await interaction.reply({ embeds: [embed], ephemeral: isPrivate });
+                return await interaction.reply({ embeds: [embed], flags: isPrivate ? MessageFlags.Ephemeral : undefined });
             }
 
             // Default: interactive menu
             const menu = await createMainMenu(interaction);
-            await interaction.reply({ ...menu, ephemeral: isPrivate });
+            await interaction.reply({ ...menu, flags: isPrivate ? MessageFlags.Ephemeral : undefined });
         } catch (error) {
             console.error('Help command execute error:', error);
             await interaction.reply({
                 content: 'An error occurred while processing the help command.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             });
         }
     },
@@ -171,7 +171,7 @@ module.exports = {
             console.error('Category selection error:', error);
             await interaction.followUp({
                 content: 'An error occurred while loading this category.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             });
         }
     },
@@ -186,7 +186,7 @@ module.exports = {
             console.error('Help back button error:', error);
             await interaction.followUp({
                 content: 'An error occurred while returning to the main menu.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             });
         }
     }

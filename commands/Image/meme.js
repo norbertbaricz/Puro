@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const axios = require('axios');
 
 const memeCache = {
@@ -22,7 +22,7 @@ module.exports = {
         const config = interaction.client.config.commands.meme;
         try {
             const isPrivate = interaction.options.getBoolean('private') || false;
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             let meme;
             const subreddit = interaction.options.getString('subreddit');
@@ -73,7 +73,7 @@ module.exports = {
             const collector = msg.createMessageComponentCollector({ time: 30000 });
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'meme_close') {
@@ -106,7 +106,7 @@ module.exports = {
             });
         } catch (error) {
             console.error('Meme error:', error);
-            const payload = { content: config.messages.error, ephemeral: true };
+            const payload = { content: config.messages.error, flags: MessageFlags.Ephemeral };
             if (interaction.deferred || interaction.replied) await interaction.editReply(payload); else await interaction.reply(payload);
         }
     },

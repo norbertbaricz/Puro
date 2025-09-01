@@ -43,6 +43,15 @@ const client = new Client({
 // Tame listener warnings in dev (and avoid AsyncEventEmitter-like noise)
 EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, 25);
 client.setMaxListeners(25);
+// Also raise limits on Discord.js websocket layers to avoid AsyncEventEmitter warnings
+if (client.ws?.setMaxListeners) {
+    client.ws.setMaxListeners(25);
+}
+client.on('shardCreate', (shard) => {
+    if (typeof shard?.setMaxListeners === 'function') {
+        shard.setMaxListeners(25);
+    }
+});
 
 client.config = config;
 client.commands = new Collection();

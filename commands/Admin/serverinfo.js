@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -21,7 +21,7 @@ module.exports = {
         const { guild } = interaction;
         const isPrivate = interaction.options.getBoolean('private') || false;
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
         const owner = await guild.fetchOwner();
         const channels = guild.channels.cache;
         const textChannels = channels.filter(c => c.type === ChannelType.GuildText).size;
@@ -106,7 +106,7 @@ module.exports = {
         const collector = msg.createMessageComponentCollector({ time: 30000 });
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use this button.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use this button.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'srv_roles') {
@@ -116,7 +116,7 @@ module.exports = {
                     .first(25)
                     .map(r => `${r} (${r.members.size})`)
                     .join('\n') || 'No roles';
-                await i.reply({ content: roles, ephemeral: true });
+                await i.reply({ content: roles, flags: MessageFlags.Ephemeral });
             }
         });
 

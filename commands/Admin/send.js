@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -54,11 +54,11 @@ module.exports = {
 
         try {
             if (!interaction.inGuild()) {
-                return interaction.reply({ content: "This command can only be used within a server.", ephemeral: true });
+                return interaction.reply({ content: "This command can only be used within a server.", flags: MessageFlags.Ephemeral });
             }
 
             if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages)) {
-                return interaction.reply({ content: messages.no_permission, ephemeral: true });
+                return interaction.reply({ content: messages.no_permission, flags: MessageFlags.Ephemeral });
             }
 
             const targetUser = interaction.options.getUser('user');
@@ -139,7 +139,7 @@ module.exports = {
                 await new Promise((resolve) => {
                     collector.on('collect', async i => {
                         if (i.user.id !== interaction.user.id) {
-                            await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                            await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                             return;
                         }
                         if (i.customId === 'send_cancel') {
@@ -215,7 +215,7 @@ module.exports = {
                 .setTitle('Error')
                 .setDescription(messages.error_generic)
                 .setColor(0xff0000);
-            const payload = { embeds: [embed], ephemeral: true };
+            const payload = { embeds: [embed], flags: MessageFlags.Ephemeral };
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(payload);
             } else {

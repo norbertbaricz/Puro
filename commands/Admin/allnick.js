@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -56,11 +56,11 @@ module.exports = {
                         .setTitle('⛔ No Permission')
                         .setDescription(config.messages?.no_permission || 'You need "Manage Nicknames" permission to use this command.')
                 ],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         const members = await guild.members.fetch();
         const targets = members.filter(m => {
@@ -107,7 +107,7 @@ module.exports = {
         let proceed = false;
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'allnick_cancel') {

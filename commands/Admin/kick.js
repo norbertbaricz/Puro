@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Admin',
@@ -30,11 +30,11 @@ module.exports = {
         const messages = config.messages || {};
 
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
-            return interaction.reply({ content: messages.no_permission || 'You do not have permission to use this command.', ephemeral: true });
+            return interaction.reply({ content: messages.no_permission || 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
         }
         
         if (!interaction.guild.members.me.permissions.has(PermissionsBitField.Flags.KickMembers)) {
-            return interaction.reply({ content: messages.bot_no_permission || 'I do not have permission to kick members.', ephemeral: true });
+            return interaction.reply({ content: messages.bot_no_permission || 'I do not have permission to kick members.', flags: MessageFlags.Ephemeral });
         }
 
         const member = interaction.options.getMember('member');
@@ -44,23 +44,23 @@ module.exports = {
         const reason = (reasonRaw && reasonRaw.trim()) || messages.no_reason || 'No reason provided';
 
         if (!member) {
-            return interaction.reply({ content: messages.user_not_found || 'That user is not in this server.', ephemeral: true });
+            return interaction.reply({ content: messages.user_not_found || 'That user is not in this server.', flags: MessageFlags.Ephemeral });
         }
 
         if (member.id === interaction.user.id) {
-            return interaction.reply({ content: messages.cannot_kick_self || 'You cannot kick yourself.', ephemeral: true });
+            return interaction.reply({ content: messages.cannot_kick_self || 'You cannot kick yourself.', flags: MessageFlags.Ephemeral });
         }
         
         if (member.id === interaction.client.user.id) {
-            return interaction.reply({ content: messages.cannot_kick_bot || 'I cannot kick myself.', ephemeral: true });
+            return interaction.reply({ content: messages.cannot_kick_bot || 'I cannot kick myself.', flags: MessageFlags.Ephemeral });
         }
 
         const me = await interaction.guild.members.fetch(interaction.client.user.id);
         if (!member.kickable || me.roles.highest.comparePositionTo(member.roles.highest) <= 0) {
-            return interaction.reply({ content: messages.cannot_kick_member || 'I cannot kick this member.', ephemeral: true });
+            return interaction.reply({ content: messages.cannot_kick_member || 'I cannot kick this member.', flags: MessageFlags.Ephemeral });
         }
         try {
-            await interaction.deferReply({ ephemeral: isPrivate });
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             // Preview + confirmation
             const preview = new EmbedBuilder()
@@ -85,7 +85,7 @@ module.exports = {
             let proceed = false;
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'kick_cancel') {
@@ -143,7 +143,7 @@ module.exports = {
         } catch (error) {
             console.error(`Failed to kick member ${member?.user?.tag || member?.id}:`, error);
             const already = interaction.replied || interaction.deferred;
-            const payload = { content: (messages.error || 'An error occurred: {error}').replace('{error}', error.message), ephemeral: true };
+            const payload = { content: (messages.error || 'An error occurred: {error}').replace('{error}', error.message), flags: MessageFlags.Ephemeral };
             if (already) await interaction.editReply(payload); else await interaction.reply(payload);
         }
     }
