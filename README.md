@@ -43,6 +43,7 @@ Puro provides a comprehensive suite of slash commands, including:
 - **/userinfo**: Show detailed info about a user.
 - **/divorce**: Divorce your in-bot partner.
 - **/serverinfo**: Show server information.
+- **/adopt**: Send a wholesome adoption request with accept/decline.
 
 > **Note:** All commands are fully configurable via `config.yml` (colors, messages, limits, etc).
 
