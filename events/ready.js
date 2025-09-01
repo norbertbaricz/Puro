@@ -5,7 +5,10 @@ module.exports = {
     once: true,
     async execute(client) {
         const config = client.config.events.ready;
-        console.log(config.messages.login_success.replace('{tag}', client.user.tag));
+        const quiet = client.config?.logging?.quiet_startup ?? true;
+        if (!quiet) {
+            console.log(config.messages.login_success.replace('{tag}', client.user.tag));
+        }
 
         const computeStats = () => {
             let members = 0, channels = 0;
@@ -18,9 +21,11 @@ module.exports = {
 
         // Log stats once on ready
         const { members: totalMembers, channels: totalChannels } = computeStats();
-        console.log(config.messages.stats.servers.replace('{count}', client.guilds.cache.size));
-        console.log(config.messages.stats.members.replace('{count}', totalMembers));
-        console.log(config.messages.stats.channels.replace('{count}', totalChannels));
+        if (!quiet) {
+            console.log(config.messages.stats.servers.replace('{count}', client.guilds.cache.size));
+            console.log(config.messages.stats.members.replace('{count}', totalMembers));
+            console.log(config.messages.stats.channels.replace('{count}', totalChannels));
+        }
 
         const statusConfig = client.config.status;
         if (!statusConfig?.texts?.length) { // Am schimbat asta, verifica doar lungimea array-ului
@@ -91,5 +96,25 @@ module.exports = {
         setRandomActivity();
         const intervalMs = Math.max(5000, Number(statusConfig.interval_ms) || 10000);
         setInterval(setRandomActivity, intervalMs);
+
+        // Print futuristic banner once, after presence is set and ping stabilizes
+        setTimeout(() => {
+            try {
+                const commandsLoaded = client.commands?.size || 0;
+                const eventsLoaded = (client.eventLoadDetails || []).filter(x => x.status === 'success' && !x.type).length;
+                const servers = client.guilds.cache.size;
+                const { members } = computeStats();
+                const ping = Math.max(0, client.ws.ping);
+
+                const lines = [
+                    '\n══════════════════════════════════════════════════════',
+                    '🚀 Puro is online and ready!',
+                    `🧠 Commands: ${commandsLoaded} loaded  •  🧩 Events: ${eventsLoaded} active`,
+                    `🌐 Servers: ${servers}  •  👥 Members: ${members}  •  📡 Ping: ${ping}ms`,
+                    '══════════════════════════════════════════════════════\n',
+                ];
+                console.log(lines.join('\n'));
+            } catch {}
+        }, 800);
     },
 };
