@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags } = require('discord.js');
 const ms = require('ms');
 
 module.exports = {
@@ -49,20 +49,20 @@ module.exports = {
 
         // Basic validations
         if (!interaction.inGuild()) {
-            return interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+            return interaction.reply({ content: 'This command can only be used in a server.', flags: MessageFlags.Ephemeral });
         }
         if (!targetMember) {
-            return interaction.reply({ content: config.messages?.user_not_found || 'That user is not in this server.', ephemeral: true });
+            return interaction.reply({ content: config.messages?.user_not_found || 'That user is not in this server.', flags: MessageFlags.Ephemeral });
         }
         if (targetMember.id === interaction.user.id) {
-            return interaction.reply({ content: config.messages?.cannot_ban_self || 'You cannot ban yourself.', ephemeral: true });
+            return interaction.reply({ content: config.messages?.cannot_ban_self || 'You cannot ban yourself.', flags: MessageFlags.Ephemeral });
         }
         if (targetMember.id === interaction.client.user.id) {
-            return interaction.reply({ content: config.messages?.cannot_ban_bot || 'I cannot ban myself.', ephemeral: true });
+            return interaction.reply({ content: config.messages?.cannot_ban_bot || 'I cannot ban myself.', flags: MessageFlags.Ephemeral });
         }
         const me = await interaction.guild.members.fetch(interaction.client.user.id);
         if (!targetMember.bannable || me.roles.highest.comparePositionTo(targetMember.roles.highest) <= 0) {
-            return interaction.reply({ content: config.messages?.cannot_ban || 'I cannot ban this member. They may have a higher role than me or I lack permissions.', ephemeral: true });
+            return interaction.reply({ content: config.messages?.cannot_ban || 'I cannot ban this member. They may have a higher role than me or I lack permissions.', flags: MessageFlags.Ephemeral });
         }
 
         // Parse duration
@@ -71,7 +71,7 @@ module.exports = {
         if (period.toLowerCase() !== 'permanent') {
             const msPeriod = ms(period);
             if (!msPeriod || msPeriod < 1000) {
-                return interaction.reply({ content: config.messages?.invalid_period || 'Invalid period format.', ephemeral: true });
+                return interaction.reply({ content: config.messages?.invalid_period || 'Invalid period format.', flags: MessageFlags.Ephemeral });
             }
             periodText = ms(msPeriod, { long: true });
             unbanAfterMs = msPeriod;
@@ -79,7 +79,7 @@ module.exports = {
             periodText = config.messages?.permanent || 'Permanent';
         }
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         // Preview + confirm
         const preview = new EmbedBuilder()
@@ -104,7 +104,7 @@ module.exports = {
         let proceed = false;
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
             }
             if (i.customId === 'ban_cancel') {

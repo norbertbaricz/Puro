@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'Fun',
@@ -22,7 +22,7 @@ module.exports = {
         const isPrivate = interaction.options.getBoolean('private') || false;
 
         if (!targetMember || !targetMember.user) {
-            return interaction.reply({ content: genderConfig.messages.not_found, ephemeral: true });
+            return interaction.reply({ content: genderConfig.messages.not_found, flags: MessageFlags.Ephemeral });
         }
 
         const identities = genderConfig.identities;
@@ -34,7 +34,7 @@ module.exports = {
             return '█'.repeat(filled) + '░'.repeat(blocks - filled) + ` ${pct}%`;
         };
 
-        await interaction.deferReply({ ephemeral: isPrivate });
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
         const render = async (rerolls = 0) => {
             const identity = pick();
@@ -65,7 +65,7 @@ module.exports = {
 
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'gender_close') {

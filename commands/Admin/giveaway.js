@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags } = require('discord.js');
 
 module.exports = {
   category: 'Admin',
@@ -57,12 +57,12 @@ module.exports = {
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
         return interaction.reply({
             content: 'You do not have permission to use this command.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral,
         });
     }
 
     const isPrivate = interaction.options.getBoolean('private') || false;
-    await interaction.deferReply({ ephemeral: isPrivate });
+    await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
     const prize = interaction.options.getString('prize');
     const durationDays = interaction.options.getInteger('duration_days') || 7;
@@ -197,7 +197,7 @@ module.exports = {
     const collector = reply.createMessageComponentCollector({ time: 60000 });
     collector.on('collect', async i => {
       if (i.user.id !== interaction.user.id) {
-        await i.reply({ content: 'Only the command invoker can use these buttons.', ephemeral: true });
+        await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
         return;
       }
       if (i.customId === 'ga_close') {
@@ -226,7 +226,7 @@ module.exports = {
           await announceChannel.send({ embeds: [embed] });
           await i.update({ components: [disabled] });
         } catch (e) {
-          await i.reply({ content: 'Failed to post to the selected channel. Check my permissions.', ephemeral: true });
+          await i.reply({ content: 'Failed to post to the selected channel. Check my permissions.', flags: MessageFlags.Ephemeral });
         }
         return;
       }

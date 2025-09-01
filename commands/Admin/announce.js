@@ -31,7 +31,7 @@ module.exports = {
 
         // MODIFICARE AICI: Verificăm dacă comanda este rulată pe un server
         if (!interaction.inGuild()) {
-            return interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+            return interaction.reply({ content: 'This command can only be used in a server.', flags: MessageFlags.Ephemeral });
         }
 
         try {
@@ -72,7 +72,7 @@ module.exports = {
                     .setTitle('Missing Permission')
                     .setDescription(config.messages.no_bot_permission.replace('{channel}', channel))
                     .setColor(0xff0000);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
             if (allowEveryone && !channel.permissionsFor(botMember).has(PermissionFlagsBits.MentionEveryone)) {
                 return interaction.reply({ content: 'I lack the Mention Everyone permission in that channel.', ephemeral: true });

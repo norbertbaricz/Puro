@@ -152,7 +152,7 @@ module.exports = {
         game.gameMessage = await interaction.editReply({ embeds: [embed], components: createControls(game) });
 
         // Info ghid pentru jucător (ephemeral)
-        await interaction.followUp({ content: 'Type letters or the full word in chat. Use the buttons for a hint or to give up. Good luck!', ephemeral: true }).catch(() => {});
+        await interaction.followUp({ content: 'Type letters or the full word in chat. Use the buttons for a hint or to give up. Good luck!', flags: 64 }).catch(() => {});
 
         const filter = m => m.author.id === interaction.user.id;
         game.collector = interaction.channel.createMessageCollector({ filter, time: 300000 }); // 5 minute
@@ -212,7 +212,7 @@ module.exports = {
             await m.delete().catch(() => {});
 
             if (!guess || !/^[a-z]+$/.test(guess)) {
-                 const msg = await interaction.followUp({ content: config.messages.not_a_letter.replace('{input}', m.content), ephemeral: true });
+                 const msg = await interaction.followUp({ content: config.messages.not_a_letter.replace('{input}', m.content), flags: 64 });
                  setTimeout(() => msg.delete().catch(() => {}), 3000);
                  return;
             }
@@ -223,12 +223,12 @@ module.exports = {
                     game.collector.stop('win'); // Victorie
                 } else {
                     game.mistakes++; // Greșeală
-                    const msg = await interaction.followUp({ content: config.messages.wrong_word_guess, ephemeral: true });
+                    const msg = await interaction.followUp({ content: config.messages.wrong_word_guess, flags: 64 });
                     setTimeout(() => msg.delete().catch(() => {}), 3000);
                 }
             } else { // Altfel, este o ghicire de o singură literă
                 if (game.guessedLetters.includes(guess) || game.wordGuessed.includes(guess.toUpperCase())) {
-                    const msg = await interaction.followUp({ content: config.messages.letter_already_guessed.replace('{letter}', guess), ephemeral: true });
+                    const msg = await interaction.followUp({ content: config.messages.letter_already_guessed.replace('{letter}', guess), flags: 64 });
                     setTimeout(() => msg.delete().catch(() => {}), 3000);
                     return;
                 }
