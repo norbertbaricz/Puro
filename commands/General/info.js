@@ -104,14 +104,14 @@ module.exports = {
           const statusContent = content.status || {};
           base.addFields({
             name: statusContent.title || '📊 Bot Status & Statistics',
-            value: `${statusContent.servers_label || '🌐 Servers'}: \`${guilds.size}\`\n${statusContent.members_label || '👥 Members'}: \`${totalMembers}\`\n${statusContent.commands_label || '🧩 Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || '📡 Latency'}: \`${client.ws.ping}ms\`\n${statusContent.events_label || '🧩 Events'}: \`${eventsCount}\``,
+            value: `${statusContent.servers_label || '🏠 Servers'}: \`${guilds.size}\`\n${statusContent.members_label || '👥 Members'}: \`${totalMembers}\`\n${statusContent.commands_label || '⚙ Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || '⏱ Latency'}: \`${client.ws.ping}ms\`\n${statusContent.events_label || '🎯 Events'}: \`${eventsCount}\``,
             inline: false,
           });
           const systemContent = content.system || {};
           const mem = process.memoryUsage();
           base.addFields({
             name: systemContent.title || '💻 System Information',
-            value: `${systemContent.os_label || '🖥️ Operating System'}: \`${os.type()} ${os.release()}\`\n${systemContent.cpu_label || '🧠 CPU'}: \`${os.cpus()[0]?.model || 'Unknown'}\`\n${systemContent.mem_usage_label || '🔥 Memory Usage'}: \`${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.total_mem_label || '💾 Total Memory'}: \`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.node_label || '🟢 Node.js Version'}: \`${process.version}\`\n${systemContent.djs_label || '🔷 Discord.js Version'}: \`v${require('discord.js').version}\`\n${systemContent.cpu_temp_label || '🌡️ CPU Temperature'}: \`${cpuTemperature}\`\n${systemContent.battery_label || '🔋 Battery'}: \`${batteryPercentage}\``,
+            value: `${systemContent.os_label || '💻 Operating System'}: \`${os.type()} ${os.release()}\`\n${systemContent.cpu_label || '🧠 CPU'}: \`${os.cpus()[0]?.model || 'Unknown'}\`\n${systemContent.mem_usage_label || '📈 Memory Usage'}: \`${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.total_mem_label || '💾 Total Memory'}: \`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\`\n${systemContent.node_label || 'Node.js Version'}: \`${process.version}\`\n${systemContent.djs_label || 'discord.js Version'}: \`v${require('discord.js').version}\`\n${systemContent.cpu_temp_label || '🌡 CPU Temperature'}: \`${cpuTemperature}\`\n${systemContent.battery_label || '🔋 Battery'}: \`${batteryPercentage}\``,
             inline: false,
           });
           const uptimeContent = content.uptime || {};
@@ -134,24 +134,24 @@ module.exports = {
           const s = content.status || {};
           base.setTitle(s.title || '📊 Bot Status')
             .addFields(
-              { name: s.servers_label || '🌐 Servers', value: `\`${guilds.size}\``, inline: true },
+              { name: s.servers_label || '🏠 Servers', value: `\`${guilds.size}\``, inline: true },
               { name: s.members_label || '👥 Members', value: `\`${totalMembers}\``, inline: true },
-              { name: s.commands_label || '🧩 Commands', value: `\`${client.commands?.size || 0}\``, inline: true },
-              { name: s.events_label || '🧩 Events', value: `\`${eventsCount}\``, inline: true },
-              { name: s.latency_label || '📡 Latency', value: `\`${client.ws.ping}ms\``, inline: true }
+              { name: s.commands_label || '⚙ Commands', value: `\`${client.commands?.size || 0}\``, inline: true },
+              { name: s.events_label || '🎯 Events', value: `\`${eventsCount}\``, inline: true },
+              { name: s.latency_label || '⏱ Latency', value: `\`${client.ws.ping}ms\``, inline: true }
             );
         } else if (type === 'system') {
           const s = content.system || {};
           const mem = process.memoryUsage();
           base.setTitle(s.title || '💻 System Information')
             .addFields(
-              { name: s.os_label || '🖥️ Operating System', value: `\`${os.type()} ${os.release()}\``, inline: false },
+              { name: s.os_label || '💻 Operating System', value: `\`${os.type()} ${os.release()}\``, inline: false },
               { name: s.cpu_label || '🧠 CPU', value: `\`${os.cpus()[0]?.model || 'Unknown'}\``, inline: false },
-              { name: s.mem_usage_label || '🔥 Memory Usage', value: `\`${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB\``, inline: true },
+              { name: s.mem_usage_label || '📈 Memory Usage', value: `\`${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB\``, inline: true },
               { name: s.total_mem_label || '💾 Total Memory', value: `\`${(os.totalmem() / 1024 / 1024).toFixed(2)} MB\``, inline: true },
-              { name: s.node_label || '🟢 Node.js Version', value: `\`${process.version}\``, inline: true },
-              { name: s.djs_label || '🔷 Discord.js Version', value: `\`v${require('discord.js').version}\``, inline: true },
-              { name: s.cpu_temp_label || '🌡️ CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
+              { name: s.node_label || 'Node.js Version', value: `\`${process.version}\``, inline: true },
+              { name: s.djs_label || 'discord.js Version', value: `\`v${require('discord.js').version}\``, inline: true },
+              { name: s.cpu_temp_label || '🌡 CPU Temperature', value: `\`${cpuTemperature}\``, inline: true },
               { name: s.battery_label || '🔋 Battery', value: `\`${batteryPercentage}\``, inline: true }
             );
         } else if (type === 'uptime') {
