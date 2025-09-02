@@ -60,6 +60,18 @@ commands:
       success: "✅ Message sent to {channel}!"
       error: "❌ Failed to send message!"
       cooldown: "⏳ Please wait {remaining} seconds."
+      invalid_channel_variants:
+        - "❌ That channel won't work for announcements."
+        - "⚠️ Pick a text or announcement channel."
+        - "🚫 Invalid target channel for this action."
+      success_variants:
+        - "✅ Announced successfully in {channel}!"
+        - "📣 Posted in {channel}!"
+        - "🟢 Announcement delivered to {channel}."
+      error_variants:
+        - "❌ I couldn't send that message."
+        - "🛑 Something blocked the announcement."
+        - "⚠️ Send failed; check my permissions."
 
   avatar:
     color: '#0099ff'
@@ -103,6 +115,19 @@ commands:
     emojis:
       heads: '🌕'
       tails: '🌑'
+    prompts:
+      suspense:
+        - "The coin rises..."
+        - "Spinning the coin..."
+        - "Airborne! Let's see..."
+      results_prefix:
+        - "Results are in!"
+        - "Outcome:"
+        - "Here's what we got:"
+      error_variants:
+        - "❌ The coin fell off the table!"
+        - "⚠️ I fumbled the flip; try again."
+        - "🛑 Flip error; please retry."
 
   divorce:
     color: '#808080'
@@ -149,6 +174,10 @@ commands:
       question_field: "Your Question"
       answer_field: "The 8-Ball's Answer"
       error: "❌ An error occurred while shaking the 8-Ball."
+      title_variants:
+        - "🎱 Mystic 8-Ball"
+        - "🔮 The All‑Seeing 8‑Ball"
+        - "🎱 Fate in a Sphere"
     answers:
       affirmative:
         - "It is certain."
@@ -748,6 +777,10 @@ commands:
       tie: "It's a tie!"
       win: '{player} wins as {symbol}! 🎉'
       timeout: '⏳ The game timed out due to inactivity.'
+      start_prompts:
+        - 'Game on! X starts first.'
+        - 'Battle begins — may the best win.'
+        - 'Ready… set… tic‑tac‑toe!'
 
   # Adopt command configuration
   adopt:
@@ -763,6 +796,18 @@ commands:
       declined: '❌ {target} politely declined the adoption from {adopter}.'
       timeout: '⏳ No response in time. Adoption request expired.'
       not_you: 'Only the requested member can respond to this.'
+      prompt_variants:
+        - '{adopter} would love to adopt {target}! 🧸'
+        - '{adopter} is offering a cozy home to {target}! 🏡'
+        - "Paperwork ready — {adopter} wants to adopt {target}! 📝"
+      accepted_variants:
+        - '🎉 Adoption complete! {adopter} and {target} are now family.'
+        - '🧾 Signed and sealed — {target} is adopted by {adopter}!'
+        - '💞 A new bond is formed! {adopter} adopted {target}.'
+      declined_variants:
+        - '🙇 The request was declined this time.'
+        - '❌ Adoption cancelled by {target}.'
+        - '🚫 Not today — request declined.'
 
 # Event-specific configurations
 events:
@@ -785,6 +830,10 @@ events:
       command_not_found: "⚠️ Command {command} not found."
       execution_error: "❌ Error executing command!"
       handler_error: "❌ Error processing interaction!"
+      command_not_found_variants:
+        - "🤔 I couldn't find /{command}."
+        - "⚠️ /{command} isn't available."
+        - "🚫 Unknown command: /{command}."
 
   messageCreate:
     guild_id: '1217588804328620163'
@@ -935,11 +984,24 @@ events:
         channels: "📊 Managing {count} channels"
       status_error: "❌ Error setting status!"
       no_status: "⚠️ No status configured, using default"
+      motd:
+        - 'Be kind. Be creative. Be curious.'
+        - 'Powered by Skypixel — have fun!'
+        - 'Tip: Use /help to explore commands.'
 
 # General messages
 messages:
   environmentVariablesNotSet: "Environment variables TOKEN or clientId not set."
   errorLoggingIn: "Error logging in: "
+  common:
+    permission_denied:
+      - '❌ You do not have permission to do that.'
+      - '🚫 Missing permission for this action.'
+      - '⚠️ You lack the required permission.'
+    try_again_later:
+      - 'Please try again later.'
+      - 'Give it another shot in a moment.'
+      - 'Try again shortly.'
 # Logging and runtime
 logging:
   quiet_startup: true
@@ -966,3 +1028,11 @@ database:
       no_permission: "❌ I don't have permission to create threads in that channel."
       invalid_channel: '❌ Please select a text or forum channel.'
       error_create: '❌ Could not create the thread.'
+      created_variants:
+        - '🧵 New thread: {thread}'
+        - '✨ Thread is live: {thread}'
+        - '📌 Spun up a thread: {thread}'
+      seed_message_variants:
+        - 'Starting a discussion…'
+        - 'One moment, making space for the topic…'
+        - 'Spawning a thread…'
