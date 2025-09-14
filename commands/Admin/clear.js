@@ -23,7 +23,16 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.clear;
         try {
-            if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+            // Guild-only guard and robust permission checks
+            if (!interaction.inGuild()) {
+                const embed = new EmbedBuilder()
+                    .setColor(config.color || '#ff0000')
+                    .setTitle('⛔ Server Only')
+                    .setDescription('This command can only be used in a server channel.');
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+            }
+
+            if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages)) {
                 const embed = new EmbedBuilder()
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ No Permission')
@@ -31,7 +40,7 @@ module.exports = {
                 return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
-            if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {
+            if (!interaction.guild.members.me?.permissions?.has(PermissionFlagsBits.ManageMessages)) {
                 const embed = new EmbedBuilder()
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ Missing Bot Permission')
@@ -151,7 +160,11 @@ module.exports = {
                 .setColor(config.color || '#ff0000')
                 .setTitle('❌ Error')
                 .setDescription(config.messages.error || 'An error occurred while clearing messages.');
-            await interaction.editReply({ embeds: [embed] });
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [embed] }).catch(() => {});
+            } else {
+                await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral }).catch(() => {});
+            }
         }
     },
 };

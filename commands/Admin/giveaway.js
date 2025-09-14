@@ -53,8 +53,16 @@ module.exports = {
     const giveawayMsg = giveawayConfig.messages;
     const giveawayColor = giveawayConfig.color;
 
+    // Guild-only and permission checks
+    if (!interaction.inGuild()) {
+        return interaction.reply({
+            content: '❌ This command can only be used in a server channel.',
+            flags: MessageFlags.Ephemeral,
+        });
+    }
+
     // Check if the user has permission to manage the server
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
+    if (!interaction.memberPermissions?.has(PermissionsBitField.Flags.ManageGuild)) {
         return interaction.reply({
             content: 'You do not have permission to use this command.',
             flags: MessageFlags.Ephemeral,

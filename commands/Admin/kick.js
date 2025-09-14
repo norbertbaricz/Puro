@@ -29,11 +29,17 @@ module.exports = {
         const config = interaction.client.config.commands.kick || {};
         const messages = config.messages || {};
 
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
+        // Ensure this runs only in a guild and permissions are checked robustly
+        if (!interaction.inGuild()) {
+            return interaction.reply({ content: '❌ This command can only be used in a server channel.', flags: MessageFlags.Ephemeral });
+        }
+
+        const canMemberKick = interaction.memberPermissions?.has(PermissionsBitField.Flags.KickMembers);
+        if (!canMemberKick) {
             return interaction.reply({ content: messages.no_permission || 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
         }
-        
-        if (!interaction.guild.members.me.permissions.has(PermissionsBitField.Flags.KickMembers)) {
+
+        if (!interaction.guild.members.me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) {
             return interaction.reply({ content: messages.bot_no_permission || 'I do not have permission to kick members.', flags: MessageFlags.Ephemeral });
         }
 

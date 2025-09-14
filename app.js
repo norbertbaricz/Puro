@@ -40,8 +40,8 @@ const client = new Client({
     ]
 });
 
-// Tame listener warnings using config values
-const listenerMax = Number((client.config?.logging?.listener_max)) || 25;
+// Tame listener warnings using config values (read from loaded config)
+const listenerMax = Number((config?.logging?.listener_max)) || 25;
 EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, listenerMax);
 client.setMaxListeners(listenerMax);
 // Also raise limits on Discord.js websocket layers to avoid AsyncEventEmitter warnings
