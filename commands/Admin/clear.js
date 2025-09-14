@@ -130,18 +130,27 @@ module.exports = {
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                     await i.update({ components: [disabled] });
 
-                    // Delete the selected messages directly
-                    const deleted = await interaction.channel.bulkDelete(toDelete, true);
+                    try {
+                        // Delete the selected messages directly
+                        const deleted = await interaction.channel.bulkDelete(toDelete, true);
 
-                    const done = new EmbedBuilder()
-                        .setColor(config.color || '#00ff00')
-                        .setTitle('✅ Messages Deleted')
-                        .setDescription(
-                            config.messages.success
-                                .replace('{count}', deleted.size)
-                                .replace('{s}', deleted.size === 1 ? '' : 's')
-                        );
-                    await interaction.editReply({ embeds: [done] });
+                        const done = new EmbedBuilder()
+                            .setColor(config.color || '#00ff00')
+                            .setTitle('✅ Messages Deleted')
+                            .setDescription(
+                                config.messages.success
+                                    .replace('{count}', deleted.size)
+                                    .replace('{s}', deleted.size === 1 ? '' : 's')
+                            );
+                        await interaction.editReply({ embeds: [done] });
+                    } catch (err) {
+                        console.error('Clear confirm error:', err);
+                        const fail = new EmbedBuilder()
+                            .setColor('#ff0000')
+                            .setTitle('❌ Error')
+                            .setDescription(config.messages.error || 'An error occurred while clearing messages.');
+                        await interaction.editReply({ embeds: [fail] }).catch(() => {});
+                    }
                 }
             });
 
