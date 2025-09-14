@@ -130,10 +130,8 @@ module.exports = {
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                     await i.update({ components: [disabled] });
 
-                    // Convert array back to collection for bulkDelete
-                    const collection = matched.clone().clear();
-                    for (const m of toDelete) collection.set(m.id, m);
-                    const deleted = await interaction.channel.bulkDelete(collection, true);
+                    // Delete the selected messages directly
+                    const deleted = await interaction.channel.bulkDelete(toDelete, true);
 
                     const done = new EmbedBuilder()
                         .setColor(config.color || '#00ff00')

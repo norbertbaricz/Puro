@@ -83,6 +83,16 @@ module.exports = {
             const messageCount = new Map();
             const sinceTimestamp = Date.now() - (durationDays * 24 * 60 * 60 * 1000);
 
+            // Ensure the bot can see and read history in the selected channel (if any)
+            const me = interaction.guild.members.me;
+            if (limitChannel) {
+                const perms = limitChannel.permissionsFor(me);
+                if (!perms || !perms.has(PermissionsBitField.Flags.ViewChannel) || !perms.has(PermissionsBitField.Flags.ReadMessageHistory)) {
+                    const msg = topMsg.no_channel_permission || '❌ I lack View Channel or Read Message History in the selected channel.';
+                    return await interaction.editReply({ content: msg });
+                }
+            }
+
             // --- Embed de procesare ---
             const processingEmbed = new EmbedBuilder()
                 .setTitle(topMsg.calculating_title || '🔍 Calculating Activity...')
@@ -104,7 +114,8 @@ module.exports = {
                 ? new Map([[limitChannel.id, limitChannel]])
                 : interaction.guild.channels.cache.filter(ch =>
                     [ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(ch.type) &&
-                    ch.permissionsFor(interaction.guild.members.me).has(PermissionsBitField.Flags.ReadMessageHistory)
+                    ch.permissionsFor(me)?.has(PermissionsBitField.Flags.ViewChannel) &&
+                    ch.permissionsFor(me)?.has(PermissionsBitField.Flags.ReadMessageHistory)
                 );
 
             let processed = 0;
