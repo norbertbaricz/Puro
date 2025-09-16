@@ -41,7 +41,7 @@ module.exports = {
         const config = interaction.client.config.commands.allnick || {};
         const newNick = interaction.options.getString('nickname');
         const role = interaction.options.getRole('role');
-        const includeBots = interaction.options.getBoolean('include_bots') || false;
+        const includeBots = interaction.options.getBoolean('include_bots') ?? true;
         const onlyWithNickname = interaction.options.getBoolean('only_with_nickname') || false;
         const isPrivate = interaction.options.getBoolean('private') || false;
         const reason = (interaction.options.getString('reason') || `Action by /allnick used by ${interaction.user.tag}`).slice(0, 200);
@@ -64,7 +64,6 @@ module.exports = {
 
         const members = await guild.members.fetch();
         const targets = members.filter(m => {
-            if (m.id === guild.ownerId) return false; // always skip owner
             if (!includeBots && m.user.bot) return false;
             if (role && !m.roles.cache.has(role.id)) return false;
             if (onlyWithNickname && !m.nickname) return false;
@@ -137,7 +136,7 @@ module.exports = {
             }
 
             // Execute operation
-            let changed = 0, failed = 0, skipped = 0, processed = 0;
+            let changed = 0, failed = 0, processed = 0;
             const total = targets.size;
             const updateProgress = async () => {
                 const prog = new EmbedBuilder()
@@ -146,8 +145,7 @@ module.exports = {
                     .setDescription(`${processed}/${total} processed`)
                     .addFields(
                         { name: 'Succeeded', value: `**${changed}**`, inline: true },
-                        { name: 'Failed', value: `**${failed}**`, inline: true },
-                        { name: 'Skipped (Owner)', value: `**${skipped}**`, inline: true }
+                        { name: 'Failed', value: `**${failed}**`, inline: true }
                     )
                     .setFooter({ text: `Requested by ${interaction.user.tag}` })
                     .setTimestamp();
@@ -156,7 +154,6 @@ module.exports = {
 
             let idx = 0;
             for (const member of targets.values()) {
-                if (member.id === guild.ownerId) { skipped++; processed++; continue; }
                 try {
                     await member.setNickname(newNick || null, reason);
                     changed++;
@@ -180,8 +177,7 @@ module.exports = {
                 )
                 .addFields(
                     { name: 'Succeeded', value: `**${changed}**`, inline: true },
-                    { name: 'Failed', value: `**${failed}**`, inline: true },
-                    { name: 'Skipped (Owner)', value: `**${skipped}**`, inline: true }
+                    { name: 'Failed', value: `**${failed}**`, inline: true }
                 )
                 .setFooter({ text: `Requested by ${interaction.user.tag}`})
                 .setTimestamp();
