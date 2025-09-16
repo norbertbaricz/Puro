@@ -767,6 +767,30 @@ commands:
       field_incident: "Incident"
       incident_text: "Mining accident"
 
+  gamble:
+    color_win: '#2ecc71'
+    color_lose: '#ed4245'
+    color_info: '#5865f2'
+    messages:
+      title: '🎰 Puro Slots'
+      field_bet: 'Bet'
+      field_multiplier: 'Multiplier'
+      field_win: 'Winnings'
+      field_loss: 'Loss'
+      field_new_balance: 'New Balance'
+      footer_win: 'Luck is on your side!'
+      footer_lose: 'You lost the bet. Try again!'
+      buttons:
+        play_again: 'Play Again'
+        half: 'Half'
+        all_in: 'All‑in'
+        close: 'Close'
+      errors:
+        invalid_bet: '❌ Bet amount must be a positive number.'
+        insufficient_funds: '❌ Insufficient funds. You only have ${balance}.'
+        insufficient_funds_bet: '❌ Insufficient funds to bet ${bet}. Balance: ${balance}.'
+      not_you: 'Only you can use these buttons.'
+
   # TicTacToe command configuration
   ttt:
     color: '#5865F2'
