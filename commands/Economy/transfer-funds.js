@@ -1,55 +1,8 @@
-const fs = require('fs');
-const path = require('path');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-
-// --- Database Functions ---
-const dbPath = path.join(__dirname, '../../database.json');
-
-/**
- * Reads the database file. Creates one if it doesn't exist.
- * @returns {object} The parsed database object.
- */
-function readDB() {
-    if (!fs.existsSync(dbPath)) {
-        fs.writeFileSync(dbPath, JSON.stringify({}));
-        return {};
-    }
-    try {
-        const data = fs.readFileSync(dbPath, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.error("Error reading or parsing database.json:", err);
-        fs.writeFileSync(dbPath, JSON.stringify({}));
-        return {};
-    }
-}
-
-/**
- * Writes data to the database file.
- * @param {object} data The data to write to the database.
- */
-function writeDB(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
-
-/**
- * Ensures a user exists in the database with the correct object format.
- * @param {object} db The database object.
- * @param {string} userId The ID of the user to check.
- * @returns {object} The user's database entry.
- */
-function ensureUser(db, userId) {
-    if (!db[userId] || typeof db[userId] !== 'object' || db[userId] === null) {
-        // If user doesn't exist, or is in the old format (just a number),
-        // initialize them with the new object structure.
-        db[userId] = { balance: db[userId] || 0 };
-    }
-    return db[userId];
-}
-
+const { readEconomyDB, writeEconomyDB, ensureUserRecord } = require('../../lib/economy');
 
 module.exports = {
-    category: 'Development',
+    category: 'Economy',
     data: new SlashCommandBuilder()
         .setName('pay')
         .setDescription('Send money to another member (with taxes and risks!).')
@@ -85,7 +38,7 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
-        const db = readDB();
+        const db = readEconomyDB();
         
         const sender = interaction.user;
         const receiver = interaction.options.getUser('member');
@@ -96,8 +49,8 @@ module.exports = {
         const isPrivate = interaction.options.getBoolean('private') || false;
 
         // --- Ensure users exist in the new DB format ---
-        const senderData = ensureUser(db, sender.id);
-        const receiverData = ensureUser(db, receiver.id);
+        const senderData = ensureUserRecord(db, sender.id);
+        const receiverData = ensureUserRecord(db, receiver.id);
 
         const baseEmbed = new EmbedBuilder()
             .setFooter({ text: `Transaction initiated by ${sender.username}` })
@@ -214,7 +167,7 @@ module.exports = {
         if (eventChance < 0.15) {
             senderData.balance -= amount;
             if (senderData.balance < 0) senderData.balance = 0;
-            writeDB(db);
+            writeEconomyDB(db);
 
             const events = [
                 { title: '💀 Transaction Intercepted by Hackers! 💀', description: 'A shadowy group of hackers intercepted the data packet! The money is gone.', color: 0x9B59B6 },
@@ -242,7 +195,7 @@ module.exports = {
         // Success path
         senderData.balance -= totalDeduction;
         receiverData.balance += amount;
-        writeDB(db);
+        writeEconomyDB(db);
 
         if (dmRecipient) {
             const recipientName = anonymous ? 'Someone' : sender.username;

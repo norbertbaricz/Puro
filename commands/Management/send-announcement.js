@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
-    category: 'Admin',
+    category: 'Management',
     data: new SlashCommandBuilder()
         .setName('announce')
         .setDescription('Announce a message to a specific channel!')

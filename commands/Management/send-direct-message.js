@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Admin',
+    category: 'Management',
     data: new SlashCommandBuilder()
         .setName('send')
         .setDescription('Send a DM to a user, a role, or everyone in the server')

@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionsBitField, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'General',
+    category: 'Info',
     data: new SlashCommandBuilder()
         .setName('top')
         .setDescription('Shows a leaderboard of the most or least active members.')

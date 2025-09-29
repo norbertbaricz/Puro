@@ -1,17 +1,106 @@
 {
   "486412940199591967": {
-    "balance": 0
+    "balance": 3558,
+    "job": {
+      "id": "pilot",
+      "hiredAt": 1759188544949,
+      "lastWorkedAt": 1759188552548,
+      "streak": 1
+    },
+    "jobStats": {
+      "shiftsCompleted": 1,
+      "failedShifts": 0,
+      "totalEarned": 403
+    }
   },
   "935530770469093376": {
-    "balance": 1675
+    "balance": 5870,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
   },
   "914250836538961941": {
-    "balance": 20933
+    "balance": 40,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
   },
   "1279782688819122208": {
-    "balance": 8885
+    "balance": 9215,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
   },
   "960795399642288128": {
-    "balance": 22180
+    "balance": 22180,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
+  },
+  "1073282994778943508": {
+    "balance": 40464,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
+  },
+  "1340642798503854102": {
+    "balance": 8503,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
+  },
+  "344284273148166155": {
+    "balance": 11741,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
+  },
+  "556927582432657409": {
+    "balance": 310,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
+  },
+  "1022635363308666910": {
+    "balance": 30,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
+  },
+  "274965406429741066": {
+    "balance": 188,
+    "job": null,
+    "jobStats": {
+      "shiftsCompleted": 0,
+      "failedShifts": 0,
+      "totalEarned": 0
+    }
   }
 }

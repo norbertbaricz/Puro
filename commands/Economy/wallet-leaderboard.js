@@ -1,28 +1,8 @@
-const fs = require('fs');
-const path = require('path');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-
-// Database path
-const dbPath = path.join(__dirname, '../../database.json');
-
-function readDB() {
-    if (!fs.existsSync(dbPath)) {
-        fs.writeFileSync(dbPath, JSON.stringify({}));
-        return {};
-    }
-    try {
-        const data = fs.readFileSync(dbPath, 'utf8');
-        if (data.trim() === '') return {};
-        return JSON.parse(data);
-    } catch (err) {
-        console.error('Error reading or parsing database.json:', err);
-        fs.writeFileSync(dbPath, JSON.stringify({}));
-        return {};
-    }
-}
+const { readEconomyDB, ensureUserRecord, writeEconomyDB } = require('../../lib/economy');
 
 module.exports = {
-    category: 'Development',
+    category: 'Economy',
     data: new SlashCommandBuilder()
         .setName('leaderboard')
         .setDescription('Displays the richest members with pagination')
@@ -45,7 +25,9 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const db = readDB();
+        const db = readEconomyDB();
+        const normalizedEntries = Object.entries(db).map(([id]) => [id, ensureUserRecord(db, id)]);
+        writeEconomyDB(db);
         const conf = interaction.client.config.commands.leaderboard || {};
         const color = conf.color || 0xFFD700;
         const title = conf.messages?.title || '👑 Top 10 Richest Members 👑';
@@ -57,7 +39,7 @@ module.exports = {
 
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
-        let sortedUsers = Object.entries(db)
+        let sortedUsers = normalizedEntries
             .filter(([, data]) => data && typeof data.balance === 'number')
             .sort(([, a], [, b]) => b.balance - a.balance);
 

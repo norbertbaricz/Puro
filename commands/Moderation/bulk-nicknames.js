@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Admin',
+    category: 'Moderation',
     data: new SlashCommandBuilder()
         .setName('allnick')
         .setDescription('Change or reset the nickname of many members')

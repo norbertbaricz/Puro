@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Development',
+    category: 'Moderation',
     data: new SlashCommandBuilder()
         .setName('react')
         .setDescription('React to one or more messages with one or more emojis.')

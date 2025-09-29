@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const axios = require('axios');
 
 module.exports = {
-    category: 'Image',
+    category: 'Media',
     data: new SlashCommandBuilder()
         .setName('e621')
         .setDescription('Search e621 images')

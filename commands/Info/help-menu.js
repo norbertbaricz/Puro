@@ -51,7 +51,7 @@ async function createMainMenu(interaction) {
 }
 
 module.exports = {
-    category: 'General',
+    category: 'Info',
     data: new SlashCommandBuilder()
         .setName('help')
         .setDescription('Displays all commands sorted by category, with search.')
@@ -81,7 +81,7 @@ module.exports = {
             if (categoryOpt) {
                 const config = interaction.client.config?.commands?.help || { color: '#0099ff' };
                 const commands = Array.from(interaction.client.commands.values())
-                    .filter(cmd => (cmd.category || 'General').toLowerCase() === categoryOpt.toLowerCase())
+                    .filter(cmd => (cmd.category || 'Misc').toLowerCase() === categoryOpt.toLowerCase())
                     .map(cmd => ({ name: cmd.data.name, description: cmd.data.description }))
                     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -100,7 +100,7 @@ module.exports = {
             if (searchOpt) {
                 const query = searchOpt.toLowerCase();
                 const results = Array.from(interaction.client.commands.values())
-                    .map(cmd => ({ name: cmd.data.name, description: cmd.data.description, category: cmd.category || 'General' }))
+                    .map(cmd => ({ name: cmd.data.name, description: cmd.data.description, category: cmd.category || 'Misc' }))
                     .filter(c => c.name.toLowerCase().includes(query) || (c.description || '').toLowerCase().includes(query))
                     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -133,7 +133,7 @@ module.exports = {
 
         try {
             const commands = Array.from(interaction.client.commands.values())
-                .filter(cmd => (cmd.category || 'General') === selectedCategory)
+                .filter(cmd => (cmd.category || 'Misc') === selectedCategory)
                 .map(cmd => ({
                     name: cmd.data.name,
                     description: cmd.data.description
