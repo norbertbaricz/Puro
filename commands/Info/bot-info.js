@@ -38,7 +38,7 @@ async function getSystemHardwareInfo() {
 }
 
 module.exports = {
-  category: 'General',
+  category: 'Info',
   data: new SlashCommandBuilder()
     .setName('info')
     .setDescription('Displays various information about the bot.')

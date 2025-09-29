@@ -8,7 +8,7 @@ const memeCache = {
 };
 
 module.exports = {
-    category: 'Image',
+    category: 'Media',
     data: new SlashCommandBuilder()
         .setName('meme')
         .setDescription('Get a random meme')

@@ -1,50 +1,12 @@
-const fs = require('fs');
-const path = require('path');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-
-// --- Database Functions ---
-const dbPath = path.join(__dirname, '../../database.json');
-
-/**
- * Reads the database file. Creates one if it doesn't exist.
- * Handles empty or corrupted JSON files gracefully.
- * @returns {object} The parsed database object.
- */
-function readDB() {
-    // If the database file doesn't exist, create it with an empty JSON object.
-    if (!fs.existsSync(dbPath)) {
-        fs.writeFileSync(dbPath, JSON.stringify({}));
-        return {};
-    }
-    try {
-        const data = fs.readFileSync(dbPath, 'utf8');
-        
-        // FIX: If the file is empty or just contains whitespace,
-        // return an empty object to prevent a parsing error.
-        if (data.trim() === '') {
-            return {};
-        }
-        
-        return JSON.parse(data);
-    } catch (err) {
-        console.error("Error reading or parsing database.json:", err);
-        
-        // FIX: If the file is corrupted, overwrite it with a valid empty JSON object
-        // to prevent the error on subsequent commands, then return an empty object.
-        fs.writeFileSync(dbPath, JSON.stringify({}));
-        return {};
-    }
-}
+const { readEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { getJobById, formatPayRange } = require('../../lib/jobs');
 
 module.exports = {
-    category: 'Development',
+    category: 'Economy',
     data: new SlashCommandBuilder()
-        .setName('balance')
-        .setDescription("Check your or another member's wallet balance!")
-        .addUserOption(option =>
-            option.setName('member')
-                .setDescription("The member whose balance you want to check")
-                .setRequired(false)) // Optional, defaults to the command user
+        .setName('wallet')
+        .setDescription('Check your wallet balance, job, and earnings history.')
         .addBooleanOption(option =>
             option.setName('private')
                 .setDescription('Reply only to you')
@@ -52,8 +14,8 @@ module.exports = {
         ),
     async execute(interaction) {
         const isPrivate = interaction.options.getBoolean('private') || false;
-        const targetUser = interaction.options.getUser('member') || interaction.user;
-        const conf = interaction.client.config.commands.balance || {};
+        const targetUser = interaction.user;
+        const conf = interaction.client.config.commands.wallet || {};
 
         if (isPrivate) {
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -62,19 +24,20 @@ module.exports = {
         }
 
         const render = async () => {
-            const db = readDB();
-            const balance = db[targetUser.id]?.balance || 0;
+            const db = readEconomyDB();
+            const entry = ensureUserRecord(db, targetUser.id);
+            const balance = entry.balance || 0;
             const color = conf.color || 0x2ECC71;
             const title = conf.messages?.title || '💰 Wallet Balance Inquiry';
             const descSelf = conf.messages?.description_self || 'Here is your current wallet balance:';
-            const descOther = conf.messages?.description_other || 'Here is the wallet balance for {user}:';
             const fieldUser = conf.messages?.field_user || 'User';
             const fieldBalance = conf.messages?.field_balance || 'Balance';
+            const jobFieldLabel = conf.messages?.field_job || 'Current Job';
 
             const embed = new EmbedBuilder()
                 .setColor(color)
                 .setTitle(title)
-                .setDescription((targetUser.id === interaction.user.id ? descSelf : descOther).replace('{user}', `${targetUser}`))
+                .setDescription(descSelf.replace('{user}', `${targetUser}`))
                 .addFields(
                     { name: fieldUser, value: `${targetUser}`, inline: true },
                     { name: fieldBalance, value: `\`$${balance.toLocaleString()}\``, inline: true }
@@ -82,6 +45,25 @@ module.exports = {
                 .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
                 .setFooter({ text: 'Puro Bank | Official Statement' })
                 .setTimestamp();
+
+            if (entry.job && entry.job.id) {
+                const job = getJobById(entry.job.id);
+                const jobName = job ? `${job.emoji} ${job.name}` : entry.job.id;
+                const payRange = job ? formatPayRange(job) : null;
+                const shifts = entry.jobStats?.shiftsCompleted || 0;
+                const earnings = entry.jobStats?.totalEarned || 0;
+                let value = `${jobName}`;
+                if (payRange) {
+                    value += `\nPay Range: ${payRange}`;
+                }
+                if (shifts > 0 || earnings > 0) {
+                    value += `\nShifts: ${shifts} • Earned: $${earnings.toLocaleString()}`;
+                }
+                embed.addFields({ name: jobFieldLabel, value, inline: false });
+            } else {
+                const unemployedText = conf.messages?.jobless || 'No job assigned.';
+                embed.addFields({ name: jobFieldLabel, value: unemployedText, inline: false });
+            }
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('bal_refresh').setLabel('Refresh').setStyle(ButtonStyle.Secondary).setEmoji('🔁'),
@@ -110,7 +92,7 @@ module.exports = {
                     return;
                 }
                 if (i.customId === 'bal_tips') {
-                    await i.reply({ content: 'Try /work to earn, /pay to transfer, and /leaderboard to see the richest!', flags: MessageFlags.Ephemeral });
+                    await i.reply({ content: 'Open /job to pick a role, earn with /work, try your luck at /blackjack or /slotmachine, share cash with /pay, and track riches via /leaderboard.', flags: MessageFlags.Ephemeral });
                     return;
                 }
             });

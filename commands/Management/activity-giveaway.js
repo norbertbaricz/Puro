@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags } = require('discord.js');
 
 module.exports = {
-  category: 'Admin',
+  category: 'Management',
   data: new SlashCommandBuilder()
     .setName('giveaway')
     .setDescription('Starts a giveaway and picks a winner from the most active members!')

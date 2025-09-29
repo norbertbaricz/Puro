@@ -1,37 +1,6 @@
-const fs = require('fs');
-const path = require('path');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-
-// --- Database helpers ---
-const dbPath = path.join(__dirname, '../../database.json');
-
-function readDB() {
-    if (!fs.existsSync(dbPath)) {
-        fs.writeFileSync(dbPath, '{}');
-        return {};
-    }
-    try {
-        const data = fs.readFileSync(dbPath, 'utf8');
-        if (data.trim() === '') return {};
-        return JSON.parse(data);
-    } catch (err) {
-        console.error('Error reading or parsing database.json:', err);
-        fs.writeFileSync(dbPath, '{}');
-        return {};
-    }
-}
-
-function writeDB(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
-
-function ensureUser(db, userId) {
-    if (!db[userId] || typeof db[userId] !== 'object' || db[userId] === null) {
-        db[userId] = { balance: typeof db[userId] === 'number' ? db[userId] : 0 };
-    }
-    if (typeof db[userId].balance !== 'number') db[userId].balance = 0;
-    return db[userId];
-}
+const { readEconomyDB, writeEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { pickRandom, formatCurrency } = require('../../lib/utils');
 
 // --- Slot machine configuration ---
 // Weights control rarity; payouts define multipliers for matches
@@ -47,47 +16,76 @@ const SYMBOLS = [
 
 const totalWeight = SYMBOLS.reduce((s, sym) => s + sym.weight, 0);
 
-function spinReel() {
-    let r = Math.random() * totalWeight;
+function spinSymbol() {
+    let roll = Math.random() * totalWeight;
     for (const sym of SYMBOLS) {
-        if (r < sym.weight) return sym;
-        r -= sym.weight;
+        if (roll < sym.weight) {
+            return sym;
+        }
+        roll -= sym.weight;
     }
     return SYMBOLS[SYMBOLS.length - 1];
 }
 
-function evaluate(reels, bet) {
-    // reels: array of symbol objects
-    const [a, b, c] = reels;
-    const counts = new Map();
-    for (const s of reels) counts.set(s.emoji, (counts.get(s.emoji) || 0) + 1);
+function spinColumn() {
+    return [spinSymbol(), spinSymbol(), spinSymbol()];
+}
+
+function spinGrid() {
+    return [spinColumn(), spinColumn(), spinColumn()];
+}
+
+function renderGrid(grid) {
+    return grid[0].map((_, rowIdx) =>
+        grid.map(column => column[rowIdx].emoji).join(' │ ')
+    ).join('\n');
+}
+
+function evaluateGrid(grid, bet) {
+    const middle = grid.map(column => column[1]);
+    const [a, b, c] = middle;
+    const counts = middle.reduce((acc, symbol) => {
+        acc[symbol.emoji] = (acc[symbol.emoji] || 0) + 1;
+        return acc;
+    }, {});
 
     let multiplier = 0;
-    // Three of a kind
-    if (a.emoji === b.emoji && b.emoji === c.emoji) {
+    let result = 'loss';
+    let label = null;
+
+    if (a === b && b === c) {
         multiplier = a.payouts?.['3'] || 0;
-    } else {
-        // Two 7s special case or two cherries
-        const seven = SYMBOLS[0];
-        const cherry = SYMBOLS[1];
-        if ((counts.get(seven.emoji) || 0) === 2) {
-            multiplier = seven.payouts?.['2'] || 0;
-        } else if ((counts.get(cherry.emoji) || 0) === 2) {
-            multiplier = cherry.payouts?.['2'] || 0;
-        } else {
-            multiplier = 0; // lose
-        }
+        label = `${a.name} x3`;
+        result = multiplier >= 15 ? 'jackpot' : 'win';
+    } else if ((counts['7️⃣'] || 0) >= 2) {
+        multiplier = SYMBOLS[0].payouts?.['2'] || 0;
+        label = 'Lucky Sevens';
+        result = 'partial';
+    } else if ((counts['🍒'] || 0) >= 2) {
+        multiplier = SYMBOLS[1].payouts?.['2'] || 0;
+        label = 'Cherry Pair';
+        result = 'partial';
     }
-    // Payout is an integer, round down for fractional multipliers
-    const payout = Math.floor(bet * multiplier);
-    return { multiplier, payout };
+
+    const payout = Math.max(0, Math.floor(bet * multiplier));
+    if (payout > 0 && result === 'loss') {
+        result = 'win';
+    }
+
+    return {
+        multiplier,
+        payout,
+        label,
+        result,
+        middle
+    };
 }
 
 module.exports = {
-    category: 'Development',
+    category: 'Economy',
     data: new SlashCommandBuilder()
-        .setName('gamble')
-        .setDescription('🎰 Play slots (cherries & 7s) and win up to 20x!')
+        .setName('slotmachine')
+        .setDescription('🎰 Spin the slot machine for tiered rewards!')
         .addIntegerOption(option =>
             option.setName('amount')
                 .setDescription('Amount to bet')
@@ -101,13 +99,13 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const conf = interaction.client.config?.commands?.gamble || {};
+        const conf = interaction.client.config?.commands?.slotmachine || {};
         const colorWin = parseInt((conf.color_win || '#2ecc71').replace('#','0x'));
         const colorLose = parseInt((conf.color_lose || '#ed4245').replace('#','0x'));
         const colorInfo = parseInt((conf.color_info || '#5865f2').replace('#','0x'));
 
         const msgs = conf.messages || {};
-        const title = msgs.title || '🎰 Puro Slots';
+        const title = msgs.title || '🎰 Slot Machine';
         const labels = {
             bet: msgs.field_bet || 'Bet',
             multiplier: msgs.field_multiplier || 'Multiplier',
@@ -139,15 +137,15 @@ module.exports = {
         const baseBet = interaction.options.getInteger('amount');
 
         const userId = interaction.user.id;
-        let db = readDB();
-        const user = ensureUser(db, userId);
+        let db = readEconomyDB();
+        const user = ensureUserRecord(db, userId);
 
         if (baseBet <= 0 || !Number.isFinite(baseBet)) {
             return interaction.reply({ content: errors.invalid_bet || '❌ Bet amount must be a positive number.', flags: MessageFlags.Ephemeral });
         }
         if (user.balance < baseBet) {
             const msg = fmt(errors.insufficient_funds || '❌ Insufficient funds. You only have ${balance}.', {
-                balance: `$${user.balance.toLocaleString()}`
+                balance: formatCurrency(user.balance)
             });
             return interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
         }
@@ -156,38 +154,68 @@ module.exports = {
 
         const play = (bet) => {
             // Re-load DB fresh each spin to avoid race conditions within collector
-            const dbNow = readDB();
-            const u = ensureUser(dbNow, userId);
+            const dbNow = readEconomyDB();
+            const u = ensureUserRecord(dbNow, userId);
             if (bet <= 0 || u.balance < bet) {
                 const err = fmt(errors.insufficient_funds_bet || '❌ Insufficient funds to bet ${bet}. Balance: ${balance}.', {
-                    bet: `$${bet.toLocaleString()}`,
-                    balance: `$${u.balance.toLocaleString()}`
+                    bet: formatCurrency(bet),
+                    balance: formatCurrency(u.balance)
                 });
                 return { error: err };
             }
             // Deduct bet first
             u.balance -= bet;
 
-            const reels = [spinReel(), spinReel(), spinReel()];
-            const { multiplier, payout } = evaluate(reels, bet);
+            const grid = spinGrid();
+            const { multiplier, payout, label, result } = evaluateGrid(grid, bet);
+            const gridArt = renderGrid(grid);
 
             // Credit payout (could be zero)
             u.balance += payout;
-            writeDB(dbNow);
+            writeEconomyDB(dbNow);
 
             const win = payout > 0;
+            const comboLabel = label && payout > 0 ? `**${label}!**` : null;
+            const jackpotMsg = pickRandom(msgs.jackpot_variants, msgs.jackpot || '🎉 JACKPOT! Triple match pays out big!');
+            const partialMsg = pickRandom(msgs.partial_variants, msgs.partial_win || 'Two-of-a-kind still pays out nicely!');
+            const winMsg = pickRandom(msgs.win_variants, msgs.win_message || 'You hit a winning combo!');
+            const loseMsg = pickRandom(msgs.lose_variants, msgs.lose_message || 'Better luck on the next spin.');
+
+            let flavour;
+            if (result === 'jackpot') {
+                flavour = jackpotMsg;
+            } else if (result === 'partial') {
+                flavour = partialMsg;
+            } else if (win) {
+                flavour = winMsg;
+            } else {
+                flavour = loseMsg;
+            }
+
+            const multiplierDisplay = multiplier > 0 ? `x${Number.isInteger(multiplier) ? multiplier : multiplier.toFixed(2)}` : 'x0';
+            const embedColor = result === 'loss' ? colorLose : (result === 'partial' ? colorInfo : colorWin);
+            const footerText = (() => {
+                if (result === 'jackpot') return msgs.footer_jackpot || footers.win;
+                if (result === 'partial') return msgs.footer_partial || footers.win;
+                return win ? footers.win : footers.lose;
+            })();
+
             const embed = new EmbedBuilder()
                 .setTitle(title)
-                .setColor(win ? colorWin : colorLose)
-                .setDescription(`${reels.map(r => r.emoji).join(' │ ')}`)
+                .setColor(embedColor)
+                .setDescription(`${comboLabel ? `${comboLabel}\n` : ''}${flavour}\n\n\`\`\`\n${gridArt}\n\`\`\``)
                 .addFields(
-                    { name: labels.bet, value: `\`$${bet.toLocaleString()}\``, inline: true },
-                    { name: labels.multiplier, value: win ? `\`x${multiplier}\`` : '`x0`', inline: true },
-                    { name: win ? labels.win : labels.loss, value: win ? `\`$${payout.toLocaleString()}\`` : `\`-$${bet.toLocaleString()}\``, inline: true },
-                    { name: labels.newBalance, value: `💰 **$${u.balance.toLocaleString()}**`, inline: false }
+                    { name: labels.bet, value: `\`${formatCurrency(bet)}\``, inline: true },
+                    { name: labels.multiplier, value: `\`${multiplierDisplay}\``, inline: true },
+                    { name: win ? labels.win : labels.loss, value: `\`${formatCurrency(win ? payout : -bet, { sign: 'always' })}\``, inline: true },
+                    { name: labels.newBalance, value: `💰 **${formatCurrency(u.balance)}**`, inline: false }
                 )
-                .setFooter({ text: win ? footers.win : footers.lose })
+                .setFooter({ text: footerText })
                 .setTimestamp();
+
+            if (comboLabel && msgs.field_combo) {
+                embed.addFields({ name: msgs.field_combo, value: comboLabel.replace(/\*\*/g, ''), inline: false });
+            }
 
             const controls = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('slots_again').setLabel(btnLabels.again).setEmoji('🔁').setStyle(ButtonStyle.Primary),
@@ -226,8 +254,8 @@ module.exports = {
             if (i.customId === 'slots_half') {
                 nextBet = Math.max(1, Math.floor(view.lastBet / 2));
             } else if (i.customId === 'slots_allin') {
-                const dbNow = readDB();
-                const uNow = ensureUser(dbNow, userId);
+                const dbNow = readEconomyDB();
+                const uNow = ensureUserRecord(dbNow, userId);
                 nextBet = Math.max(1, uNow.balance);
             } else if (i.customId === 'slots_again') {
                 // keep as lastBet

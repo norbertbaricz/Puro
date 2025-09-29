@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Admin',
+    category: 'Moderation',
     data: new SlashCommandBuilder()
         .setName('clear')
         .setDescription('Clear messages from channel')

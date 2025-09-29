@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Admin',
+    category: 'Info',
     data: new SlashCommandBuilder()
         .setName('userinfo')
         .setDescription('Shows detailed information about a user.')

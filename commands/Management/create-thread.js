@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  category: 'Development',
+  category: 'Management',
   data: new SlashCommandBuilder()
     .setName('thread')
     .setDescription('Create a thread with a title and optional invites.')

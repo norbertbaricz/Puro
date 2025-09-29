@@ -78,26 +78,15 @@ commands:
     messages:
       error: "❌ Error displaying avatar!"
 
-  balance:
+  wallet:
     color: '#3498db'
     messages:
-      title: "💰 Wallet Balance Inquiry"
+      title: "💰 Wallet Snapshot"
       description_self: "Here is your current wallet balance:"
-      description_other: "Here is the wallet balance for {user}:"
       field_user: "User"
       field_balance: "Balance"
-
-  ban:
-    color: '#8b0000'
-    messages:
-      cannot_ban: "I cannot ban this member."
-      invalid_period: "Invalid period format. Use formats like 1d, 7d, 1h, or 'permanent'."
-      success_title: "Member Banned"
-      field_user: "User"
-      field_banned_by: "Banned by"
-      field_duration: "Duration"
-      field_reason: "Reason"
-      permanent: "Permanent"
+      field_job: "Current Job"
+      jobless: "No active job. Use /job to browse roles and start working."
 
   clear:
     color: '#0099ff'
@@ -418,22 +407,6 @@ commands:
       unexpected_error: "An unexpected error occurred while fetching the joke. Please contact an administrator."
       title: "😂 Here's a Joke for You! 😂"
 
-  kick:
-    color: '#ff0000'
-    messages:
-      no_permission: "You do not have permission to use this command."
-      bot_no_permission: "I do not have permission to kick members."
-      user_not_found: "That user is not in this server."
-      cannot_kick_self: "You cannot kick yourself."
-      cannot_kick_bot: "I cannot kick myself."
-      cannot_kick_member: "I cannot kick this member. They may have a higher role than me or I lack permissions."
-      success_title: "Member Kicked"
-      field_user: "User"
-      field_kicked_by: "Kicked by"
-      field_reason: "Reason"
-      footer: "Guild: {guildName}"
-      error: "An error occurred while trying to kick the member: {error}"
-
   leaderboard:
     color: '#ffd700'
     messages:
@@ -580,20 +553,6 @@ commands:
       title: "🚢 Shipping Result!"
       description: "{emoji} **{user1}** + **{user2}** = **{shipName}**\nCompatibility: **{percentage}%**"
 
-  timeout:
-    color: '#ffcc00'
-    messages:
-      no_permission: "❌ You need 'Moderate Members' permission to use this command!"
-      no_bot_permission: "❌ I need 'Moderate Members' permission to timeout members!"
-      invalid_format: "❌ Invalid duration format! Use s (seconds), m (minutes), h (hours), or d (days)."
-      max_duration_exceeded: "❌ Duration cannot exceed 28 days."
-      not_moderatable: "❌ I cannot timeout this member!"
-      cannot_timeout_self: "❌ You cannot time out yourself."
-      cannot_timeout_bot: "❌ I cannot time myself out."
-      success_title: "✅ Member Timed Out"
-      success_desc: "{user} has been timed out for **{duration}**."
-      error: "❌ Failed to timeout the member."
-
   top:
     color: '#0099ff'
     messages:
@@ -606,21 +565,6 @@ commands:
       leaderboard_field: "Leaderboard"
       leaderboard_empty: "No activity found."
       footer: "Requested by {user}"
-
-  tp:
-    color: '#9B59B6'
-    messages:
-      cooldown: "⏳ Teleporter recharging for {remaining} seconds!"
-      not_found: "❌ Member not found!"
-      self_tp: "❌ No teleporting to yourself!"
-      bot_tp: "❌ Cannot teleport to bots!"
-      error: "❌ Teleportation failed!"
-      teleport:
-        - "🌟 *WHOOSH!* A shimmering portal slices through reality..."
-        - "⚡ *ZAP!* You're dematerialized and rematerialized in a flash of light!"
-        - "🌀 *VWOORP!* The very fabric of space-time bends around you..."
-        - "🌌 *STRETCH!* You're pulled through a cosmic string to your destination!"
-        - "✨ *TWINKLE!* With a sprinkle of quantum dust, you've arrived!"
 
   truthordare:
     color_truth: '#3498db'
@@ -752,34 +696,67 @@ commands:
       none: "None"
       footer: "Requested by {user}"
 
+  job:
+    color: '#5865f2'
+    color_success: '#2ecc71'
+    color_failure: '#ed4245'
+    messages:
+      list_title: 'Job Board'
+      list_description: 'Apply for a job to unlock /work payouts. Each role has different risks and rewards.'
+      list_footer: 'You can only hold one job at a time.'
+      job_not_found: 'That job is no longer available.'
+      already_employed: 'You already work as {job}. Use /job quit first.'
+      apply_title: 'You are hired!'
+      apply_success: 'Welcome aboard as {job}!'
+      apply_failure: 'The hiring manager passed this time. Try again soon.'
+      apply_rejected_title: 'Application result'
+      status_title: 'Employment Status'
+      status_no_job: 'You are currently unemployed. Use /job to browse openings.'
+      status_footer: 'Use /job quit if you want to change careers.'
+      quit_title: 'Resigned from position'
+      quit_success: 'You have left your job as {job}.'
+      quit_no_job: 'You are not currently employed.'
+      job_missing_title: 'Job unavailable'
+      job_missing: 'Your previous job no longer exists. Please apply for a new one.'
+
   work:
     color_success: '#2ecc71'
     color_neutral: '#f1c40f'
-    color_loss: '#e74c3c'
+    color_failure: '#ed4245'
     messages:
-      title: "⛏️ Mining Session Report"
-      success_desc: "Congratulations on your find!"
-      neutral_desc: "You searched but found nothing of value this time."
-      loss_desc: "Oh no! Your mining trip resulted in a loss."
-      field_ore: "Ore Found"
-      field_value: "Value"
-      field_result: "Result"
-      field_incident: "Incident"
-      incident_text: "Mining accident"
+      no_job_title: 'No job found'
+      no_job: 'You do not have a job yet. Open /job to browse roles and start working.'
+      job_missing_title: 'Job unavailable'
+      job_missing: 'Your previous job no longer exists. Please apply again.'
+      cooldown_title: 'Take a breather'
+      cooldown: 'You can work again {time}.'
+      success_title: '{emoji} Shift complete!'
+      success_default: 'Great work! You completed your shift successfully.'
+      failure_title: 'Shift failed'
+      failure_default: 'Something went wrong during your shift.'
+      bonus_default: 'Your effort impressed everyone!'
+      field_earnings: 'Earnings'
+      field_balance: 'Balance'
+      field_streak: 'Shift streak'
+      field_bonus: 'Bonus'
+      field_penalty: 'Penalty'
 
-  gamble:
+  slotmachine:
     color_win: '#2ecc71'
     color_lose: '#ed4245'
     color_info: '#5865f2'
     messages:
-      title: '🎰 Puro Slots'
+      title: '🎰 Slot Machine'
       field_bet: 'Bet'
       field_multiplier: 'Multiplier'
       field_win: 'Winnings'
       field_loss: 'Loss'
       field_new_balance: 'New Balance'
+      field_combo: 'Combo'
       footer_win: 'Luck is on your side!'
       footer_lose: 'You lost the bet. Try again!'
+      footer_partial: 'A small win keeps the streak alive.'
+      footer_jackpot: 'Legendary spin!'
       buttons:
         play_again: 'Play Again'
         half: 'Half'
@@ -790,6 +767,66 @@ commands:
         insufficient_funds: '❌ Insufficient funds. You only have ${balance}.'
         insufficient_funds_bet: '❌ Insufficient funds to bet ${bet}. Balance: ${balance}.'
       not_you: 'Only you can use these buttons.'
+      jackpot: '🎉 JACKPOT! Triple match pays out huge!'
+      jackpot_variants:
+        - '🎊 JACKPOT! Triple match explodes with cash!'
+        - '🔥 Mega win! Triple symbols light up the reels!'
+      partial_win: 'Two-of-a-kind still pays nicely.'
+      partial_variants:
+        - '🍒 A modest win keeps you in the game.'
+        - 'Lucky alignment! Enjoy the mini payout.'
+      win_message: 'You hit a winning combo!'
+      win_variants:
+        - '⭐ Stellar spin!'
+        - '💰 Coins clatter across the floor!'
+      lose_message: 'Better luck on the next spin.'
+      lose_variants:
+        - '🙈 The reels were not in your favour this time.'
+        - '🌀 The slot gods demand another offering.'
+
+  blackjack:
+    color: '#2f3136'
+    color_win: '#2ecc71'
+    color_lose: '#ed4245'
+    color_push: '#f1c40f'
+    hit_soft_17: true
+    messages:
+      title: '🃏 Blackjack with Puro'
+      table_intro: 'Puro shuffles the deck. Place your bet and make your move!'
+      prompt_action: 'Hit, stand, or double down?'
+      prompt_hit: 'Puro slides you another card.'
+      prompt_hit_variants:
+        - 'Another card glides across the table.'
+        - 'You tap the felt and take a hit.'
+        - 'A new card appears by your hand.'
+      dealer_label: 'Dealer — Puro'
+      dealer_hidden: 'showing one card'
+      player_label: 'Your Hand'
+      dealer_total: 'Dealer Total'
+      player_total: 'Your Total'
+      hidden_total: '??'
+      cards_label: 'Cards'
+      total_label: 'Total'
+      bet_label: 'Current Bet'
+      balance_label: 'Balance'
+      outcome_label: 'Outcome'
+      outcome_blackjack: 'Blackjack! You earn ${profit} against Puro.'
+      outcome_player_win: 'You outscore Puro and pocket ${profit}!'
+      outcome_dealer_bust: 'Puro busts! You collect ${profit}.'
+      outcome_dealer_win: 'Puro wins and keeps ${loss}.'
+      outcome_dealer_blackjack: 'Puro reveals blackjack and sweeps the table.'
+      outcome_player_bust: 'You bust and lose ${loss}.'
+      outcome_push: 'Push. Your ${bet} wager is returned.'
+      timeout_loss: 'Time ran out. Puro quietly pockets your ${bet} wager.'
+      double_unavailable: 'You cannot double right now.'
+      not_your_turn: 'Only the current player can act on this hand.'
+      already_finished: 'This hand has already finished.'
+      buttons:
+        hit: 'Hit'
+        stand: 'Stand'
+        double: 'Double'
+      footer_table: 'Dealer Puro awaits your move...'
+      footer_final: 'Thanks for playing at the den!'
 
   # TicTacToe command configuration
   ttt:
