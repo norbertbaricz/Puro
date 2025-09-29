@@ -42,11 +42,14 @@ function createGameBoard(game, isGameOver = false) {
             Array(3).fill(0).map((_, colIndex) => {
                 const pos = rowIndex * 3 + colIndex;
                 const symbol = game.board[pos];
-                return new ButtonBuilder()
+                const button = new ButtonBuilder()
                     .setCustomId(`ttt_${pos}`)
                     .setStyle(symbol ? (symbol === 'X' ? ButtonStyle.Danger : ButtonStyle.Primary) : ButtonStyle.Secondary)
-                    .setLabel(symbol ? game.symbols[symbol] : ' ')
                     .setDisabled(isGameOver || !!symbol);
+
+                return symbol
+                    ? button.setLabel(game.symbols[symbol])
+                    : button.setLabel('\u200b'); // zero-width space keeps the button valid while appearing empty
             })
         )
     );
