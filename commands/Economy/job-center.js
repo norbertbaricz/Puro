@@ -274,13 +274,20 @@ module.exports = {
                 }
             } catch (error) {
                 console.error('Job center component error:', error);
+                const responsePayload = {
+                    content: 'Something went wrong handling that action.',
+                    flags: MessageFlags.Ephemeral
+                };
                 try {
-                    await componentInteraction.reply({
-                        content: 'Something went wrong handling that action.',
-                        flags: MessageFlags.Ephemeral
-                    });
-                } catch {
-                    // ignore
+                    if (componentInteraction.deferred || componentInteraction.replied) {
+                        await componentInteraction.followUp(responsePayload);
+                    } else if (componentInteraction.isRepliable()) {
+                        await componentInteraction.reply(responsePayload);
+                    }
+                } catch (followUpError) {
+                    if (followUpError?.code !== 10062) {
+                        console.error('Failed to notify job interaction error:', followUpError);
+                    }
                 }
             }
         });
