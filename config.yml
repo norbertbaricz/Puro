@@ -88,6 +88,52 @@ commands:
       field_job: "Current Job"
       jobless: "No active job. Use /job to browse roles and start working."
 
+  pickpocket:
+    color_success: '#2ecc71'
+    color_fail: '#e74c3c'
+    color_warn: '#f1c40f'
+    min_balance: 100
+    min_percent: 0.05
+    max_percent: 0.25
+    base_success: 0.8
+    difficulty_weight: 1.5
+    fail_return_multiplier: 1
+    fail_fine_multiplier: 1.5
+    escape_drop_multiplier: 0.4
+    fight_win_multiplier: 1.8
+    fight_loss_multiplier: 2
+    jail_cooldown_ms: 600000
+    messages:
+      guild_only: '❌ This command can only be used inside a server.'
+      self_target: '❌ You cannot pickpocket yourself.'
+      bot_target: '🤖 Bots have no pockets to pick.'
+      cooldown_active: '🚓 The police are watching you. Try again in {time}s.'
+      too_poor_title: 'No luck!'
+      too_poor_desc: '{target} has barely any money to steal.'
+      success_title: 'Successful Pickpocket!'
+      success_desc: 'You slipped some cash from {target}!'
+      amount_label: 'Amount'
+      success_chance_label: 'Chance'
+      thief_balance_label: 'Your Balance'
+      victim_balance_label: 'Victim Balance'
+      fail_title: 'Caught in the act!'
+      fail_desc: '{target} noticed and things went south.'
+      fail_caught_title: 'Caught red-handed!'
+      fail_caught_desc: '{target} caught you and took their money back.'
+      fail_jail_title: 'Officer, it was a misunderstanding!'
+      fail_jail_desc: 'Security dragged you to the station and you paid a hefty fine.'
+      fail_escape_drop_title: 'Dropped the loot!'
+      fail_escape_drop_desc: 'You sprinted away but spilled some cash while fleeing.'
+      fail_escape_clean_title: 'Close call!'
+      fail_escape_clean_desc: 'You escaped empty-handed but everyone is suspicious now.'
+      fail_fight_win_title: 'Brawl Victory!'
+      fail_fight_win_desc: 'You fought {target} and grabbed a bigger haul!'
+      fail_fight_loss_title: 'Critical Hit!'
+      fail_fight_loss_desc: '{target} fought back. You paid a hefty hospital bill.'
+      penalty_paid_label: 'Returned'
+      penalty_fine_label: 'Fine / Hospital Bill'
+      drop_label: 'Lost while fleeing'
+
   clear:
     color: '#0099ff'
     messages:
