@@ -28,11 +28,30 @@ module.exports = {
             const subreddit = interaction.options.getString('subreddit');
             const apiUrl = subreddit ? `https://meme-api.com/gimme/${encodeURIComponent(subreddit)}` : 'https://meme-api.com/gimme';
 
+            const handleAxiosError = async (error) => {
+                if (axios.isAxiosError(error) && error.response?.status === 404) {
+                    const payload = { content: config.messages.subreddit_not_found || 'That subreddit has no posts or does not exist.', flags: MessageFlags.Ephemeral };
+                    if (interaction.deferred || interaction.replied) {
+                        await interaction.editReply(payload);
+                    } else {
+                        await interaction.reply(payload);
+                    }
+                    return true;
+                }
+                return false;
+            };
+
             const now = Date.now();
             if (!subreddit && memeCache.memes.length > 0 && now - memeCache.lastUpdate < memeCache.CACHE_DURATION) {
                 meme = memeCache.memes.shift();
             } else {
-                const response = await axios.get(apiUrl, { timeout: 7000, headers: { 'User-Agent': 'PuroBot/1.0' } });
+                let response;
+                try {
+                    response = await axios.get(apiUrl, { timeout: 7000, headers: { 'User-Agent': 'PuroBot/1.0' } });
+                } catch (error) {
+                    if (await handleAxiosError(error)) return;
+                    throw error;
+                }
                 if (!response.data || !response.data.url) throw new Error('Invalid meme data');
                 meme = response.data;
 
@@ -91,8 +110,12 @@ module.exports = {
                         try {
                             const resp = await axios.get(apiUrl, { timeout: 7000, headers: { 'User-Agent': 'PuroBot/1.0' } });
                             meme = resp.data;
-                        } catch {
-                            // ignore
+                        } catch (error) {
+                            if (await handleAxiosError(error)) {
+                                collector.stop('error');
+                                return;
+                            }
+                            return;
                         }
                     }
                     await i.update({ embeds: [build(meme)], components: [rowFor(rerolls)] });

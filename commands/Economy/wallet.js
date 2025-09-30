@@ -66,9 +66,9 @@ module.exports = {
             }
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('bal_refresh').setLabel('Refresh').setStyle(ButtonStyle.Secondary).setEmoji('🔁'),
-                new ButtonBuilder().setCustomId('bal_tips').setLabel('How to earn?').setStyle(ButtonStyle.Primary).setEmoji('💡'),
-                new ButtonBuilder().setCustomId('bal_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+                new ButtonBuilder().setCustomId('wallet_refresh').setLabel('Refresh').setStyle(ButtonStyle.Secondary).setEmoji('🔁'),
+                new ButtonBuilder().setCustomId('wallet_tips').setLabel('How to earn?').setStyle(ButtonStyle.Primary).setEmoji('💡'),
+                new ButtonBuilder().setCustomId('wallet_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
             );
 
             await interaction.editReply({ embeds: [embed], components: [row] });
@@ -80,18 +80,18 @@ module.exports = {
                     await i.reply({ content: 'Only you can control your view.', flags: MessageFlags.Ephemeral });
                     return;
                 }
-                if (i.customId === 'bal_close') {
+                if (i.customId === 'wallet_close') {
                     collector.stop('closed');
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                     await i.update({ components: [disabled] });
                     return;
                 }
-                if (i.customId === 'bal_refresh') {
+                if (i.customId === 'wallet_refresh') {
                     await i.deferUpdate();
                     await render();
                     return;
                 }
-                if (i.customId === 'bal_tips') {
+                if (i.customId === 'wallet_tips') {
                     await i.reply({ content: 'Open /job to pick a role, earn with /work, try your luck at /blackjack or /slotmachine, share cash with /pay, and track riches via /leaderboard.', flags: MessageFlags.Ephemeral });
                     return;
                 }

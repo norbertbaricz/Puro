@@ -60,7 +60,7 @@ module.exports = {
             flashVariant: 'info'
         };
 
-        const buildSelect = () => {
+        const buildSelect = (options = {}) => {
             const menu = new StringSelectMenuBuilder()
                 .setCustomId('job_select')
                 .setPlaceholder(messages.select_placeholder || 'Pick a job to view details')
@@ -72,6 +72,9 @@ module.exports = {
                     description: job.description.slice(0, 90),
                     default: state.selectedJobId === job.id
                 })));
+            if (options.disabled) {
+                menu.setDisabled(true);
+            }
             return new ActionRowBuilder().addComponents(menu);
         };
 
@@ -209,8 +212,8 @@ module.exports = {
                         entry.job = {
                             id: job.id,
                             hiredAt: Date.now(),
-                           lastWorkedAt: 0,
-                           streak: 0
+                            lastWorkedAt: 0,
+                            streak: 0
                        };
                        entry.jobStats = {
                            shiftsCompleted: 0,
@@ -224,15 +227,18 @@ module.exports = {
                         })}\n${pickRandom(job.apply.successMessages, messages.apply_success || 'Welcome aboard!')}`;
                         state.flashVariant = 'success';
                         writeEconomyDB(db);
+                        await interaction.editReply({
+                            embeds: [buildEmbed()],
+                            components: [buildSelect({ disabled: true }), buildButtons()]
+                        });
                     } else {
                         state.flashMessage = pickRandom(job.apply.failureMessages, messages.apply_failure || 'Unfortunately you were not hired this time.');
                         state.flashVariant = 'failure';
+                        await interaction.editReply({
+                            embeds: [buildEmbed()],
+                            components: [buildSelect(), buildButtons()]
+                        });
                     }
-
-                    await interaction.editReply({
-                        embeds: [buildEmbed()],
-                        components: [buildSelect(), buildButtons()]
-                    });
                     return;
                 }
 

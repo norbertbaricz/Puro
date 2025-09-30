@@ -470,6 +470,7 @@ commands:
     messages:
       cooldown: "⏳ Wait {remaining} seconds."
       error: "❌ Failed to fetch meme!"
+      subreddit_not_found: "❌ That subreddit has no posts or doesn't exist."
 
   pat:
     color: '#add8e6'
