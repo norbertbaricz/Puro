@@ -18,10 +18,11 @@ module.exports = {
         const config = interaction.client.config;
         const genderConfig = config.commands.gender;
 
-        const targetMember = interaction.options.getMember('member') || interaction.member;
+        const targetUser = interaction.options.getUser('member') || interaction.user;
+        const targetMember = interaction.options.getMember('member') || interaction.member || null;
         const isPrivate = interaction.options.getBoolean('private') || false;
 
-        if (!targetMember || !targetMember.user) {
+        if (!targetUser) {
             return interaction.reply({ content: genderConfig.messages.not_found, flags: MessageFlags.Ephemeral });
         }
 
@@ -39,17 +40,20 @@ module.exports = {
         const render = async (rerolls = 0) => {
             const identity = pick();
             const percentage = randomPercent();
+            const displayTarget = targetMember && typeof targetMember.toString === 'function'
+                ? targetMember.toString()
+                : `<@${targetUser.id}>`;
             const embed = new EmbedBuilder()
                 .setTitle(genderConfig.title)
                 .setDescription(
                     genderConfig.description
-                        .replace('{member}', targetMember)
+                        .replace('{member}', displayTarget)
                         .replace('{percentage}', percentage)
                         .replace('{identity}', identity.label)
                 )
                 .setColor(identity.color)
                 .addFields({ name: 'Meter', value: bar(percentage), inline: false })
-                .setThumbnail(targetMember.user.displayAvatarURL({ dynamic: true, size: 4096 }))
+                .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 4096 }))
                 .setFooter({ text: `Requested by ${interaction.user.tag}${rerolls ? ` • Rerolls: ${rerolls}` : ''}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
                 .setTimestamp();
 

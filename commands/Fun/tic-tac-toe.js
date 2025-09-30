@@ -74,7 +74,11 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const channelId = interaction.channel.id;
+        const channelId = interaction.channelId ?? interaction.channel?.id ?? null;
+        if (!channelId) {
+            await interaction.reply({ content: 'This command requires a channel context and cannot be used here.', flags: MessageFlags.Ephemeral });
+            return;
+        }
         if (activeGames.has(channelId)) {
             return interaction.reply({ content: 'A game is already in progress in this channel.', flags: MessageFlags.Ephemeral });
         }
