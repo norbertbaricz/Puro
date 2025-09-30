@@ -2,20 +2,33 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { pickRandom, formatTemplate } = require('../../lib/utils');
 
 const DEFAULT_GIFS = [
-    'https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif',
-    'https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif',
-    'https://media.giphy.com/media/143v0Z4767T15e/giphy.gif',
-    'https://media.giphy.com/media/wnsgren9NtITS/giphy.gif'
+    'https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif',
+    'https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif',
+    'https://media.giphy.com/media/11rWoZNpAKw8w/giphy.gif',
+    'https://media.giphy.com/media/Z21HJj2kz9uBG/giphy.gif'
+];
+
+const DEFAULT_TEMPLATES = [
+    '**{sender}** kisses **{receiver}**! 💋',
+    '**{sender}** plants a sweet kiss on **{receiver}**.',
+    'Smack! **{receiver}** just got a kiss from **{sender}**.',
+    '**{sender}** leans in and kisses **{receiver}** romantically.'
+];
+
+const DEFAULT_RETURN_TEMPLATES = [
+    '**{receiver}** kisses **{sender}** back! 💞',
+    '**{receiver}** responds with an even sweeter kiss!',
+    '**{receiver}** blushes and kisses **{sender}** in return.'
 ];
 
 module.exports = {
     category: 'Fun',
     data: new SlashCommandBuilder()
-        .setName('hug')
-        .setDescription('Give a virtual hug to another member!')
+        .setName('kiss')
+        .setDescription('Send a loving kiss to another member!')
         .addUserOption(option =>
             option.setName('member')
-                .setDescription('The member you want to hug')
+                .setDescription('Who do you want to kiss?')
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('note')
@@ -27,44 +40,47 @@ module.exports = {
                 .setDescription('If enabled, only you will see the message')
                 .setRequired(false)
         ),
+
     async execute(interaction) {
         const sender = interaction.user;
         const receiver = interaction.options.getUser('member');
         const note = (interaction.options.getString('note') || '').trim();
         const isPrivate = interaction.options.getBoolean('private') || false;
-        const config = interaction.client.config;
-        const hugConfig = config.commands.hug || {};
-        const hugMessages = hugConfig.messages || {};
+        const kissConfig = interaction.client.config.commands.kiss || {};
+        const kissMessages = kissConfig.messages || {};
 
         if (sender.id === receiver.id) {
-            return interaction.reply({ content: hugMessages.self_hug || "You can't hug yourself! 🤗", flags: MessageFlags.Ephemeral });
+            return interaction.reply({ content: kissMessages.self_kiss || 'You cannot kiss yourself! 😳', flags: MessageFlags.Ephemeral });
         }
 
-        const gifs = Array.isArray(hugConfig.gifs) && hugConfig.gifs.length ? hugConfig.gifs : DEFAULT_GIFS;
-        const randomGif = pickRandom(gifs);
+        const gifs = Array.isArray(kissConfig.gifs) && kissConfig.gifs.length ? kissConfig.gifs : DEFAULT_GIFS;
+        const templates = Array.isArray(kissMessages.templates) && kissMessages.templates.length ? kissMessages.templates : DEFAULT_TEMPLATES;
+        const returnTemplates = Array.isArray(kissMessages.return_templates) && kissMessages.return_templates.length ? kissMessages.return_templates : DEFAULT_RETURN_TEMPLATES;
 
-        const hugEmbed = new EmbedBuilder()
-            .setColor(hugConfig.color || '#ffb6c1')
-            .setTitle(hugMessages.success_title || '🤗 Hug Time!')
-            .setDescription(
-                (hugMessages.success_desc || '**{sender}** gives a warm hug to **{receiver}**! How sweet!')
-                    .replace('{sender}', `**${sender.username}**`)
-                    .replace('{receiver}', `**${receiver.username}**`)
-            )
+        const randomGif = pickRandom(gifs);
+        const template = pickRandom(templates)
+            .replace('{sender}', `**${sender.username}**`)
+            .replace('{receiver}', `**${receiver.username}**`);
+
+        const embed = new EmbedBuilder()
+            .setColor(kissConfig.color || '#ff6699')
+            .setTitle(kissMessages.success_title || '💋 Kiss!')
+            .setDescription(template)
             .setImage(randomGif)
             .setThumbnail(receiver.displayAvatarURL())
             .setFooter({ text: `Requested by ${sender.username}`, iconURL: sender.displayAvatarURL() })
             .setTimestamp();
 
         if (note) {
-            hugEmbed.addFields({ name: hugMessages.note_label || 'Note', value: `> ${note}` });
+            embed.addFields({ name: kissMessages.note_label || 'Note', value: `> ${note}` });
         }
+
         const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('hug_return').setLabel('Return hug').setStyle(ButtonStyle.Secondary).setEmoji('🤗'),
-            new ButtonBuilder().setCustomId('hug_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+            new ButtonBuilder().setCustomId('kiss_return').setLabel(kissMessages.return_button || 'Kiss back').setStyle(ButtonStyle.Secondary).setEmoji('💋'),
+            new ButtonBuilder().setCustomId('kiss_close').setLabel(kissMessages.close_button || 'Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
         );
 
-        await interaction.reply({ embeds: [hugEmbed], components: [row], ...(isPrivate ? { flags: MessageFlags.Ephemeral } : {}) });
+        await interaction.reply({ embeds: [embed], components: [row], ...(isPrivate ? { flags: MessageFlags.Ephemeral } : {}) });
 
         if (!receiver.bot) {
             const guildName = interaction.guild?.name || 'Direct Message';
@@ -76,7 +92,7 @@ module.exports = {
                     : 'this conversation';
             const channelMention = interaction.guild ? `<#${interaction.channelId}>` : channelLabel;
 
-            const dmTemplate = hugMessages.dm || '{sender} sent you a hug from {guild} in {channelMention}!';
+            const dmTemplate = kissMessages.dm || '{sender} sent you a kiss from {guild} in {channelMention}!';
             const dmContent = formatTemplate(dmTemplate, {
                 sender: sender.tag,
                 receiver: receiver.tag,
@@ -92,25 +108,25 @@ module.exports = {
                 contextFooter.push('Direct Message');
             }
 
-            const dmEmbed = EmbedBuilder.from(hugEmbed)
+            const dmEmbed = EmbedBuilder.from(embed)
                 .setFooter({ text: contextFooter.join(' • '), iconURL: sender.displayAvatarURL() });
 
             try {
                 await receiver.send({ content: dmContent, embeds: [dmEmbed] });
             } catch (error) {
-                if (!hugConfig.silent_dm_failures) {
-                    console.warn('Unable to DM hug target:', error?.message || error);
+                if (!kissConfig.silent_dm_failures) {
+                    console.warn('Unable to DM kiss target:', error?.message || error);
                 }
             }
         }
 
         const message = await interaction.fetchReply();
-
         const collector = message.createMessageComponentCollector({ time: 30000 });
-        collector.on('collect', async i => {
-            if (i.customId === 'hug_close') {
+
+        collector.on('collect', async (i) => {
+            if (i.customId === 'kiss_close') {
                 if (i.user.id !== sender.id && i.user.id !== receiver.id) {
-                    await i.reply({ content: 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
+                    await i.reply({ content: kissMessages.close_denied || 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 collector.stop('closed');
@@ -119,23 +135,26 @@ module.exports = {
                 return;
             }
 
-            if (i.customId === 'hug_return') {
+            if (i.customId === 'kiss_return') {
                 if (i.user.id !== receiver.id) {
-                    await i.reply({ content: 'Only the mentioned member can return the hug.', flags: MessageFlags.Ephemeral });
+                    await i.reply({ content: kissMessages.return_denied || 'Only the mentioned member can return the kiss.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 collector.stop('returned');
-                const newGif = pickRandom(gifs) || randomGif;
+                const newGif = pickRandom(gifs);
+                const returnTemplate = pickRandom(returnTemplates)
+                    .replace('{sender}', `**${sender.username}**`)
+                    .replace('{receiver}', `**${receiver.username}**`);
                 const returned = new EmbedBuilder()
-                    .setColor(hugConfig.color || '#ffb6c1')
-                    .setTitle('🤗 Hug Returned!')
-                    .setDescription(`**${receiver.username}** returns a warm hug to **${sender.username}**!`)
+                    .setColor(kissConfig.color || '#ff6699')
+                    .setTitle(kissMessages.return_title || '💞 Kiss Returned!')
+                    .setDescription(returnTemplate)
                     .setImage(newGif)
                     .setFooter({ text: `Started by ${sender.username}`, iconURL: sender.displayAvatarURL() })
                     .setTimestamp();
+
                 const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                 await i.update({ embeds: [returned], components: [disabled] });
-                return;
             }
         });
 

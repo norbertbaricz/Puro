@@ -407,10 +407,71 @@ commands:
 
   hug:
     color: '#ffb6c1'
+    gifs:
+      - 'https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif'
+      - 'https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif'
+      - 'https://media.giphy.com/media/143v0Z4767T15e/giphy.gif'
+      - 'https://media.giphy.com/media/wnsgren9NtITS/giphy.gif'
     messages:
       self_hug: "You can't hug yourself! 🤗"
       success_title: "🤗 Hug Time!"
       success_desc: "**{sender}** gives a warm hug to **{receiver}**! How sweet!"
+      note_label: 'Note'
+      dm: '{sender} sent you a hug from {guild} in {channelMention}!'
+
+  poke:
+    color: '#ffcc66'
+    gifs:
+      - 'https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif'
+      - 'https://media.giphy.com/media/xUA7b6wBJ7ZRMfF2ze/giphy.gif'
+      - 'https://media.giphy.com/media/26xByNG6m6nU2czby/giphy.gif'
+      - 'https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif'
+    messages:
+      self_poke: 'You cannot poke yourself! 😅'
+      success_title: '👈 Poke!'
+      return_title: '👈 Poke Returned!'
+      return_button: 'Poke back'
+      close_button: 'Close'
+      return_denied: 'Only the mentioned member can return the poke.'
+      close_denied: 'Only the sender or receiver can close this.'
+      note_label: 'Note'
+      dm: '{sender} poked you from {guild} in {channelMention}!'
+      templates:
+        - '**{sender}** gives **{receiver}** a little poke! 👈'
+        - 'Poke poke! **{sender}** taps **{receiver}** on the shoulder.'
+        - '**{sender}** pokes **{receiver}** to get their attention!'
+        - "**{receiver}**, you've been poked by **{sender}**!"
+      return_templates:
+        - '**{receiver}** pokes back at **{sender}**! 👈'
+        - '**{receiver}** laughs and returns the poke to **{sender}**.'
+        - 'Counter poke! **{receiver}** taps **{sender}** right back.'
+
+  kiss:
+    color: '#ff6699'
+    gifs:
+      - 'https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif'
+      - 'https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif'
+      - 'https://media.giphy.com/media/11rWoZNpAKw8w/giphy.gif'
+      - 'https://media.giphy.com/media/Z21HJj2kz9uBG/giphy.gif'
+    messages:
+      self_kiss: 'You cannot kiss yourself! 😳'
+      success_title: '💋 Kiss!'
+      return_title: '💞 Kiss Returned!'
+      return_button: 'Kiss back'
+      close_button: 'Close'
+      return_denied: 'Only the mentioned member can return the kiss.'
+      close_denied: 'Only the sender or receiver can close this.'
+      note_label: 'Note'
+      dm: '{sender} sent you a kiss from {guild} in {channelMention}!'
+      templates:
+        - '**{sender}** kisses **{receiver}**! 💋'
+        - '**{sender}** plants a sweet kiss on **{receiver}**.'
+        - 'Smack! **{receiver}** just got a kiss from **{sender}**.'
+        - '**{sender}** leans in and kisses **{receiver}** romantically.'
+      return_templates:
+        - '**{receiver}** kisses **{sender}** back! 💞'
+        - '**{receiver}** responds with an even sweeter kiss!'
+        - '**{receiver}** blushes and kisses **{sender}** in return.'
 
   info:
     color: '#5865F2'
@@ -520,10 +581,17 @@ commands:
 
   pat:
     color: '#add8e6'
+    gifs:
+      - 'https://media.giphy.com/media/109ltuoSQT212w/giphy.gif'
+      - 'https://media.giphy.com/media/ARSp9T7wwxNcs/giphy.gif'
+      - 'https://media.giphy.com/media/4HP0ddZnNVvKU/giphy.gif'
+      - 'https://media.giphy.com/media/L2z7dnOduqEow/giphy.gif'
     messages:
       self_pat: "You can't pat yourself! 🫶"
       success_title: "🫶 Pat Time!"
       success_desc: "**{sender}** gently pats **{receiver}**! That's adorable!"
+      note_label: 'Note'
+      dm: '{sender} gave you a pat from {guild} in {channelMention}!'
 
   pay:
     color_error: '#e74c3c'
