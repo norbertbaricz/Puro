@@ -32,12 +32,17 @@
     }
   },
   "1279782688819122208": {
-    "balance": 9215,
-    "job": null,
+    "balance": 9525,
+    "job": {
+      "id": "cyber_security",
+      "hiredAt": 1759241312124,
+      "lastWorkedAt": 1759241376049,
+      "streak": 1
+    },
     "jobStats": {
-      "shiftsCompleted": 0,
+      "shiftsCompleted": 1,
       "failedShifts": 0,
-      "totalEarned": 0
+      "totalEarned": 310
     }
   },
   "960795399642288128": {
