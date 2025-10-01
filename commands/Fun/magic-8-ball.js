@@ -20,6 +20,11 @@ module.exports = {
         try {
             const question = (interaction.options.getString('question') || '').trim();
             const isPrivate = interaction.options.getBoolean('private') || false;
+            const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            if (!config || !config.answers) {
+                throw new Error('Magic 8-Ball configuration is missing.');
+            }
 
             // Harta culorilor pe categorie folosind schema globală din config
             const palette = interaction.client.config.colors || {};
@@ -45,11 +50,11 @@ module.exports = {
             };
 
             // Suspans: arătăm „shake” înainte de rezultat
-            if (isPrivate) {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-            } else {
-                await interaction.deferReply();
-            }
+            const canUseEphemeral = typeof interaction.inGuild === 'function'
+                ? interaction.inGuild()
+                : Boolean(interaction.guildId);
+            const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
+            await interaction.deferReply(shouldBeEphemeral ? { ephemeral: true } : {});
 
             const loadingEmbed = new EmbedBuilder()
                 .setColor(config.color)
@@ -129,7 +134,8 @@ module.exports = {
                             row.components.map(btn => ButtonBuilder.from(btn).setDisabled(true))
                         );
                         await interaction.editReply({ embeds: [rolling], components: [disabledRow] });
-                        setTimeout(() => reveal(rerollCount + 1), 1000);
+                        await wait(1000);
+                        await reveal(rerollCount + 1);
                     }
                 });
 
@@ -143,11 +149,21 @@ module.exports = {
                 });
             };
 
-            setTimeout(() => reveal(0), 1000);
+            await wait(1000);
+            await reveal(0);
 
         } catch (error) {
             console.error('8ball command error:', error);
-            await interaction.reply({ content: config.messages.error, flags: MessageFlags.Ephemeral });
+            const fallback = config?.messages?.error || '❌ Something went wrong while consulting the 8-Ball.';
+            try {
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.followUp({ content: fallback, ephemeral: true });
+                } else {
+                    await interaction.reply({ content: fallback, ephemeral: true });
+                }
+            } catch (replyError) {
+                console.error('Failed to notify user about 8ball error:', replyError);
+            }
         }
     },
 };
