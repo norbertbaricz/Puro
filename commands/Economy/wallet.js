@@ -16,12 +16,24 @@ module.exports = {
         const isPrivate = interaction.options.getBoolean('private') || false;
         const targetUser = interaction.user;
         const conf = interaction.client.config.commands.wallet || {};
+        const canUseEphemeral = typeof interaction.inGuild === 'function'
+            ? interaction.inGuild()
+            : Boolean(interaction.guildId);
+        const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
 
-        if (isPrivate) {
-            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-        } else {
-            await interaction.deferReply();
-        }
+        await interaction.deferReply(shouldBeEphemeral ? { ephemeral: true } : {});
+
+        let activeCollector = null;
+        const stopCollector = (reason = 'replaced') => {
+            if (activeCollector) {
+                try {
+                    activeCollector.stop(reason);
+                } catch (err) {
+                    // Collector might already be stopped, ignore.
+                }
+                activeCollector = null;
+            }
+        };
 
         const render = async () => {
             const db = readEconomyDB();
@@ -74,20 +86,26 @@ module.exports = {
             await interaction.editReply({ embeds: [embed], components: [row] });
 
             const msg = await interaction.fetchReply();
+            if (activeCollector) {
+                stopCollector('replaced');
+            }
             const collector = msg.createMessageComponentCollector({ time: 30000 });
+            activeCollector = collector;
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
                     await i.reply({ content: 'Only you can control your view.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'wallet_close') {
-                    collector.stop('closed');
+                    await i.deferUpdate();
+                    stopCollector('closed');
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                    await i.update({ components: [disabled] });
+                    await interaction.editReply({ components: [disabled] });
                     return;
                 }
                 if (i.customId === 'wallet_refresh') {
                     await i.deferUpdate();
+                    stopCollector('refresh');
                     await render();
                     return;
                 }
@@ -98,6 +116,9 @@ module.exports = {
             });
 
             collector.on('end', async (c, reason) => {
+                if (activeCollector === collector) {
+                    activeCollector = null;
+                }
                 if (reason === 'time') {
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                     await interaction.editReply({ components: [disabled] }).catch(() => {});
