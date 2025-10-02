@@ -5,6 +5,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('top')
         .setDescription('Shows a leaderboard of the most or least active members.')
+        .setDMPermission(false)
         .addStringOption(option =>
             option
                 .setName('type')
@@ -70,7 +71,14 @@ module.exports = {
 
         try {
             const isPrivate = interaction.options.getBoolean('private') || false;
-            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+
+            if (typeof interaction.inGuild === 'function' ? !interaction.inGuild() : !interaction.guild) {
+                const response = topMsg.guild_only || '❌ This command can only be used inside a server.';
+                return await interaction.reply({ content: response, ephemeral: true });
+            }
+
+            const shouldBeEphemeral = Boolean(isPrivate);
+            await interaction.deferReply(shouldBeEphemeral ? { ephemeral: true } : {});
 
             // --- Obținerea opțiunilor ---
             const type = interaction.options.getString('type');
@@ -85,6 +93,9 @@ module.exports = {
 
             // Ensure the bot can see and read history in the selected channel (if any)
             const me = interaction.guild.members.me;
+            if (!me) {
+                throw new Error('Bot member instance is unavailable in the current guild.');
+            }
             if (limitChannel) {
                 const perms = limitChannel.permissionsFor(me);
                 if (!perms || !perms.has(PermissionsBitField.Flags.ViewChannel) || !perms.has(PermissionsBitField.Flags.ReadMessageHistory)) {
