@@ -5,6 +5,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('guess')
         .setDescription('Starts a number guessing minigame.')
+        .setDMPermission(false)
         .addIntegerOption(option =>
             option.setName('min')
                 .setDescription('The minimum value of the range.')
@@ -30,7 +31,16 @@ module.exports = {
         const min = interaction.options.getInteger('min');
         const max = interaction.options.getInteger('max');
         let chances = interaction.options.getInteger('chances');
+        const totalChances = chances;
         const isPrivate = interaction.options.getBoolean('private') || false;
+        const channel = interaction.channel;
+
+        if (!channel || typeof channel.isTextBased !== 'function' || !channel.isTextBased()) {
+            return interaction.reply({
+                content: guessConfig.messages?.unsupported_channel || '❌ This game can only be played in text channels.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
 
         if (min >= max) {
             return interaction.reply({
@@ -71,7 +81,7 @@ module.exports = {
                     .replace('{chances}', chances)
             )
             .addFields(
-                { name: 'Attempts', value: bar(chances, interaction.options.getInteger('chances')), inline: false },
+                { name: 'Attempts', value: bar(chances, totalChances), inline: false },
                 { name: guessConfig.messages.prompt, value: guessConfig.messages.prompt_value, inline: false },
                 ...(feedback ? [{ name: 'Hint', value: feedback, inline: false }] : []),
                 { name: 'Hints used', value: `\`${hintsUsed}/${maxHints}\``, inline: true }
@@ -84,12 +94,23 @@ module.exports = {
             new ButtonBuilder().setCustomId('guess_giveup').setLabel('Give up').setStyle(ButtonStyle.Danger).setEmoji('🏳️')
         );
 
-        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+        const shouldBeEphemeral = Boolean(isPrivate && (typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId)));
+        await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
         let gameEmbed = buildEmbed();
         const reply = await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
 
         const filter = m => m.author.id === player.id;
-        const collector = reply.channel.createMessageCollector({ filter, time: 120000 });
+        const collector = channel.createMessageCollector({ filter, time: 120000 });
+
+        const safeDeferUpdate = async (componentInteraction) => {
+            try {
+                await componentInteraction.deferUpdate();
+            } catch (err) {
+                if (err?.code !== 10062) {
+                    throw err;
+                }
+            }
+        };
 
         const updateGame = async (feedback = null) => {
             gameEmbed = buildEmbed(feedback);
@@ -115,7 +136,7 @@ module.exports = {
             }
             if (i.customId === 'guess_hint') {
                 if (hintsUsed >= maxHints || chances <= 1) {
-                    await i.deferUpdate();
+                    await safeDeferUpdate(i);
                     return;
                 }
                 hintsUsed += 1;
@@ -129,7 +150,7 @@ module.exports = {
                     rangeMax = mid;
                     feedback = `Try lower than ${mid + 1}.`;
                 }
-                await i.deferUpdate();
+                await safeDeferUpdate(i);
                 await updateGame(feedback);
                 if (chances <= 0) {
                     collector.stop('depleted');

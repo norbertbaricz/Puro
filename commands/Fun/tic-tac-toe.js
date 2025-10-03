@@ -60,6 +60,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('tictactoe')
         .setDescription('Play Tic Tac Toe against another member.')
+        .setDMPermission(false)
         .addUserOption(option =>
             option.setName('opponent').setDescription('Your opponent').setRequired(true))
         .addStringOption(option =>
@@ -74,9 +75,10 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const channelId = interaction.channelId ?? interaction.channel?.id ?? null;
-        if (!channelId) {
-            await interaction.reply({ content: 'This command requires a channel context and cannot be used here.', flags: MessageFlags.Ephemeral });
+        const channel = interaction.channel;
+        const channelId = interaction.channelId ?? channel?.id ?? null;
+        if (!channelId || !channel || typeof channel.isTextBased !== 'function' || !channel.isTextBased()) {
+            await interaction.reply({ content: 'This command requires a text channel and cannot be used here.', flags: MessageFlags.Ephemeral });
             return;
         }
         if (activeGames.has(channelId)) {
@@ -107,6 +109,8 @@ module.exports = {
                 return interaction.reply({ content: cfg.messages.self_challenge, flags: MessageFlags.Ephemeral });
             }
 
+            await interaction.deferReply();
+
             // Invitation step
             const invite = new EmbedBuilder()
                 .setTitle('🎮 Tic Tac Toe')
@@ -120,7 +124,7 @@ module.exports = {
                 new ButtonBuilder().setCustomId('ttt_decline').setLabel('Decline').setStyle(ButtonStyle.Danger).setEmoji('❌')
             );
 
-            await interaction.reply({ embeds: [invite], components: [inviteRow] });
+            await interaction.editReply({ embeds: [invite], components: [inviteRow] });
             const inviteMsg = await interaction.fetchReply();
 
             const inviteCollector = inviteMsg.createMessageComponentCollector({ time: 30000 });
@@ -174,6 +178,9 @@ module.exports = {
                 let rematches = 0;
 
                 const startMatch = async () => {
+                    if (!players.X || !players.O) {
+                        throw new Error('Missing player references for Tic Tac Toe game start.');
+                    }
                     const game = new TicTacToe();
                     game.currentPlayer = 'X';
 
@@ -198,14 +205,32 @@ module.exports = {
                     await interaction.editReply({ embeds: [embed], components: createGameBoard(game) });
                     const message = await interaction.fetchReply();
 
+                    const allowedIds = new Set([players.X.id, players.O.id]);
                     const collector = message.createMessageComponentCollector({
-                        filter: i => i.user.id === players.X.id || i.user.id === players.O.id,
+                        filter: i => allowedIds.has(i.user.id),
                         time: 300000
                     });
 
+                    const safeDeferUpdate = async (componentInteraction) => {
+                        try {
+                            await componentInteraction.deferUpdate();
+                        } catch (err) {
+                            if (err?.code !== 10062) {
+                                throw err;
+                            }
+                        }
+                    };
+
                     collector.on('collect', async i => {
                         if (!i.customId.startsWith('ttt_')) return;
-                        if (i.user.id !== players[game.currentPlayer].id) {
+                        const currentPlayerUser = players[game.currentPlayer];
+                        if (!currentPlayerUser || !currentPlayerUser.id) {
+                            await i.reply({ content: 'Game state no longer valid. Ending game.', flags: MessageFlags.Ephemeral }).catch(() => {});
+                            collector.stop('error');
+                            activeGames.delete(channelId);
+                            return;
+                        }
+                        if (i.user.id !== currentPlayerUser.id) {
                             await i.reply({ content: cfg.messages.not_your_turn.replace('{player}', players[game.currentPlayer]), flags: MessageFlags.Ephemeral });
                             return;
                         }
@@ -245,7 +270,7 @@ module.exports = {
                                     rematches += 1;
                                     // swap players for fairness
                                     players = { X: players.O, O: players.X };
-                                    await btn.deferUpdate();
+                                    await safeDeferUpdate(btn);
                                     await startMatch();
                                     endCollector.stop('rematch');
                                 }
@@ -272,6 +297,9 @@ module.exports = {
                             interaction.editReply({ embeds: [embed], components: createGameBoard(game, true) }).catch(() => {});
                             activeGames.delete(channelId);
                         }
+                        if (reason === 'error') {
+                            interaction.editReply({ content: 'Game ended due to an unexpected error.', components: [] }).catch(() => {});
+                        }
                     });
                 };
 
@@ -280,11 +308,11 @@ module.exports = {
 
         } catch (error) {
             console.error("TicTacToe Error:", error);
-            activeGames.delete(interaction.channel.id);
-            if (!interaction.replied && !interaction.deferred) {
-                 await interaction.reply({ content: 'A critical error occurred while starting the game.', flags: MessageFlags.Ephemeral });
+            if (channelId) activeGames.delete(channelId);
+            if (!interaction.deferred && !interaction.replied) {
+                await interaction.reply({ content: 'A critical error occurred while starting the game.', flags: MessageFlags.Ephemeral }).catch(() => {});
             } else {
-                 await interaction.editReply({ content: 'A critical error occurred, the game has been cancelled.', components: [] });
+                await interaction.editReply({ content: 'A critical error occurred, the game has been cancelled.', components: [] }).catch(() => {});
             }
         }
     },
