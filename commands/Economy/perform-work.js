@@ -8,6 +8,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('work')
         .setDescription('Complete a shift at your current job to earn money.')
+        .setDMPermission(false)
         .addBooleanOption(option =>
             option.setName('private')
                 .setDescription('Reply only to you (ephemeral)')
@@ -18,13 +19,20 @@ module.exports = {
         const isPrivate = interaction.options.getBoolean('private') || false;
         const config = interaction.client.config?.commands?.work || {};
         const messages = config.messages || {};
+
+        if (typeof interaction.inGuild === 'function' ? !interaction.inGuild() : !interaction.guild) {
+            const reply = messages.guild_only || '❌ This command can only be used inside a server.';
+            await interaction.reply({ content: reply, flags: MessageFlags.Ephemeral });
+            return;
+        }
+
         const colors = {
             success: parseColor(config.color_success || '#2ECC71', '#2ECC71'),
             neutral: parseColor(config.color_neutral || '#F1C40F', '#F1C40F'),
             failure: parseColor(config.color_failure || '#ED4245', '#ED4245')
         };
 
-        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+        await interaction.deferReply(isPrivate ? { flags: MessageFlags.Ephemeral } : {});
 
         const db = readEconomyDB();
         const entry = ensureUserRecord(db, interaction.user.id);

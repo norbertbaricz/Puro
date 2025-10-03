@@ -17,6 +17,7 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.eightball;
 
+        let shouldBeEphemeral = false;
         try {
             const question = (interaction.options.getString('question') || '').trim();
             const isPrivate = interaction.options.getBoolean('private') || false;
@@ -53,8 +54,9 @@ module.exports = {
             const canUseEphemeral = typeof interaction.inGuild === 'function'
                 ? interaction.inGuild()
                 : Boolean(interaction.guildId);
-            const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
-            await interaction.deferReply(shouldBeEphemeral ? { ephemeral: true } : {});
+            shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
+            const deferOptions = shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {};
+            await interaction.deferReply(deferOptions);
 
             const loadingEmbed = new EmbedBuilder()
                 .setColor(config.color)
@@ -157,9 +159,11 @@ module.exports = {
             const fallback = config?.messages?.error || '❌ Something went wrong while consulting the 8-Ball.';
             try {
                 if (interaction.deferred || interaction.replied) {
-                    await interaction.followUp({ content: fallback, ephemeral: true });
+                    const followUpOptions = shouldBeEphemeral ? { content: fallback, flags: MessageFlags.Ephemeral } : { content: fallback };
+                    await interaction.followUp(followUpOptions);
                 } else {
-                    await interaction.reply({ content: fallback, ephemeral: true });
+                    const replyOptions = shouldBeEphemeral ? { content: fallback, flags: MessageFlags.Ephemeral } : { content: fallback };
+                    await interaction.reply(replyOptions);
                 }
             } catch (replyError) {
                 console.error('Failed to notify user about 8ball error:', replyError);

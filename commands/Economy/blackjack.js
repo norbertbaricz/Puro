@@ -130,6 +130,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('blackjack')
         .setDescription('Play blackjack against dealer Puro.')
+        .setDMPermission(false)
         .addIntegerOption(option =>
             option.setName('bet')
                 .setDescription('Amount of money to wager')
@@ -160,6 +161,13 @@ module.exports = {
             double: msgs.buttons?.double || 'Double'
         };
 
+        if (typeof interaction.inGuild === 'function' ? !interaction.inGuild() : !interaction.guild) {
+            return interaction.reply({
+                content: msgs.guild_only || '❌ This command can only be used inside a server.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
         if (bet <= 0) {
             return interaction.reply({
                 content: msgs.invalid_bet || '❌ Bet must be a positive amount.',
@@ -167,7 +175,8 @@ module.exports = {
             });
         }
 
-        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+        const shouldBeEphemeral = Boolean(isPrivate);
+        await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
 
         const db = readEconomyDB();
         const entry = ensureUserRecord(db, interaction.user.id);
@@ -375,6 +384,16 @@ module.exports = {
         const message = await interaction.fetchReply();
         const collector = message.createMessageComponentCollector({ time: 60000 });
 
+        const safeDeferUpdate = async (componentInteraction) => {
+            try {
+                await componentInteraction.deferUpdate();
+            } catch (err) {
+                if (err?.code !== 10062) {
+                    throw err;
+                }
+            }
+        };
+
         collector.on('collect', async (i) => {
             if (i.user.id !== interaction.user.id) {
                 await i.reply({ content: msgs.not_your_turn || 'Only the current player can act on this game.', flags: MessageFlags.Ephemeral });
@@ -387,7 +406,7 @@ module.exports = {
             }
 
             if (i.customId === 'bj_hit') {
-                await i.deferUpdate();
+                await safeDeferUpdate(i);
                 state.canDouble = false;
                 state.player.push(draw());
                 const evalPlayer = calculateHand(state.player);
@@ -404,7 +423,7 @@ module.exports = {
             }
 
             if (i.customId === 'bj_stand') {
-                await i.deferUpdate();
+                await safeDeferUpdate(i);
                 state.canDouble = false;
                 await dealerTurn();
                 collector.stop('finished');
@@ -416,7 +435,7 @@ module.exports = {
                     await i.reply({ content: msgs.double_unavailable || 'You cannot double right now.', flags: MessageFlags.Ephemeral });
                     return;
                 }
-                await i.deferUpdate();
+                await safeDeferUpdate(i);
                 entry.balance -= state.bet;
                 state.bet *= 2;
                 state.canDouble = false;

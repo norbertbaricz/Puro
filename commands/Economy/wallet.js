@@ -21,7 +21,7 @@ module.exports = {
             : Boolean(interaction.guildId);
         const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
 
-        await interaction.deferReply(shouldBeEphemeral ? { ephemeral: true } : {});
+        await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
 
         let activeCollector = null;
         const stopCollector = (reason = 'replaced') => {
@@ -32,6 +32,16 @@ module.exports = {
                     // Collector might already be stopped, ignore.
                 }
                 activeCollector = null;
+            }
+        };
+
+        const safeDeferUpdate = async (componentInteraction) => {
+            try {
+                await componentInteraction.deferUpdate();
+            } catch (err) {
+                if (err?.code !== 10062) {
+                    throw err;
+                }
             }
         };
 
@@ -97,14 +107,14 @@ module.exports = {
                     return;
                 }
                 if (i.customId === 'wallet_close') {
-                    await i.deferUpdate();
+                    await safeDeferUpdate(i);
                     stopCollector('closed');
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                     await interaction.editReply({ components: [disabled] });
                     return;
                 }
                 if (i.customId === 'wallet_refresh') {
-                    await i.deferUpdate();
+                    await safeDeferUpdate(i);
                     stopCollector('refresh');
                     await render();
                     return;
