@@ -81,6 +81,10 @@ module.exports = {
         const eventsCount = Array.isArray(client.eventLoadDetails)
           ? client.eventLoadDetails.filter(x => x && x.status === 'success' && !x.type).length
           : 0;
+        const globalCommandsCount = client.commands?.size || 0;
+        const guildScopedCount = Array.from(client.guildCommands instanceof Map ? client.guildCommands.values() : [])
+          .reduce((sum, col) => sum + (col?.size || 0), 0);
+        const totalCommandCount = globalCommandsCount + guildScopedCount;
 
         const uptime = process.uptime();
         const days = Math.floor(uptime / 86400);
@@ -104,7 +108,7 @@ module.exports = {
           const statusContent = content.status || {};
           base.addFields({
             name: statusContent.title || '📊 Bot Status & Statistics',
-            value: `${statusContent.servers_label || '🏠 Servers'}: \`${guilds.size}\`\n${statusContent.members_label || '👥 Members'}: \`${totalMembers}\`\n${statusContent.commands_label || '⚙ Commands'}: \`${client.commands?.size || 0}\`\n${statusContent.latency_label || '⏱ Latency'}: \`${client.ws.ping}ms\`\n${statusContent.events_label || '🎯 Events'}: \`${eventsCount}\``,
+            value: `${statusContent.servers_label || '🏠 Servers'}: \`${guilds.size}\`\n${statusContent.members_label || '👥 Members'}: \`${totalMembers}\`\n${statusContent.commands_label || '⚙ Commands'}: \`${totalCommandCount}\`\n${statusContent.latency_label || '⏱ Latency'}: \`${client.ws.ping}ms\`\n${statusContent.events_label || '🎯 Events'}: \`${eventsCount}\``,
             inline: false,
           });
           const systemContent = content.system || {};
@@ -136,7 +140,7 @@ module.exports = {
             .addFields(
               { name: s.servers_label || '🏠 Servers', value: `\`${guilds.size}\``, inline: true },
               { name: s.members_label || '👥 Members', value: `\`${totalMembers}\``, inline: true },
-              { name: s.commands_label || '⚙ Commands', value: `\`${client.commands?.size || 0}\``, inline: true },
+              { name: s.commands_label || '⚙ Commands', value: `\`${totalCommandCount}\``, inline: true },
               { name: s.events_label || '🎯 Events', value: `\`${eventsCount}\``, inline: true },
               { name: s.latency_label || '⏱ Latency', value: `\`${client.ws.ping}ms\``, inline: true }
             );

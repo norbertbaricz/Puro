@@ -12,7 +12,18 @@ module.exports = {
             // Handle Slash Commands
             if (interaction.isChatInputCommand()) {
                 const commandName = interaction.commandName;
-                const command = interaction.client.commands.get(commandName);
+                let command = null;
+
+                if (interaction.guildId && interaction.client.guildCommands instanceof Map) {
+                    const scoped = interaction.client.guildCommands.get(interaction.guildId);
+                    if (scoped) {
+                        command = scoped.get(commandName) || null;
+                    }
+                }
+
+                if (!command) {
+                    command = interaction.client.commands.get(commandName);
+                }
 
                 if (!command) {
                     console.error(`No command matching ${commandName} was found.`);
@@ -49,7 +60,16 @@ module.exports = {
 
             // Handle Autocomplete
             if (interaction.isAutocomplete()) {
-                const command = interaction.client.commands.get(interaction.commandName);
+                let command = null;
+                if (interaction.guildId && interaction.client.guildCommands instanceof Map) {
+                    const scoped = interaction.client.guildCommands.get(interaction.guildId);
+                    if (scoped) {
+                        command = scoped.get(interaction.commandName) || null;
+                    }
+                }
+                if (!command) {
+                    command = interaction.client.commands.get(interaction.commandName);
+                }
                 if (command && typeof command.autocomplete === 'function') {
                     try { await command.autocomplete(interaction); } catch (e) { console.error('Autocomplete error:', e); }
                 }

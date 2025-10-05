@@ -1,52 +1,76 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags, Collection } = require('discord.js');
 
-// Helper function to create the main menu embed, avoiding code repetition
+function collectVisibleCommands(client, guildId) {
+    const visible = new Collection();
+    client.commands.forEach((cmd, name) => visible.set(name, cmd));
+
+    if (guildId && client.guildCommands instanceof Map) {
+        const scoped = client.guildCommands.get(guildId);
+        if (scoped) {
+            scoped.forEach((cmd, name) => visible.set(name, cmd));
+        }
+    }
+
+    return Array.from(visible.values());
+}
+
+function groupCommandsByCategory(commands) {
+    const categories = new Map();
+    for (const command of commands) {
+        const category = (command.category || 'Misc').toString();
+        const key = category.trim().length ? category.trim() : 'Misc';
+        if (!categories.has(key)) {
+            categories.set(key, []);
+        }
+        categories.get(key).push(command);
+    }
+
+    for (const list of categories.values()) {
+        list.sort((a, b) => a.data.name.localeCompare(b.data.name));
+    }
+
+    return categories;
+}
+
+function buildCategorySummary(categories) {
+    return Array.from(categories.entries())
+        .map(([name, cmds]) => ({ name, count: cmds.length }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 async function createMainMenu(interaction) {
     const config = interaction.client.config?.commands?.help || { color: '#0099ff' };
-    const commandsPath = path.join(__dirname, '..');
-    const categories = fs.readdirSync(commandsPath)
-        .filter(file => fs.statSync(path.join(commandsPath, file)).isDirectory())
-        .sort();
+    const commands = collectVisibleCommands(interaction.client, interaction.guildId);
+    const categories = groupCommandsByCategory(commands);
+    const summaries = buildCategorySummary(categories);
 
-    let totalCommands = 0;
-    const categoryData = categories.map(category => {
-        const categoryCommands = fs.readdirSync(path.join(commandsPath, category))
-            .filter(file => file.endsWith('.js'));
-        const count = categoryCommands.length;
-        totalCommands += count;
-        return { name: category, count };
-    });
-
+    const totalCommands = commands.length;
     const embed = new EmbedBuilder()
         .setColor(config.color)
         .setTitle('📚 Command Categories')
         .setDescription('Select a category from the menu below to view its commands.')
-        .setFooter({ text: `Total categories: ${categories.length} • Total commands: ${totalCommands}` })
+        .setFooter({ text: `Total categories: ${summaries.length} • Total commands: ${totalCommands}` })
         .setTimestamp();
 
-    // Reverting to the old style of displaying categories
-    const commandsField = categoryData.map(cat => `**${cat.name}**\n${cat.count} commands`).join('\n\n');
+    const commandsField = summaries.map(cat => `**${cat.name}**\n${cat.count} commands`).join('\n\n');
     embed.addFields({
         name: 'Categories',
         value: commandsField || 'No categories found.',
-        inline: true
+        inline: true,
     });
 
     const selectMenu = new StringSelectMenuBuilder()
         .setCustomId('help_category_select')
         .setPlaceholder('Select a category')
         .addOptions(
-            categoryData.map(category => ({
+            summaries.slice(0, 25).map(category => ({
                 label: category.name,
                 description: `${category.count} commands available in this category.`,
-                value: category.name
+                value: category.name,
             }))
         );
 
     const actionRow = new ActionRowBuilder().addComponents(selectMenu);
-
     return { embeds: [embed], components: [actionRow] };
 }
 
@@ -80,17 +104,18 @@ module.exports = {
             // Direct category view via option
             if (categoryOpt) {
                 const config = interaction.client.config?.commands?.help || { color: '#0099ff' };
-                const commands = Array.from(interaction.client.commands.values())
-                    .filter(cmd => (cmd.category || 'Misc').toLowerCase() === categoryOpt.toLowerCase())
-                    .map(cmd => ({ name: cmd.data.name, description: cmd.data.description }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
+                const commands = collectVisibleCommands(interaction.client, interaction.guildId);
+                const categories = groupCommandsByCategory(commands);
+                const matchKey = Array.from(categories.keys()).find(key => key.toLowerCase() === categoryOpt.toLowerCase());
+                const list = matchKey ? categories.get(matchKey) : [];
+                const summaryName = matchKey || categoryOpt;
 
                 const embed = new EmbedBuilder()
                     .setColor(config.color)
-                    .setTitle(`📂 ${categoryOpt} Commands`)
-                    .setFooter({ text: `${commands.length} commands available` })
+                    .setTitle(`📂 ${summaryName} Commands`)
+                    .setFooter({ text: `${list.length} commands available` })
                     .setTimestamp();
-                const commandsList = commands.map(cmd => `\`/${cmd.name}\`\n↳ ${cmd.description}`).join('\n\n') || 'This category currently has no commands.';
+                const commandsList = list.map(cmd => `\`/${cmd.data.name}\`\n↳ ${cmd.data.description || 'No description.'}`).join('\n\n') || 'This category currently has no commands.';
                 embed.setDescription(commandsList);
 
                 return await interaction.reply({ embeds: [embed], flags: isPrivate ? MessageFlags.Ephemeral : undefined });
@@ -99,7 +124,7 @@ module.exports = {
             // Search by name/description
             if (searchOpt) {
                 const query = searchOpt.toLowerCase();
-                const results = Array.from(interaction.client.commands.values())
+                const results = collectVisibleCommands(interaction.client, interaction.guildId)
                     .map(cmd => ({ name: cmd.data.name, description: cmd.data.description, category: cmd.category || 'Misc' }))
                     .filter(c => c.name.toLowerCase().includes(query) || (c.description || '').toLowerCase().includes(query))
                     .sort((a, b) => a.name.localeCompare(b.name));
@@ -132,13 +157,7 @@ module.exports = {
         const config = interaction.client.config?.commands?.help || { color: '#0099ff' };
 
         try {
-            const commands = Array.from(interaction.client.commands.values())
-                .filter(cmd => (cmd.category || 'Misc') === selectedCategory)
-                .map(cmd => ({
-                    name: cmd.data.name,
-                    description: cmd.data.description
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name));
+            const commands = groupCommandsByCategory(collectVisibleCommands(interaction.client, interaction.guildId)).get(selectedCategory) || [];
 
             const embed = new EmbedBuilder()
                 .setColor(config.color)
@@ -147,8 +166,7 @@ module.exports = {
                 .setTimestamp();
 
             if (commands.length > 0) {
-                // Reverting to the old style of listing commands
-                const commandsList = commands.map(cmd => `\`/${cmd.name}\`\n↳ ${cmd.description}`).join('\n\n');
+                const commandsList = commands.map(cmd => `\`/${cmd.data.name}\`\n↳ ${cmd.data.description || 'No description.'}`).join('\n\n');
                 embed.setDescription(commandsList);
             } else {
                 embed.setDescription('This category currently has no commands.');
