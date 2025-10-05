@@ -56,6 +56,7 @@ client.on('shardCreate', (shard) => {
 
 client.config = config;
 client.commands = new Collection();
+client.guildCommands = new Map();
 client.commandLoadDetails = [];
 client.eventLoadDetails = [];
 
@@ -65,6 +66,75 @@ const verboseLog = (...args) => { if (!quietStartup) console.log(...args); };
 if (!quietStartup) {
     console.log("✅ Successfully loaded config.yml.");
 }
+
+function slugify(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function buildGuildDirectory(cfg) {
+    const entries = Array.isArray(cfg?.guilds) ? cfg.guilds : [];
+    const bySlug = new Map();
+    const byId = new Map();
+    const premiumSlugs = new Set();
+    const premiumIds = new Set();
+    const premiumGuilds = new Map();
+
+    for (const raw of entries) {
+        if (!raw || typeof raw !== 'object') continue;
+
+        const slug = slugify(raw.slug || raw.name);
+        if (!slug) continue;
+
+        const id = raw.id ? String(raw.id) : null;
+        const tier = typeof raw.tier === 'string' ? raw.tier.toLowerCase() : '';
+        const premium = raw.premium === true || tier === 'premium';
+
+        const aliasInputs = [];
+        if (Array.isArray(raw.aliases)) aliasInputs.push(...raw.aliases);
+        if (raw.name) aliasInputs.push(raw.name);
+        if (raw.slug) aliasInputs.push(raw.slug);
+
+        const aliasSlugs = new Set(aliasInputs.map(slugify).filter(Boolean));
+        aliasSlugs.add(slug);
+
+        const extraIds = Array.isArray(raw.ids) ? raw.ids.map(String) : [];
+        if (id) extraIds.unshift(id);
+        const aliasIds = new Set(extraIds.filter(Boolean));
+
+        const meta = {
+            ...raw,
+            id,
+            slug,
+            tier: tier || (premium ? 'premium' : raw.tier),
+            premium,
+            aliasSlugs,
+            aliasIds,
+        };
+
+        bySlug.set(slug, meta);
+        aliasSlugs.forEach(sl => {
+            if (sl && !bySlug.has(sl)) {
+                bySlug.set(sl, meta);
+            }
+        });
+        aliasIds.forEach(aliasId => {
+            if (aliasId) byId.set(aliasId, meta);
+        });
+        if (premium) {
+            aliasSlugs.forEach(sl => premiumSlugs.add(sl));
+            aliasIds.forEach(aliasId => premiumIds.add(aliasId));
+            if (slug) premiumGuilds.set(slug, meta);
+        }
+    }
+
+    return { bySlug, byId, premiumSlugs, premiumIds, premiumGuilds };
+}
+
+client.guildDirectory = buildGuildDirectory(client.config);
 
 // Helper function to recursively get all .js files
 async function getAllJsFiles(dir) {
@@ -113,9 +183,14 @@ function ensureDatabase(dbPath, options = {}) {
 // Function to load and register slash commands
 async function loadAndRegisterCommands() {
     verboseLog('\n🤖 Starting command registration...');
-    const commandsToRegister = [];
     const localCommandsPath = path.join(__dirname, 'commands');
     client.commandLoadDetails = [];
+    client.commands.clear();
+    if (!(client.guildCommands instanceof Map)) {
+        client.guildCommands = new Map();
+    } else {
+        client.guildCommands.clear();
+    }
 
     if (!fs.existsSync(localCommandsPath)) {
         verboseLog("📂 'commands' directory does not exist. No local commands will be loaded.");
@@ -127,17 +202,80 @@ async function loadAndRegisterCommands() {
     verboseLog(`\n🔍 Found ${commandFiles.length} command files...`);
     client.commandLoadDetails.push({ type: 'summary', message: `Found ${commandFiles.length} command files.` });
 
+    const directory = client.guildDirectory || {};
+    const bySlug = directory.bySlug instanceof Map ? directory.bySlug : new Map();
+    const globalCommands = [];
+    const guildScopedPayloads = new Map();
+    const seenGlobalNames = new Set();
+
     for (const filePath of commandFiles) {
         const file = path.relative(localCommandsPath, filePath);
+        const segments = file.split(path.sep);
+        const isGuildScoped = segments[0] === 'guilds' && segments.length >= 2;
+        let guildMeta = null;
+        let guildIds = [];
+
         try {
             delete require.cache[require.resolve(filePath)];
             const command = require(filePath);
 
             if (command.data && typeof command.data.name === 'string' && typeof command.execute === 'function') {
-                commandsToRegister.push(command.data.toJSON());
-                client.commands.set(command.data.name, command);
-                verboseLog(`✅ Loaded command: ${file}`);
-                client.commandLoadDetails.push({ file, name: command.data.name, status: 'success', message: 'Loaded successfully.' });
+                if (isGuildScoped) {
+                    const slugCandidate = slugify(segments[1]);
+                    if (!slugCandidate) {
+                        verboseLog(`⚠️ Skipping command ${file} (cannot resolve guild slug).`);
+                        client.commandLoadDetails.push({ file, status: 'skipped', message: 'Guild slug could not be resolved.' });
+                        continue;
+                    }
+
+                    guildMeta = bySlug.get(slugCandidate) || null;
+                    if (!guildMeta) {
+                        verboseLog(`⚠️ Skipping command ${file} (no guild config for slug ${slugCandidate}).`);
+                        client.commandLoadDetails.push({ file, status: 'skipped', message: `No guild config for slug ${slugCandidate}.` });
+                        continue;
+                    }
+
+                    if (!guildMeta.premium) {
+                        verboseLog(`⚠️ Skipping command ${file} (guild ${guildMeta.slug} is not premium).`);
+                        client.commandLoadDetails.push({ file, status: 'skipped', message: `Guild ${guildMeta.slug} is not flagged premium.` });
+                        continue;
+                    }
+
+                    const aliasIds = guildMeta.aliasIds instanceof Set ? Array.from(guildMeta.aliasIds) : [];
+                    if (guildMeta.id && !aliasIds.includes(guildMeta.id)) aliasIds.unshift(guildMeta.id);
+                    guildIds = aliasIds.filter(Boolean);
+
+                    if (!guildIds.length) {
+                        verboseLog(`⚠️ Skipping command ${file} (premium guild ${guildMeta.slug} missing ID).`);
+                        client.commandLoadDetails.push({ file, status: 'skipped', message: `Guild ${guildMeta.slug} missing numeric id for registration.` });
+                        continue;
+                    }
+
+                    guildIds.forEach((guildId) => {
+                        if (!client.guildCommands.has(guildId)) {
+                            client.guildCommands.set(guildId, new Collection());
+                        }
+                        const perGuild = client.guildCommands.get(guildId);
+                        if (perGuild.has(command.data.name)) {
+                            verboseLog(`⚠️ Command ${command.data.name} for guild ${guildId} is being overwritten by ${file}.`);
+                        }
+                        perGuild.set(command.data.name, command);
+                        if (!guildScopedPayloads.has(guildId)) guildScopedPayloads.set(guildId, []);
+                        guildScopedPayloads.get(guildId).push(command.data.toJSON());
+                    });
+
+                    verboseLog(`✅ Loaded guild command: ${file} → [${guildIds.join(', ')}]`);
+                    client.commandLoadDetails.push({ file, name: command.data.name, status: 'success', message: `Loaded for premium guild ${guildMeta.slug}.` });
+                } else {
+                    if (seenGlobalNames.has(command.data.name)) {
+                        verboseLog(`⚠️ Duplicate global command name detected: ${command.data.name} (${file}).`);
+                    }
+                    seenGlobalNames.add(command.data.name);
+                    client.commands.set(command.data.name, command);
+                    globalCommands.push(command.data.toJSON());
+                    verboseLog(`✅ Loaded command: ${file}`);
+                    client.commandLoadDetails.push({ file, name: command.data.name, status: 'success', message: 'Loaded successfully.' });
+                }
             } else {
                 const missingProps = 'Missing or invalid "data" (with "name") or "execute" properties.';
                 verboseLog(`❌ Command ${file} ${missingProps}`);
@@ -149,34 +287,59 @@ async function loadAndRegisterCommands() {
         }
     }
 
-    // Respect config for registration mode
+    const scopedCount = Array.from(guildScopedPayloads.values()).reduce((acc, list) => acc + list.length, 0);
+    client.commandLoadDetails.push({ type: 'summary', message: `Prepared ${globalCommands.length} global commands and ${scopedCount} guild-scoped commands.` });
+
     const refreshOnStart = client.config?.api?.refresh_on_start ?? true;
     const regMode = (client.config?.api?.registration || 'global').toLowerCase();
     const guildId = client.config?.api?.guild_id;
 
-    if (commandsToRegister.length > 0 && refreshOnStart) {
-        const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-        verboseLog(`\n⚡ Refreshing ${commandsToRegister.length} application (/) commands...`);
+    if (!refreshOnStart) {
+        verboseLog('\nℹ️ refresh_on_start=false; skipping Discord API registration.');
+        client.commandLoadDetails.push({ type: 'summary', message: 'Skipped registration (refresh_on_start=false).' });
+        return;
+    }
 
-        try {
-            let route;
-            if (regMode === 'guild' && guildId) {
-                route = Routes.applicationGuildCommands(process.env.clientId, guildId);
-            } else {
-                route = Routes.applicationCommands(process.env.clientId);
-            }
-            const data = await rest.put(route, { body: commandsToRegister });
-            const scope = regMode === 'guild' && guildId ? `guild ${guildId}` : 'global';
-            const refreshMessage = `Successfully reloaded ${data.length} ${scope} application (/) commands!`;
+    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
+    try {
+        if (regMode === 'guild' && guildId) {
+            const combined = [...globalCommands, ...(guildScopedPayloads.get(guildId) || [])];
+            const data = await rest.put(
+                Routes.applicationGuildCommands(process.env.clientId, guildId),
+                { body: combined }
+            );
+            const refreshMessage = `Reloaded ${data.length} application commands for guild ${guildId}.`;
             verboseLog(`\n✅ ${refreshMessage}`);
             client.commandLoadDetails.push({ type: 'summary', message: refreshMessage, status: 'success' });
-        } catch (error) {
-            console.error('❌ Discord API command registration error:', error);
-            client.commandLoadDetails.push({ type: 'summary', message: `Discord API Error: ${error.message}`, status: 'error' });
+            guildScopedPayloads.delete(guildId);
+        } else {
+            const data = await rest.put(
+                Routes.applicationCommands(process.env.clientId),
+                { body: globalCommands }
+            );
+            const refreshMessage = `Reloaded ${data.length} global application (/) commands.`;
+            verboseLog(`\n✅ ${refreshMessage}`);
+            client.commandLoadDetails.push({ type: 'summary', message: refreshMessage, status: 'success' });
         }
-    } else {
-        verboseLog("\nℹ️ No valid commands to register with Discord API.");
-        client.commandLoadDetails.push({ type: 'summary', message: "No valid commands to register." });
+
+        for (const [gid, scopedCommands] of guildScopedPayloads.entries()) {
+            try {
+                const data = await rest.put(
+                    Routes.applicationGuildCommands(process.env.clientId, gid),
+                    { body: scopedCommands }
+                );
+                const refreshMessage = `Reloaded ${data.length} guild-specific commands for ${gid}.`;
+                verboseLog(`\n✅ ${refreshMessage}`);
+                client.commandLoadDetails.push({ type: 'summary', message: refreshMessage, status: 'success' });
+            } catch (error) {
+                console.error(`❌ Discord API command registration error for guild ${gid}:`, error);
+                client.commandLoadDetails.push({ type: 'summary', message: `Guild ${gid} API Error: ${error.message}`, status: 'error' });
+            }
+        }
+    } catch (error) {
+        console.error('❌ Discord API command registration error:', error);
+        client.commandLoadDetails.push({ type: 'summary', message: `Discord API Error: ${error.message}`, status: 'error' });
     }
 }
 
@@ -197,20 +360,80 @@ async function loadEvents() {
     verboseLog(`\n🔍 Found ${eventFiles.length} event files...`);
     client.eventLoadDetails.push({ type: 'summary', message: `Found ${eventFiles.length} event files.` });
 
+    const directory = client.guildDirectory || {};
+    const bySlug = directory.bySlug instanceof Map ? directory.bySlug : new Map();
+
+    const findGuildInArgs = (args) => {
+        for (const arg of args) {
+            if (!arg) continue;
+            if (arg.guild) return arg.guild;
+            if (arg.member?.guild) return arg.member.guild;
+            if (arg.guildId && client.guilds?.cache?.get) {
+                const fetched = client.guilds.cache.get(arg.guildId);
+                if (fetched) return fetched;
+            }
+        }
+        return null;
+    };
+
     for (const filePath of eventFiles) {
         const file = path.relative(localEventsPath, filePath);
+        const segments = file.split(path.sep);
+        const isGuildScoped = segments[0] === 'guilds' && segments.length >= 3;
+        let guildMeta = null;
+
+        if (isGuildScoped) {
+            const slugCandidate = slugify(segments[1]);
+            if (!slugCandidate) {
+                verboseLog(`⚠️ Skipping event ${file} (cannot resolve guild slug).`);
+                client.eventLoadDetails.push({ file, status: 'skipped', message: 'Guild slug could not be resolved.' });
+                continue;
+            }
+
+            guildMeta = bySlug.get(slugCandidate) || null;
+            if (!guildMeta) {
+                verboseLog(`⚠️ Skipping event ${file} (no guild config for slug ${slugCandidate}).`);
+                client.eventLoadDetails.push({ file, status: 'skipped', message: `No guild config for slug ${slugCandidate}.` });
+                continue;
+            }
+
+            if (!guildMeta.premium) {
+                verboseLog(`⚠️ Skipping event ${file} (guild ${guildMeta.slug} is not premium).`);
+                client.eventLoadDetails.push({ file, status: 'skipped', message: `Guild ${guildMeta.slug} is not flagged premium.` });
+                continue;
+            }
+        }
+
         try {
             delete require.cache[require.resolve(filePath)];
             const event = require(filePath);
 
             if (event.name && typeof event.name === 'string' && typeof event.execute === 'function') {
+                const handler = (...args) => {
+                    if (guildMeta) {
+                        const targetGuild = findGuildInArgs(args);
+                        if (!targetGuild) return;
+
+                        if (guildMeta.aliasIds?.size) {
+                            if (!guildMeta.aliasIds.has(targetGuild.id)) return;
+                        } else if (guildMeta.id) {
+                            if (targetGuild.id !== guildMeta.id) return;
+                        } else {
+                            const guildSlug = slugify(targetGuild.name);
+                            if (!guildMeta.aliasSlugs?.has(guildSlug)) return;
+                        }
+                    }
+
+                    return event.execute(...args, client);
+                };
+
                 if (event.once) {
-                    client.once(event.name, (...args) => event.execute(...args, client));
+                    client.once(event.name, handler);
                 } else {
-                    client.on(event.name, (...args) => event.execute(...args, client));
+                    client.on(event.name, handler);
                 }
                 verboseLog(`✅ Loaded event: ${file}`);
-                client.eventLoadDetails.push({ file, name: event.name, status: 'success', message: 'Loaded successfully.' });
+                client.eventLoadDetails.push({ file, name: event.name, status: 'success', message: guildMeta ? `Loaded for premium guild ${guildMeta.slug}.` : 'Loaded successfully.' });
                 loadedEventsCount++;
             } else {
                 const missingProps = 'Missing or invalid "name" or "execute" properties.';

@@ -1,6 +1,5 @@
 const createGreetingEvent = require('../../../lib/guildGreetingEventFactory');
 
 module.exports = createGreetingEvent({
-    allowedGuildIds: ['1217588804328620163'],
-    allowedGuildNames: ['The Wolf Den'],
+    allowedGuildNames: ["Spencer's Cave"],
 });

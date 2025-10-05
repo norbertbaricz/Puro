@@ -58,13 +58,21 @@ module.exports = {
         const setRandomActivity = async () => {
             const { members } = computeStats();
             const servers = client.guilds.cache.size;
+            const premiumGuildCount = (() => {
+                const directory = client.guildDirectory || {};
+                if (directory.premiumGuilds instanceof Map) return directory.premiumGuilds.size;
+                if (Array.isArray(directory.premiumGuilds)) return directory.premiumGuilds.length;
+                return Number(directory.premiumGuilds) || 0;
+            })();
             const uptime = formatUptime();
             const textRaw = statusConfig.texts[idx % statusConfig.texts.length];
             idx++;
             const text = textRaw
                 .replace('{servers}', String(servers))
                 .replace('{members}', String(members))
+                .replace('{membersGreeted}', String(members))
                 .replace('{uptime}', uptime)
+                .replace('{premiumGuilds}', String(premiumGuildCount))
                 .slice(0, 128);
             let activity;
 
@@ -100,7 +108,10 @@ module.exports = {
         // Print futuristic banner once, after presence is set and ping stabilizes
         setTimeout(() => {
             try {
-                const commandsLoaded = client.commands?.size || 0;
+                const globalCommandsCount = client.commands?.size || 0;
+                const scopedCommandsCount = Array.from(client.guildCommands instanceof Map ? client.guildCommands.values() : [])
+                    .reduce((sum, col) => sum + (col?.size || 0), 0);
+                const commandsLoaded = globalCommandsCount + scopedCommandsCount;
                 const eventsLoaded = (client.eventLoadDetails || []).filter(x => x.status === 'success' && !x.type).length;
                 const servers = client.guilds.cache.size;
                 const { members } = computeStats();

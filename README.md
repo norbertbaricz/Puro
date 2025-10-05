@@ -1,249 +1,76 @@
 # Puro - Discord Bot
 
-## Overview
-
-Puro is a modern, feature-rich Discord bot designed for community engagement, moderation, and entertainment. Built with Node.js and Discord.js, Puro offers a wide range of slash commands, interactive games, and event-driven features, all fully customizable via a single `config.yml` file. Whether you want to manage your server, boost activity, or just have fun, Puro is ready to help!
-
-Created by Skypixel Team. © Skypixel Team — all rights reserved. This project is open source under the ISC license; copyright remains with Skypixel Team.
-
----
-
-## Features
-
-### Slash Commands
-
-Puro provides a comprehensive suite of slash commands, including:
-
-- **/announce**: Send announcements to a channel (supports announcement channels).
-- **/avatar**: Show a user's avatar (global or server-specific).
-- **/clear**: Bulk delete messages, with optional user filter.
-- **/coinflip**: Flip one or more coins (up to 10) with animated results.
-- **/e621**: Fetch images from e621 with safe/explicit filtering (NSFW channel required for explicit).
-- **/eightball**: Ask the magic 8-ball for answers.
-- **/gender**: Randomly assign a fun gender/sexuality and percentage to a member.
-- **/giveaway**: Start a giveaway and pick a winner from the most active members.
-- **/guess**: Play a number guessing game.
-- **/hangman**: Classic hangman game with Discord embeds.
-- **/help**: Paginated help menu for all commands.
-- **/hug**: Send a virtual hug to another member.
-- **/info**: Display detailed bot and system info.
-- **/joke**: Get a random joke.
-- **/love**: Calculate love compatibility between two users.
-- **/marry**: Propose marriage to another user.
-- **/meme**: Fetch memes from Reddit, optionally by subreddit.
-- **/pat**: Pat another user.
-- **/rate**: Rate anything, just for fun.
-- **/send**: Send a private DM to a user (requires Manage Messages).
-- **/ship**: Ship two users together.
-- **/timeout**: Timeout a member (requires Moderate Members).
-- **/top**: Show a leaderboard of the most or least active members.
-- **/tp**: "Teleport" to another member with a fun animation.
-- **/tictactoe**: Play Tic-Tac-Toe against another user.
-- **/truthordare**: Play Truth or Dare.
-- **/userinfo**: Show detailed info about a user.
-- **/divorce**: Divorce your in-bot partner.
-- **/serverinfo**: Show server information.
-- **/adopt**: Send a wholesome adoption request with accept/decline.
-
-> **Note:** All commands are fully configurable via `config.yml` (colors, messages, limits, etc).
-
----
-
-### Events
-
-Puro listens and responds to various Discord events:
-
-- **Ready**: Logs startup details and sets a custom status (from `config.yml`).
-- **Interaction Create**: Handles slash commands and button interactions.
-- **Message Create**: Responds to greetings (e.g., "hi", "hello") in a configured guild with customizable replies.
-- **Custom Events**: Easily add your own event handlers.
-
-> Optional AI moderation example: `events/ai.js` demonstrates an on-message moderation check using a local Ollama server. If you want to enable it, update `CHANNEL_ID`, `MODEL`, and `OLLAMA_API_URL` at the top of that file and ensure the server is running. If you don't need it, you can delete or ignore that file.
-
----
-
-### Configuration
-
-All commands and events are fully customizable via `config.yml`:
-
-- Set custom colors for embeds (global and per-command).
-- Define messages for success, errors, and interactions.
-- Configure cooldowns, limits, and bot status.
-- Customize greeting patterns, responses, and more.
-
----
-
-## Installation
-
-### Prerequisites
-
-- **Node.js** v16.9+ (Node 18 LTS recommended)
-- **npm** (comes with Node.js)
-- A Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications))
-- Optional: e621 API credentials for `/e621`
-
-### Steps
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/username/puro-discord-bot.git
-   cd puro-discord-bot
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**:
-   Create a `.env` file in the root directory and add:
-   ```
-   TOKEN=your_discord_bot_token
-   clientId=your_bot_client_id
-   E621_USERNAME=your_e621_username
-   E621_API_KEY=your_e621_api_key
-   ```
-   > `E621_USERNAME` and `E621_API_KEY` are only required for the `/e621` command.
-
-4. **Configure the bot**:
-   Edit `config.yml` to customize colors, messages, limits, and other settings. Example:
-   ```yaml
-   status:
-     texts:
-       - "Powered by Skypixel"
-       - "Ready to help ❤️"
-     type: "Custom"
-     url: "https://example.com/"
-   ```
-
-5. **Run the bot**:
-   ```bash
-   npm start
-   ```
-
----
-
-## Usage
-
-1. **Invite the bot**:
-   - Use the bot's invite link (generate in the Discord Developer Portal).
-   - Grant permissions to read/send messages, embed links, and manage messages.
-
-2. **Use slash commands**:
-   - Type `/` in any text channel to see available commands.
-   - Example: `/help` for all commands, `/flip 5` to flip five coins.
-
-3. **Interact with events**:
-   - In the configured guild, send greetings like "hi" or "hello" for the configured reply.
-   - The bot sets its status automatically on startup.
-
----
-
-## Configuration Details
-
-The `config.yml` file is the heart of Puro's customization. Key sections include:
-
-- **colors**: Define global and per-command embed colors.
-- **limits**: Set constraints like max message length, coin flips, etc.
-- **commands**: Customize messages, colors, and settings for each command.
-- **events**: Configure event-specific settings, such as greeting patterns.
-- **status**: Set the bot's activity and status type.
-
-Example command configuration:
-```yaml
-commands:
-  love:
-    color: '#FF69B4'
-    messages:
-      self_love: "💝 No self-love checks!"
-      error: "❌ Error calculating love!"
-```
-
-### Command Registration
-
-On startup, the bot automatically registers all valid slash commands it finds under `commands/` as global application commands. This can take a few minutes to propagate. If you prefer guild-only registration during development, adapt the call in `app.js` to use `Routes.applicationGuildCommands(clientId, guildId)`.
-
-### Ephemeral Replies (Discord.js v14)
-
-Discord.js deprecated the `ephemeral: true` option on interaction responses in favor of flags. The codebase now uses `flags: MessageFlags.Ephemeral` (or `64`) for ephemeral responses. If you add new commands, prefer:
-
-```js
-await interaction.reply({ content: 'Only you can see this', flags: 64 });
-```
-
-or, when deferring:
-
-```js
-await interaction.deferReply({ flags: isPrivate ? 64 : undefined });
-```
-
----
-
-## Contributing
-
-We welcome contributions! To contribute:
-
-1. **Fork the repository** and create a new branch:
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-
-2. **Make your changes** and test thoroughly.
-
-3. **Submit a pull request** with a clear description.
-
-Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and ensure your code adheres to the project's style (use ESLint if configured).
-
----
-
-## Troubleshooting
-
-- **Bot not responding**:
-  - Check permissions.
-  - Verify `TOKEN` and `clientId` in `.env`.
-  - Ensure commands are registered (re-run `npm start`).
-  - Note: environment variable is `TOKEN` in this project (not `DISCORD_TOKEN`).
-
-- **e621 command failing**:
-  - Confirm `E621_USERNAME` and `E621_API_KEY` in `.env`.
-  - Channel must be NSFW for explicit content.
-
-- **Greetings not working**:
-  - Check the guild ID in `config.yml`.
-  - Ensure the message matches a greeting pattern.
-
-- **AsyncEventEmitter memory leak warnings**:
-  - The project increases listener limits on the client and shards to suppress benign warnings from the Discord.js websocket layer. This is expected and safe.
-
-- **database.json issues**:
-  - On boot, `database.json` is auto-created if missing and auto-healed if empty/corrupted (a backup is written when possible).
-
----
-
-## Changelog (recent)
-
-- Migrate ephemeral responses to `flags: MessageFlags.Ephemeral` for Discord.js deprecation compliance.
-- Raise max listeners on client/shards to avoid benign AsyncEventEmitter warnings.
-- Auto-create/repair `database.json` on boot for smoother first-run and recovery.
-
-For help, open an issue on GitHub or contact the maintainer.
-
----
-
-## License
-
-Puro is licensed under the ISC License. © Skypixel Team. All rights reserved.
-
----
-
-## Acknowledgments
-
-- Built with [Discord.js](https://discord.js.org/)
-- Inspired by the furry and gaming communities
-- Thanks to all contributors and users!
-
----
-
-**Contact**: For questions or suggestions, open an issue on GitHub or reach out via Discord (username: MaxUltimat3).
-
-Happy howling with Puro! 🐺✨
+## Bot Overview
+Puro is a social-first Discord companion built for packs that want energy, structure, and playful automation. Powered by Discord.js v14 and a deep `config.yml`, the bot mixes advanced moderation, interactive games, and a full economy so communities stay active without juggling multiple bots.
+
+## Core Highlights
+- Dynamic rotating statuses, greeting flows, and voice lobby automation keep the server feeling alive day and night.
+- 40+ slash commands grouped by Moderation, Management, Fun, Media, Info, and Economy categories, each fully themed via config.
+- Rich economy toolkit with jobs, work cooldowns, blackjack, slots, and leaderboards to motivate daily engagement.
+- Safety-first utilities for staff including mass nickname tools, reaction management, and intelligent giveaways.
+- No-code tailoring: every message, color, cooldown, and limit lives inside `config.yml`, so you can localise and brand the experience.
+
+## Premium Mode
+Premium mode unlocks guild-specific automations stored in `events/guilds/<slug>`.
+- Mark a guild entry in `config.yml` with `tier: 'premium'` (or `premium: true`).
+- Match the `slug` to the folder name (e.g. `the-wolf-den`) and supply the Discord guild ID.
+- Premium events cover welcome flows, thematic responses, and bespoke voice-channel behaviour; locate them under `events/guilds/<slug>`.
+- Premium commands live in `commands/guilds/<slug>` and register only for the tagged guilds; everything else in `commands/` remains global.
+- Guilds without the premium flag automatically fall back to the global catalog so the default experience is always available.
+
+## Command Lineup
+
+### Management & Moderation
+- `/announce` – broadcast embeds or plain messages with buttons, thumbnails, and auto-publish controls.
+- `/thread` – spin up text, announcement, or forum threads, invite members, and handle private threads.
+- `/send` – deliver DM campaigns to individuals, roles, or entire servers with live preview.
+- `/giveaway` – reward recent activity by analysing message volume and presenting interactive controls.
+- `/allnick` – update or reset nicknames across whole servers while respecting hierarchy.
+- `/react` – add or remove multiple reactions across channels in one command, perfect for moderation follow-ups.
+- `/clear` – bulk-delete targeted messages with filtering for authors, pins, attachments, and more.
+
+### Fun & Social Play
+- `/flip`, `/8ball`, `/truthordare`, `/guess`, `/hangman`, `/tictactoe` – fast party games with rich embeds and reroll buttons.
+- `/hug`, `/pat`, `/poke`, `/kiss`, `/adopt`, `/marry`, `/divorce` – social emote commands that keep conversations lively.
+- `/love`, `/rate`, `/joke`, `/gender` – playful generators built around configurable message pools.
+- `/meme`, `/food` – pull curated memes or foodie shots to keep chats fresh.
+
+### Economy & Progression
+- `/wallet` – show personal balance, current job, and flavour text.
+- `/leaderboard` – paginate the richest members with private or public views.
+- `/job` – browse careers, inspect bonuses, and switch roles with live cooldown tracking.
+- `/work` – run job-specific tasks featuring success, failure, and bonus logic.
+- `/pay`, `/pickpocket`, `/blackjack`, `/slotmachine` – trade, duel, and gamble using configurable limits and taxes.
+
+### Media & Insight
+- `/e621` – search the e621 API with safety filters and per-command limits.
+- `/info` – display bot stats including latency, versions, and invite buttons.
+- `/serverinfo`, `/userinfo`, `/top`, `/help` – surface community analytics, profile call-outs, and a paginated help centre.
+
+## Event Automations
+- **Status rotation** – `config.yml` powers periodic activity changes with placeholders such as `{servers}`, `{members}`, `{premiumGuilds}`, and `{uptime}` to showcase live stats.
+- **Greeting engine** – Regex-driven keyword detection greets new chatters with themed responses, probability gates, and cooldowns.
+- **Voice lobby manager** (premium) – drop into a lobby channel and Puro spins up private voice rooms, reassigns owners, and cleans up empty spaces.
+- **Custom guild hooks** – add bespoke logic under `events/guilds/<slug>` for birthdays, onboarding, or seasonal content without touching core files.
+
+## Personalising Puro
+- Update colours, emoji, copywriting, and cooldowns directly inside `config.yml`; arrays support randomised responses in any language.
+- Extend the economy by editing `lib/jobs.js` or create entirely new commands under the category folders—Puro auto-registers them on startup.
+- Tweak database behaviour via the `database` section, including auto-repair and storage paths for self-hosted deployments.
+
+## Data & Safety
+- Economy data persists in `database.json`, automatically backed up and repaired if corruption is detected.
+- Event and command loaders include guardrails for missing configs, sandboxing premium features to approved guilds only.
+- Extensive use of ephemeral replies keeps moderation actions discreet while still providing rich feedback to staff.
+
+## Credits
+Created by Skypixel Team. © Skypixel Team — all rights reserved. Licensed under the ISC license. Community contributions are welcome—open a pull request with improvements or new experiences for the pack!
+- **Premium samples** (per guild): `/howl-greeting` for The Wolf Den, `/directors-cut` for Mastera's Animation Empire, and `/cave-briefing` for Spencer's Cave – templates you can customise per client.
+
+## Directory Layout
+- `commands/` – global slash commands organised by category.
+- `commands/guilds/<slug>/` – premium-only commands scoped to the matching guild from `config.yml`.
+- `events/core/` – global event handlers.
+- `events/guilds/<slug>/` – premium event hooks for each guild.
+- `lib/` – shared helpers, economy logic, and utility functions.
+- `config.yml` – single source of truth for messages, colours, limits, premium tiers, and status rotation.
