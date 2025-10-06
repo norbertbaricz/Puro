@@ -46,7 +46,7 @@ EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 
 client.setMaxListeners(listenerMax);
 // Also raise limits on Discord.js websocket layers to avoid AsyncEventEmitter warnings
 if (client.ws?.setMaxListeners) {
-    client.ws.setMaxListeners(listenerMax);
+    client.ws.setMaxListeners(0);
 }
 client.on('shardCreate', (shard) => {
     if (typeof shard?.setMaxListeners === 'function') {
