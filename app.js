@@ -50,7 +50,7 @@ if (client.ws?.setMaxListeners) {
 }
 client.on('shardCreate', (shard) => {
     if (typeof shard?.setMaxListeners === 'function') {
-        shard.setMaxListeners(listenerMax);
+        shard.setMaxListeners(0);
     }
 });
 
