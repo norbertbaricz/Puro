@@ -1,76 +1,101 @@
-# Puro - Discord Bot
+# Puro — Your Discord Pack Companion
 
-## Bot Overview
-Puro is a social-first Discord companion built for packs that want energy, structure, and playful automation. Powered by Discord.js v14 and a deep `config.yml`, the bot mixes advanced moderation, interactive games, and a full economy so communities stay active without juggling multiple bots.
+Puro is a Discord bot built for communities that thrive on energy, friendliness, and playful structure. Every interaction is designed to keep conversations moving, reward participation, and give staff the tools they need without feeling heavy-handed.
 
-## Core Highlights
-- Dynamic rotating statuses, greeting flows, and voice lobby automation keep the server feeling alive day and night.
-- 40+ slash commands grouped by Moderation, Management, Fun, Media, Info, and Economy categories, each fully themed via config.
-- Rich economy toolkit with jobs, work cooldowns, blackjack, slots, and leaderboards to motivate daily engagement.
-- Safety-first utilities for staff including mass nickname tools, reaction management, and intelligent giveaways.
-- No-code tailoring: every message, color, cooldown, and limit lives inside `config.yml`, so you can localise and brand the experience.
+---
 
-## Premium Mode
-Premium mode unlocks guild-specific automations stored in `events/guilds/<slug>`.
-- Mark a guild entry in `config.yml` with `tier: 'premium'` (or `premium: true`).
-- Match the `slug` to the folder name (e.g. `the-wolf-den`) and supply the Discord guild ID.
-- Premium events cover welcome flows, thematic responses, and bespoke voice-channel behaviour; locate them under `events/guilds/<slug>`.
-- Premium commands live in `commands/guilds/<slug>` and register only for the tagged guilds; everything else in `commands/` remains global.
-- Guilds without the premium flag automatically fall back to the global catalog so the default experience is always available.
+## How Puro Behaves in Your Server
 
-## Command Lineup
+- **Always-on presence**  
+  Rotating custom statuses share live stats such as total servers, member counts, premium dens, and uptime so the pack always knows what Puro is tracking.
 
-### Management & Moderation
-- `/announce` – broadcast embeds or plain messages with buttons, thumbnails, and auto-publish controls.
-- `/thread` – spin up text, announcement, or forum threads, invite members, and handle private threads.
-- `/send` – deliver DM campaigns to individuals, roles, or entire servers with live preview.
-- `/giveaway` – reward recent activity by analysing message volume and presenting interactive controls.
-- `/allnick` – update or reset nicknames across whole servers while respecting hierarchy.
-- `/react` – add or remove multiple reactions across channels in one command, perfect for moderation follow-ups.
-- `/clear` – bulk-delete targeted messages with filtering for authors, pins, attachments, and more.
+- **Conversation greeter**  
+  Regex-driven greeting flows listen for warm hellos (“hey”, “yo”, “aloha”, etc.) and reply with adorable, randomized responses that brighten the sender’s day. Cooldowns and probability weighting stop spam while keeping the channel lively.
 
-### Fun & Social Play
-- `/flip`, `/8ball`, `/truthordare`, `/guess`, `/hangman`, `/tictactoe` – fast party games with rich embeds and reroll buttons.
-- `/hug`, `/pat`, `/poke`, `/kiss`, `/adopt`, `/marry`, `/divorce` – social emote commands that keep conversations lively.
-- `/love`, `/rate`, `/joke`, `/gender` – playful generators built around configurable message pools.
-- `/meme`, `/food` – pull curated memes or foodie shots to keep chats fresh.
+- **Guided voice hangouts**  
+  Hop into the lobby channel and Puro spins up a private voice den named after the member, assigns permissions, and retires the room when everyone leaves. Ownership is transferred automatically if the host drops out.
+
+- **Smart event logging**  
+  Readiness, interaction errors, command failures, and activity scans are announced with themed embeds so moderators instantly understand what happened and why.
+
+---
+
+## Command Catalog
+
+Each command is a slash command. The text below summarizes what happens when members use them and how Puro responds.
+
+### Moderation & Management
+| Command | What happens |
+| --- | --- |
+| `/announce` | Launches a guided announcement builder with colorized embeds, optional buttons, auto-publish for announcement channels, and cooldown enforcement for staff. |
+| `/thread` | Creates text, announcement, or forum threads, seeds messages if required, and invites up to five members automatically. Private threads are used when supported. |
+| `/send` | Delivers direct messages to individuals, roles, or the whole server with error handling for closed inboxes. |
+| `/giveaway` | Calculates message activity over a configurable window, surfaces the top contributors, and lets hosts reroll or publish winners. |
+| `/allnick` | Mass-updates or resets member nicknames while respecting role hierarchy and summarizing skipped entries. |
+| `/react` | Adds or removes reactions across multiple messages with a single request—ideal for moderation follow-up. |
+| `/clear` | Bulk deletes messages with friendly warnings when none qualify or permissions are missing. |
+
+### Fun & Social
+| Command family | What happens |
+| --- | --- |
+| `/hug`, `/pat`, `/kiss`, `/poke`, `/adopt`, `/marry`, `/divorce`, `/howl-greeting` (premium) | Sends vibrant embeds and GIFs celebrating social interactions, complete with buttons for accept/decline where it makes sense. |
+| `/love`, `/rate`, `/identity-meter`, `/ship`, `/gender` | Generates playful percentages, labels, and descriptions from curated lists in the configuration file. |
+| `/truthordare`, `/hangman`, `/ttt`, `/guess`, `/number-guess`, `/coinflip`, `/magic-8-ball`, `/random-joke` | Provides interactive mini-games with reroll buttons, turn timers, and expressive success/failure messaging. |
+| `/meme`, `/food`, `/random-meme`, `/random-food` | Fetches fresh media (with caching for speed) and displays origin, stats, and author details. |
 
 ### Economy & Progression
-- `/wallet` – show personal balance, current job, and flavour text.
-- `/leaderboard` – paginate the richest members with private or public views.
-- `/job` – browse careers, inspect bonuses, and switch roles with live cooldown tracking.
-- `/work` – run job-specific tasks featuring success, failure, and bonus logic.
-- `/pay`, `/pickpocket`, `/blackjack`, `/slotmachine` – trade, duel, and gamble using configurable limits and taxes.
+| Command | What happens |
+| --- | --- |
+| `/wallet` | Shows a user’s balance, active job, jobless hint, and cosmetics pulled straight from the shared economy file. |
+| `/leaderboard` | Lists the richest pack members with optional private view. |
+| `/job` | Lets members browse jobs, review payouts, and switch roles with cool-down reminders. |
+| `/work` | Runs job-specific encounters that adjust streaks, balances, and success narratives. |
+| `/pay` | Walks the sender through a confirmation flow, applies taxes, handles bad actors (hacker events), and optionally DMs the recipient. |
+| `/pickpocket` | Simulates risk-reward theft with configurable outcomes, fines, and cooldowns. |
+| `/blackjack`, `/slotmachine` | Interactive casino experiences using dynamic embeds, buttons for actions, and themed color palettes. |
 
-### Media & Insight
-- `/e621` – search the e621 API with safety filters and per-command limits.
-- `/info` – display bot stats including latency, versions, and invite buttons.
-- `/serverinfo`, `/userinfo`, `/top`, `/help` – surface community analytics, profile call-outs, and a paginated help centre.
+### Insights & Utilities
+| Command | What happens |
+| --- | --- |
+| `/serverinfo`, `/userinfo`, `/activity-top`, `/top` | Surfaces community statistics, top performers, or individual snapshots with friendly formatting. |
+| `/info` | Displays creator credits, uptime, latency, system statistics, and optional invite buttons. |
+| `/help` | Opens a category-aware selector that lists every command accessible to the user. |
+| `/bot-info` (alias via `/info`) | Includes real-time hardware data when available (CPU temperature, memory usage, node versions). |
+| `/fetch-e621` | Searches e621 with safety checks, NSFW gating, and per-command rate limits to keep moderation comfortable. |
 
-## Event Automations
-- **Status rotation** – `config.yml` powers periodic activity changes with placeholders such as `{servers}`, `{members}`, `{premiumGuilds}`, and `{uptime}` to showcase live stats.
-- **Greeting engine** – Regex-driven keyword detection greets new chatters with themed responses, probability gates, and cooldowns.
-- **Voice lobby manager** (premium) – drop into a lobby channel and Puro spins up private voice rooms, reassigns owners, and cleans up empty spaces.
-- **Custom guild hooks** – add bespoke logic under `events/guilds/<slug>` for birthdays, onboarding, or seasonal content without touching core files.
+---
 
-## Personalising Puro
-- Update colours, emoji, copywriting, and cooldowns directly inside `config.yml`; arrays support randomised responses in any language.
-- Extend the economy by editing `lib/jobs.js` or create entirely new commands under the category folders—Puro auto-registers them on startup.
-- Tweak database behaviour via the `database` section, including auto-repair and storage paths for self-hosted deployments.
+## Premium Experience
 
-## Data & Safety
-- Economy data persists in `database.json`, automatically backed up and repaired if corruption is detected.
-- Event and command loaders include guardrails for missing configs, sandboxing premium features to approved guilds only.
-- Extensive use of ephemeral replies keeps moderation actions discreet while still providing rich feedback to staff.
+Premium dens are supercharged versions of the bot tailored to a specific Discord server. They unlock guild-scoped automations and slash commands that live in `commands/guilds/<slug>` and `events/guilds/<slug>`. Current highlights include:
 
-## Credits
-Created by Skypixel Team. © Skypixel Team — all rights reserved. Licensed under the ISC license. Community contributions are welcome—open a pull request with improvements or new experiences for the pack!
-- **Premium samples** (per guild): `/howl-greeting` for The Wolf Den, `/directors-cut` for Mastera's Animation Empire, and `/cave-briefing` for Spencer's Cave – templates you can customise per client.
+- **Wolf Den greeting suite**: Dozens of affirmative responses triggered by everyday greetings, making members feel adored the moment they walk in.
+- **Temporary voice dens**: Private voice channels created on demand with automatic cleanup and ownership transfers.
+- **Guild-branded slash commands**: `/howl-greeting`, `/cave-briefing`, and `/directors-cut` give each premium community a unique spotlight moment.
 
-## Directory Layout
-- `commands/` – global slash commands organised by category.
-- `commands/guilds/<slug>/` – premium-only commands scoped to the matching guild from `config.yml`.
-- `events/core/` – global event handlers.
-- `events/guilds/<slug>/` – premium event hooks for each guild.
-- `lib/` – shared helpers, economy logic, and utility functions.
-- `config.yml` – single source of truth for messages, colours, limits, premium tiers, and status rotation.
+### How to Unlock Premium
+
+Premium access is sold directly through Discord. A server owner or administrator can:
+1. Open your Discord client and navigate to **Puro’s profile**.  
+2. Choose the **“Subscribe”** or **Premium** button.  
+3. Complete the purchase flow inside Discord (no external storefront required).  
+4. After the payment is confirmed, contact the Skypixel support team via DM or dedicated support server to map your guild ID to the premium tier.  
+5. Once linked, Puro automatically loads the custom events and commands for that guild—no restart necessary on your side.
+
+Subscriptions can be adjusted or cancelled within Discord’s subscription management panel. Premium-only features remain isolated, so non-premium servers keep the global command set without premium leakage.
+
+---
+
+## Customisation & Configuration
+
+- All text, emojis, colors, cooldowns, and probabilities come from `config.yml`. Update strings without touching code and the bot reacts immediately on restart.
+- Randomized arrays ensure variety: add more greetings, jokes, or economy outcomes by editing the relevant list.
+- Economy data lives in `database.json`; Puro repairs corrupt files automatically and maintains balances across restarts.
+- Jobs, payouts, and scenario texts are defined in `lib/jobs.js`, making it easy to extend or rebalance your economy.
+
+---
+
+## Support & Credits
+
+Puro is curated by the **Skypixel Team**, with special thanks to all the dens that helped shape its voice and feature set.  
+Questions, premium activations, or ideas for new interactions? Hop into the Skypixel support hub or DM the team directly on Discord—we’re always listening for the next adorable howl.
