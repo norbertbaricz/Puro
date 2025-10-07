@@ -1016,149 +1016,143 @@ events:
         - "⚠️ /{command} isn't available."
         - "🚫 Unknown command: /{command}."
 
-  messageCreate:
-    allowed_guilds:
-      - '1217588804328620163'
-      - 'The Wolf Den'
-      - "Mastera's Animation Empire"
-      - "Spencer's Cave"
-    greetings:
-      patterns:
-        - '^h+e+l+o+$'
-        - '^h+e+l+l+o+$'
-        - '^h+i+$'
-        - '^h+e+y+$'
-        - '^h+e+y+a+$'
-        - '^h+e+y+y+$'
-        - '^h+e+w+o+$'
-        - '^h+e+l+w+o+$'
-        - '^yo+$'
-        - '^yo+u+$'
-        - '^sup+$'
-        - '^wassup+$'
-        - '^good\\s*afternoon+$'
-        - '^good\\s*evening+$'
-        - '^evening+$'
-        - '^hiya+$'
-        - '^hi+ya+$'
-        - '^greetings+$'
-        - '^salutations+$'
-        - '^howdy+$'
-        - '^yo+o+$'
-        - '^hey+o+$'
-        - '^hey+ya+$'
-        - '^hey+there+$'
-        - '^hello+there+$'
-        - '^welcome+$'
-        - '^peace+$'
-        - '^aloha+$'
-        - '^hey+everyone+$'
-        - '^hey+guys+$'
-        - '^hey+all+$'
-        - '^hi+everyone+$'
-        - '^hi+all+$'
-        - '^yo+everyone+$'
-        - '^yo+all+$'
-        - '^hey+fam+$'
-        - '^hey+friends+$'
-        - '^hey+buddy+$'
-        - '^hey+pal+$'
-        - '^hey+mate+$'
-        - '^hey+bro+$'
-        - '^hey+sis+$'
-        - '^hey+dude+$'
-        - '^hey+girl+$'
-        - '^hey+man+$'
-        - '^hey+woman+$'
-        - '^hey+team+$'
-        - '^hey+crew+$'
-        - '^hey+pack+$'
-        - '^hey+wolf+$'
-        - '^hey+wolves+$'
-        - '^yo+pack+$'
-        - '^yo+wolf+$'
-        - '^yo+wolves+$'
-        - '^hi+pack+$'
-        - '^hi+wolf+$'
-        - '^hi+wolves+$'
-      responses:
-        - "*perks ears* Hey {user}! 🐺"
-        - "*wags fluffy tail* Hi there {user}! 🐺✨"
-        - "*howls softly* Hello {user}! 🐺🌟"
-        - "*waves paw* Welcome, {user}! 👋"
-        - "*barks happily* Hey, {user}! 🐶"
-        - "*wiggles nose* Yo {user}! 😎"
-        - "*fluffs fur* Greetings, {user}! 🦊"
-        - "*does a happy spin* Hiya, {user}! 🌀"
-        - "*gives a friendly boop* Howdy, {user}! 🐾"
-        - "*wags tail excitedly* What's up, {user}? 🌞"
-        - "*nods politely* Salutations, {user}! 🎩"
-        - "*raises paw* Wassup, {user}! ✋"
-        - "*waves tail* Good evening, {user}! 🌆"
-        - "*greets with a soft bark* Afternoon, {user}! ☕"
-        - "*howls playfully* Yo yo, {user}! 🎶"
-        - "*gives a high five* Hey there, {user}! ✋"
-        - "*sits and wags tail* Welcome back, {user}! 🏡"
-        - "*howls in greeting* Hello, {user}! 🐺"
-        - "*bows politely* Aloha, {user}! 🌺"
-        - "*waves tail* Glad you're here, {user}! 🐾"
-        - "*howls with joy* Glad to see you, {user}! 🎉"
-        - "*jumps in excitement* Hey hey, {user}! 🦴"
-        - "*sniffs the air* New scent detected: {user}! 👃"
-        - "*does a little dance* Welcome, {user}! 💃"
-        - "*gives a friendly nudge* Hi, {user}! 🐾"
-        - "*wags tail* Nice to see you, {user}! 😊"
-        - "*perks up ears* What's up, {user}? 👂"
-        - "*howls a tune* Welcome to the pack, {user}! 🎵"
-        - "*offers a paw* Let's have fun, {user}! 🐾"
-        - "*smiles with bright eyes* Hey, {user}! 🌟"
-        - "*gives a gentle boop* Hi, {user}! 🐽"
-        - "*wags tail and smiles* Welcome, {user}! 🐾"
-        - "*greets with a bark* Yo, {user}! 🐕"
-        - "*howls at the sunset* Evening, {user}! 🌇"
-        - "*gives a playful bark* Hi, {user}! 🐶"
-        - "*wiggles ears* Hey, {user}! 🐰"
-        - "*smiles and wags tail* Welcome, {user}! 🐺"
-        - "*howls softly* Glad to see you, {user}! 🐾"
-        - "*waves paw* Hi, {user}! 👋"
-        - "*nods* Hello, {user}! 😊"
-        - "*greets with a soft bark* Good afternoon, {user}! ☀️"
-        - "*wags tail* Welcome to the server, {user}! 🎉"
-        - "*howls with excitement* Let's have a great day, {user}! 🌞"
-        - "*smiles with a wag* Happy to see you, {user}! 🐺"
-        - "*howls a welcome* Hey, {user}! 🐺"
-        - "*waves tail* Glad you're here, {user}! 🐾"
-        - "*greets with a howl* Hello, {user}! 🐺"
-        - "*smiles and barks* Hi, {user}! 🐶"
-        - "*wags tail and smiles* Welcome, {user}! 🐺"
-        - "*greets with a bark* Hey, {user}! 🐺"
-        - "*howls at the moon* Welcome, {user}! 🌙"
-        - "*waves paw* Hi, {user}! 👋"
-        - "*smiles and wags tail* Welcome, {user}! 🐺"
-        - "*howls softly* Glad to see you, {user}! 🐾"
-        - "*waves paw* Hi, {user}! 👋"
-        - "*nods* Hello, {user}! 😊"
-        - "*greets with a soft bark* Good afternoon, {user}! ☀️"
-        - "*wags tail* Welcome to the server, {user}! 🎉"
-        - "*howls with excitement* Let's have a great day, {user}! 🌞"
-        - "*smiles with a wag* Happy to see you, {user}! 🐺"
-        - "* bounds forward* Yo, {user}, you’re in the pack now! 🐺"
-        - "*tilts head* Hey {user}, ready to howl with us? 🌟"
-        - "*chases tail* Hiya, {user}! Let’s make some noise! 🐾"
-        - "*paws at the ground* Sup, {user}? Time to run with the wolves! 🐺"
-        - "*flashes a toothy grin* Hey there, {user}! Welcome to the den! 😁"
-        - "*leaps playfully* Yo {user}, let’s explore the wild together! 🌲"
-        - "*howls in harmony* Greetings, {user}! Join the pack vibe! 🎶"
-        - "*winks with a wag* Hey {user}, you’re looking pawsome! 🐺✨"
-        - "*rolls over playfully* Hi {user}! Ready for some fun? 🐾"
-        - "*sniffs curiously* Yo {user}, what’s the word in the forest? 🌳"
-        - "*bounces with energy* Hey {user}, let’s make today epic! 🚀"
-        - "*howls a cheerful tune* Welcome, {user}, to the wolf pack! 🐺🎉"
-        - "*paws the air* Hiya {user}! Let’s kick things off! 🦴"
-        - "*grins widely* Yo, {user}! The pack’s thrilled you’re here! 🐾"
-        - "*spins in excitement* Hey {user}, let’s run under the stars! 🌠"
-      messages:
-        error: "❌ Error sending greeting!"
+  guilds:
+    the-wolf-den:
+      messageCreate:
+        allowed_guilds:
+          - '1217588804328620163'
+        greetings:
+          patterns:
+            - '^h+e+l+o+$'
+            - '^h+e+l+l+o+$'
+            - '^h+i+$'
+            - '^h+e+y+$'
+            - '^h+e+y+a+$'
+            - '^h+e+y+y+$'
+            - '^h+e+w+o+$'
+            - '^h+e+l+w+o+$'
+            - '^yo+$'
+            - '^yo+u+$'
+            - '^sup+$'
+            - '^wassup+$'
+            - '^good\s*afternoon+$'
+            - '^good\s*evening+$'
+            - '^evening+$'
+            - '^hiya+$'
+            - '^hi+ya+$'
+            - '^greetings+$'
+            - '^salutations+$'
+            - '^howdy+$'
+            - '^yo+o+$'
+            - '^hey+o+$'
+            - '^hey+ya+$'
+            - '^hey+there+$'
+            - '^hello+there+$'
+            - '^welcome+$'
+            - '^peace+$'
+            - '^aloha+$'
+            - '^hey+everyone+$'
+            - '^hey+guys+$'
+            - '^hey+all+$'
+            - '^hi+everyone+$'
+            - '^hi+all+$'
+            - '^yo+everyone+$'
+            - '^yo+all+$'
+            - '^hey+fam+$'
+            - '^hey+friends+$'
+            - '^hey+buddy+$'
+            - '^hey+pal+$'
+            - '^hey+mate+$'
+            - '^hey+bro+$'
+            - '^hey+sis+$'
+            - '^hey+dude+$'
+            - '^hey+girl+$'
+            - '^hey+man+$'
+            - '^hey+woman+$'
+            - '^hey+team+$'
+            - '^hey+crew+$'
+            - '^hey+pack+$'
+            - '^hey+wolf+$'
+            - '^hey+wolves+$'
+            - '^yo+pack+$'
+            - '^yo+wolf+$'
+            - '^yo+wolves+$'
+            - '^hi+pack+$'
+            - '^hi+wolf+$'
+            - '^hi+wolves+$'
+          responses:
+            - "🌟 Hey {user}! The den sparkles a little brighter now that you're here!"
+            - "🐾 Hi {user}! Sending tail wags, warm hugs, and a sky full of good vibes!"
+            - "💖 Hello {user}! You're loved, valued, and paw-sitively amazing!"
+            - "✨ Welcome back {user}! Let's make today magical from start to finish!"
+            - "😊 Yo {user}! Your hello is like sunshine dancing on the snow!"
+            - "🌈 Hiya {user}! May your day overflow with color, comfort, and cozy moments!"
+            - "🧡 Hey {user}! The pack can't stop smiling because you're here!"
+            - "🎉 Hello {user}! Confetti burst just for you—grab the joy!"
+            - "🥰 Hey there {user}! You deserve every wag, waggle, and warm vibe!"
+            - "🌺 Hi {user}! Bloom wild, bloom free, bloom happy!"
+            - "🐺 Yo {user}! The wolves are harmonizing a welcome song for you!"
+            - "🍀 Hey {user}! Lucky stars follow every pawstep you take today!"
+            - "🌙 Hi {user}! Even the moon peeked out to say you're amazing!"
+            - "☀️ Hello {user}! You just lit up the whole den with pure glow!"
+            - "🦴 Hey {user}! Fetching you courage, kindness, and comfort on repeat!"
+            - "🌊 Hiya {user}! May waves of calm and cheer carry you forward!"
+            - "🎈 Hello {user}! This pack celebrates you like the best surprise!"
+            - "🔥 Hey {user}! Keep shining; your energy warms every heart here!"
+            - "💫 Hi {user}! Shooting stars trail behind you wherever you roam!"
+            - "🍯 Hey {user}! Your sweetness makes this den feel like home!"
+            - "🌻 Hello {user}! Stand tall, soak in the sun, and know you're cherished!"
+            - "🧁 Hey {user}! We topped today's welcome with extra sprinkles for you!"
+            - "🌌 Hi {user}! The universe nods in approval every time you drop by!"
+            - "🎵 Hey {user}! Your hello is our favorite melody today!"
+            - "🪴 Hi {user}! Grow gently today—every leaf of yours matters!"
+            - "🧸 Hey {user}! Sending the softest hugs and snuggliest vibes!"
+            - "🚀 Hello {user}! Your kindness launches us beyond the clouds!"
+            - "💎 Hi {user}! You sparkle like a gemstone in moonlight!"
+            - "🎀 Hey {user}! All wrapped up in joy, gratitude, and giggles for you!"
+            - "🍓 Hello {user}! Freshly picked positivity coming right up!"
+            - "🌠 Hiya {user}! Let's wish on every star you just brought along!"
+            - "🎯 Hey {user}! You've already hit today's happiness target!"
+            - "🫧 Hello {user}! Float through the day on bubbles of bliss!"
+            - "📚 Hey {user}! Your story adds the sweetest chapter to our den!"
+            - "🏔️ Hi {user}! You're strong like mountains and soft like snowfall."
+            - "🛼 Hey {user}! Let's glide into joy together—no brakes allowed!"
+            - "🌷 Hello {user}! You freshen the air like a field of spring blooms!"
+            - "🍉 Hi {user}! Serving up slices of refreshing smiles just for you!"
+            - "🎇 Hey {user}! Fireworks of friendship ignite when you arrive!"
+            - "🫶 Hello {user}! Our paws and hearts form a circle around you!"
+            - "🎭 Hi {user}! Your hello deserves a standing ovation!"
+            - "🍥 Hey {user}! Sweet swirls of comfort roll your way today!"
+            - "🌤️ Hello {user}! Sky clears instantly when you step in!"
+            - "🏖️ Hiya {user}! Sending breezy beach vibes and soft sand hugs!"
+            - "🍨 Hey {user}! Scooping extra scoops of delight into your day!"
+            - "🛖 Hello {user}! Welcome to your cozy corner of the den!"
+            - "🎒 Hi {user}! Pack your joy—an adventure of smiles awaits!"
+            - "🎠 Hey {user}! Carousel of wonder spins faster with you aboard!"
+            - "🌵 Hello {user}! You thrive beautifully, even in tough places!"
+            - "🦋 Hi {user}! Change the world softly with every flutter hello!"
+            - "🛁 Hey {user}! Let the day soak you in calm and lavender dreams!"
+            - "🎹 Hello {user}! Your voice sits perfectly in today's harmony!"
+            - "🧭 Hi {user}! Wherever you wander, the pack follows with pride!"
+            - "🪄 Hey {user}! Tiny sparks of wonder pop with every word you say!"
+            - "🍁 Hello {user}! Your presence paints the den in cozy colors!"
+            - "🐚 Hi {user}! Gentle ocean whispers carry your name with awe!"
+            - "🏵️ Hey {user}! You're the rare bloom we celebrate daily!"
+            - "🍦 Hello {user}! Double-scoop happiness with sprinkles of love!"
+            - "🛰️ Hi {user}! Even satellites pause to catch your glow-up!"
+            - "🥳 Hey {user}! Party banners unfurl the moment you appear!"
+            - "🧃 Hello {user}! Sip on kindness, zest, and fizzy fun today!"
+            - "🪁 Hi {user}! Let joy lift you higher than the clouds!"
+            - "💌 Hey {user}! You just got a mailbag full of gratitude!"
+            - "🌋 Hello {user}! You erupt with enthusiasm and we love it!"
+            - "🎢 Hi {user}! Buckle up—today's ride is thrilled to have you!"
+            - "🕊️ Hey {user}! Peaceful breezes and hopeful feathers surround you!"
+            - "🍰 Hello {user}! Here's a slice of sweetness for your soul!"
+            - "🧣 Hi {user}! Wrapped you in warmth, coziness, and care."
+            - "🛡️ Hey {user}! Courage and comfort stand at attention for you!"
+            - "💐 Hello {user}! We gathered the loveliest petals just to greet you!"
+        messages:
+          error: "❌ Error sending greeting!"
 
   ready:
     messages:
