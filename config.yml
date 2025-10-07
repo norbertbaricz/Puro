@@ -648,6 +648,18 @@ commands:
       dm_fail: "❌ Failed to send the DM to {user} due to an unknown issue."
       user_not_found: "❌ The specified user could not be found."
 
+  thread:
+    color: '#5865F2'
+    messages:
+      created: '🧵 Thread created: {thread}'
+      created_title: '🧵 Thread Created'
+      forum_post_message: 'Thread created via /thread.'
+      seed_message: 'Creating a new thread…'
+      invited_some: 'Invited {count} members.'
+      no_permission: "❌ I don't have permission to create threads in that channel."
+      invalid_channel: '❌ Please select a text or forum channel.'
+      error_create: '❌ Could not create the thread.'
+
   serverinfo:
     color: '#5865F2'
     messages:
@@ -1021,6 +1033,8 @@ events:
       messageCreate:
         allowed_guilds:
           - '1217588804328620163'
+          - 'The Wolf Den'
+          - 'the-wolf-den'
         greetings:
           patterns:
             - '^h+e+l+o+$'
@@ -1151,6 +1165,30 @@ events:
             - "🧣 Hi {user}! Wrapped you in warmth, coziness, and care."
             - "🛡️ Hey {user}! Courage and comfort stand at attention for you!"
             - "💐 Hello {user}! We gathered the loveliest petals just to greet you!"
+        messages:
+          error: "❌ Error sending greeting!"
+
+    masteras-animation-empire:
+      messageCreate:
+        allowed_guilds:
+          - '1299378352301539398'
+          - "Mastera's Animation Empire"
+          - 'masteras-animation-empire'
+        greetings:
+          patterns: []
+          responses: []
+        messages:
+          error: "❌ Error sending greeting!"
+
+    spencers-cave:
+      messageCreate:
+        allowed_guilds:
+          - '1010638602004340787'
+          - "Spencer's Cave"
+          - 'spencers-cave'
+        greetings:
+          patterns: []
+          responses: []
         messages:
           error: "❌ Error sending greeting!"
 
