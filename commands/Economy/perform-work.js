@@ -32,7 +32,20 @@ module.exports = {
             failure: parseColor(config.color_failure || '#ED4245', '#ED4245')
         };
 
-        await interaction.deferReply(isPrivate ? { flags: MessageFlags.Ephemeral } : {});
+        const canUseEphemeral = typeof interaction.inGuild === 'function'
+            ? interaction.inGuild()
+            : Boolean(interaction.guildId);
+        const deferOptions = (isPrivate && canUseEphemeral) ? { ephemeral: true } : {};
+
+        try {
+            await interaction.deferReply(deferOptions);
+        } catch (error) {
+            if (error?.code === 10062) {
+                console.warn('[work] Interaction token expired before deferred reply.', { interactionId: interaction.id });
+                return;
+            }
+            throw error;
+        }
 
         const db = readEconomyDB();
         const entry = ensureUserRecord(db, interaction.user.id);
