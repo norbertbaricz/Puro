@@ -36,6 +36,14 @@ guilds:
     id: '1010638602004340787'  # Set this to the guild ID if available
     slug: 'spencers-cave'
     tier: 'premium'
+  - name: "~Icy's Chill Floofy Server~"
+    id: '1328613051670200340'
+    slug: 'icys-chill-floofy-server'
+    tier: 'premium'
+  - name: 'Thunderhoof Tavern'
+    id: '1401355259573698691'
+    slug: 'thunderhoof-tavern'
+    tier: 'premium'
 
 # General limits
 limits:

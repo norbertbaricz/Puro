@@ -32,12 +32,14 @@ module.exports = {
             failure: parseColor(config.color_failure || '#ED4245', '#ED4245')
         };
 
-        const canUseEphemeral = typeof interaction.inGuild === 'function'
-            ? interaction.inGuild()
-            : Boolean(interaction.guildId);
-        const deferOptions = (isPrivate && canUseEphemeral) ? { ephemeral: true } : {};
-
         try {
+            const canUseEphemeral = typeof interaction.inGuild === 'function'
+                ? interaction.inGuild()
+                : Boolean(interaction.guildId);
+            const deferOptions = (isPrivate && canUseEphemeral)
+                ? { flags: MessageFlags.Ephemeral }
+                : {};
+
             await interaction.deferReply(deferOptions);
         } catch (error) {
             if (error?.code === 10062) {
