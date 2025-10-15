@@ -421,10 +421,12 @@ commands:
   hug:
     color: '#ffb6c1'
     gifs:
-      - 'https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif'
-      - 'https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif'
-      - 'https://media.giphy.com/media/143v0Z4767T15e/giphy.gif'
-      - 'https://media.giphy.com/media/wnsgren9NtITS/giphy.gif'
+      - 'https://media.tenor.com/P9YD49mfnxkAAAAC/furry-hug.gif'
+      - 'https://media.tenor.com/sUoIQyxhHdsAAAAC/furry-anti-furry.gif'
+      - 'https://media.tenor.com/OrJiTqPixtYAAAAC/hugs-love.gif'
+      - 'https://media.tenor.com/LEJdSFuAe-UAAAAC/pokemon-cuddle.gif'
+      - 'https://media.tenor.com/30l78d5MMF4AAAAC/furry-meme.gif'
+      - 'https://media.tenor.com/9dZVO_VXGjcAAAAC/hugs-fox.gif'
     messages:
       self_hug: "You can't hug yourself! 🤗"
       success_title: "🤗 Hug Time!"
@@ -435,10 +437,12 @@ commands:
   poke:
     color: '#ffcc66'
     gifs:
-      - 'https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif'
-      - 'https://media.giphy.com/media/xUA7b6wBJ7ZRMfF2ze/giphy.gif'
-      - 'https://media.giphy.com/media/26xByNG6m6nU2czby/giphy.gif'
-      - 'https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif'
+      - 'https://media.tenor.com/8xDEVy0S3nAAAAAC/flaik-fox.gif'
+      - 'https://media.tenor.com/zAwceKZ5To8AAAAC/boy-kisser-boop.gif'
+      - 'https://media.tenor.com/luKSDbafAKIAAAAC/ollie-boop-paws-boop.gif'
+      - 'https://media.tenor.com/eOoQ_YB2IF8AAAAC/protogen-boop.gif'
+      - 'https://media.tenor.com/n997o-na714AAAAC/protogen-moose.gif'
+      - 'https://media.tenor.com/oRoczsrjl9EAAAAC/wolf-boop.gif'
     messages:
       self_poke: 'You cannot poke yourself! 😅'
       success_title: '👈 Poke!'
@@ -459,13 +463,45 @@ commands:
         - '**{receiver}** laughs and returns the poke to **{sender}**.'
         - 'Counter poke! **{receiver}** taps **{sender}** right back.'
 
+  comfort:
+    enabled: true
+    color: '#6ddccf'
+    volume: 0.38
+    default_sound: 'purr'
+    default_duration_minutes: 10
+    max_duration_minutes: 60
+    sounds:
+      - id: 'purr'
+        name: 'Gentle Purr'
+        description: 'Soft, cozy rumble inspired by a sleepy cat.'
+        file: './assets/audio/comfort-purr.wav'
+        volume: 0.35
+      - id: 'rain'
+        name: 'Evening Rain'
+        description: 'Calming rainfall ambience with soft patter.'
+        file: './assets/audio/comfort-rain.wav'
+        volume: 0.4
+      - id: 'hearth'
+        name: 'Crackling Hearth'
+        description: 'Warm fireplace crackles and embers.'
+        file: './assets/audio/comfort-fireplace.wav'
+        volume: 0.45
+    messages:
+      disabled: '🔇 Comfort ambience is disabled on this server.'
+      start_title: '🌙 Comfort ambience started'
+      stop_title: '🌤️ Ambience stopped'
+      start_failed: '❌ Unable to start ambience right now. Please try again shortly.'
+      nothing_to_stop: 'There is no ambience playing at the moment.'
+
   kiss:
     color: '#ff6699'
     gifs:
-      - 'https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif'
-      - 'https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif'
-      - 'https://media.giphy.com/media/11rWoZNpAKw8w/giphy.gif'
-      - 'https://media.giphy.com/media/Z21HJj2kz9uBG/giphy.gif'
+      - 'https://media.tenor.com/Cm_yDYrpx-AAAAAC/furry-furry-love.gif'
+      - 'https://media.tenor.com/s4sQI66ZptUAAAAC/furry-couple.gif'
+      - 'https://media.tenor.com/UO-pdPnf7ggAAAAC/furry-kiss.gif'
+      - 'https://media.tenor.com/S_iFfCRoRNYAAAAC/furry-furry-kiss.gif'
+      - 'https://media.tenor.com/hZSOdF6eJ9kAAAAC/protogen-protogen-kiss.gif'
+      - 'https://media.tenor.com/ss6CRfqp1UUAAAAC/furry-love.gif'
     messages:
       self_kiss: 'You cannot kiss yourself! 😳'
       success_title: '💋 Kiss!'
@@ -595,10 +631,12 @@ commands:
   pat:
     color: '#add8e6'
     gifs:
-      - 'https://media.giphy.com/media/109ltuoSQT212w/giphy.gif'
-      - 'https://media.giphy.com/media/ARSp9T7wwxNcs/giphy.gif'
-      - 'https://media.giphy.com/media/4HP0ddZnNVvKU/giphy.gif'
-      - 'https://media.giphy.com/media/L2z7dnOduqEow/giphy.gif'
+      - 'https://media.tenor.com/btPy5klSh0IAAAAC/bumfuzzled-bee-fox.gif'
+      - 'https://media.tenor.com/-jJlxJOR2yIAAAAC/moose-protogen.gif'
+      - 'https://media.tenor.com/_NRJIzd6gN0AAAAC/headpats.gif'
+      - 'https://media.tenor.com/_bR7adLs-KUAAAAC/moose-protogen.gif'
+      - 'https://media.tenor.com/5PioGrUQwccAAAAC/furries-furry.gif'
+      - 'https://media.tenor.com/IjM-iW1BkPYAAAAC/cutie-furry-meme.gif'
     messages:
       self_pat: "You can't pat yourself! 🫶"
       success_title: "🫶 Pat Time!"

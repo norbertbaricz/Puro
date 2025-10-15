@@ -2,10 +2,12 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { pickRandom, formatTemplate } = require('../../lib/utils');
 
 const DEFAULT_GIFS = [
-    'https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif',
-    'https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif',
-    'https://media.giphy.com/media/143v0Z4767T15e/giphy.gif',
-    'https://media.giphy.com/media/wnsgren9NtITS/giphy.gif'
+    'https://media.tenor.com/P9YD49mfnxkAAAAC/furry-hug.gif',
+    'https://media.tenor.com/sUoIQyxhHdsAAAAC/furry-anti-furry.gif',
+    'https://media.tenor.com/OrJiTqPixtYAAAAC/hugs-love.gif',
+    'https://media.tenor.com/LEJdSFuAe-UAAAAC/pokemon-cuddle.gif',
+    'https://media.tenor.com/30l78d5MMF4AAAAC/furry-meme.gif',
+    'https://media.tenor.com/9dZVO_VXGjcAAAAC/hugs-fox.gif'
 ];
 
 module.exports = {
