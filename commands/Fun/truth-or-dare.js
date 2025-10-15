@@ -71,17 +71,25 @@ module.exports = {
             if (i.customId === 'tod_close') {
                 collector.stop('closed');
                 const disabled = new ActionRowBuilder().addComponents(row().components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                await i.update({ components: [disabled] });
+                await i.deferUpdate();
+                await i.editReply({ components: [disabled] });
                 return;
             }
             if (i.customId === 'tod_switch') {
                 truth = !truth;
-                await i.update({ embeds: [build(truth, rerolls)], components: [row()] });
+                await i.deferUpdate();
+                await i.editReply({ embeds: [build(truth, rerolls)], components: [row()] });
                 return;
             }
             if (i.customId === 'tod_another') {
+                if (rerolls >= 3) {
+                    await i.deferUpdate();
+                    await i.editReply({ embeds: [build(truth, rerolls)], components: [row()] });
+                    return;
+                }
                 rerolls += 1;
-                await i.update({ embeds: [build(truth, rerolls)], components: [row()] });
+                await i.deferUpdate();
+                await i.editReply({ embeds: [build(truth, rerolls)], components: [row()] });
                 return;
             }
         });

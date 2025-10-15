@@ -2,10 +2,12 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { pickRandom, formatTemplate } = require('../../lib/utils');
 
 const DEFAULT_GIFS = [
-    'https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif',
-    'https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif',
-    'https://media.giphy.com/media/11rWoZNpAKw8w/giphy.gif',
-    'https://media.giphy.com/media/Z21HJj2kz9uBG/giphy.gif'
+    'https://media.tenor.com/Cm_yDYrpx-AAAAAC/furry-furry-love.gif',
+    'https://media.tenor.com/s4sQI66ZptUAAAAC/furry-couple.gif',
+    'https://media.tenor.com/UO-pdPnf7ggAAAAC/furry-kiss.gif',
+    'https://media.tenor.com/S_iFfCRoRNYAAAAC/furry-furry-kiss.gif',
+    'https://media.tenor.com/hZSOdF6eJ9kAAAAC/protogen-protogen-kiss.gif',
+    'https://media.tenor.com/ss6CRfqp1UUAAAAC/furry-love.gif'
 ];
 
 const DEFAULT_TEMPLATES = [
