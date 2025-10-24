@@ -109,6 +109,13 @@ module.exports = {
 
         } catch (error) {
             console.error('Interaction handler error:', error);
+
+            const maybeCode = error?.code ?? error?.rawError?.code;
+            if (maybeCode === 10062) {
+                const label = interaction?.isChatInputCommand?.() ? interaction.commandName : interaction?.customId;
+                console.warn(`Skipped error reply for expired interaction${label ? ` (${label})` : ''}.`);
+                return;
+            }
             
             const errorMessage = {
                 content: config.messages.handler_error || 'There was an error while processing this interaction!',

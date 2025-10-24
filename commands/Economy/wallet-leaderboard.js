@@ -25,9 +25,6 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const db = readEconomyDB();
-        const normalizedEntries = Object.entries(db).map(([id]) => [id, ensureUserRecord(db, id)]);
-        writeEconomyDB(db);
         const conf = interaction.client.config.commands.leaderboard || {};
         const color = conf.color || 0xFFD700;
         const title = conf.messages?.title || '👑 Top 10 Richest Members 👑';
@@ -38,6 +35,10 @@ module.exports = {
         const isPrivate = interaction.options.getBoolean('private') || false;
 
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+
+        const db = readEconomyDB();
+        const normalizedEntries = Object.entries(db).map(([id]) => [id, ensureUserRecord(db, id)]);
+        writeEconomyDB(db);
 
         let sortedUsers = normalizedEntries
             .filter(([, data]) => data && typeof data.balance === 'number')

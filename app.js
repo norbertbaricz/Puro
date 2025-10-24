@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, Collection } = require('discord.js');
+const { AsyncEventEmitter } = require('@vladfrangu/async_event_emitter');
 const { EventEmitter } = require('events');
 const fs = require('fs');
 const path = require('path');
@@ -43,14 +44,24 @@ const client = new Client({
 // Tame listener warnings using config values (read from loaded config)
 const listenerMax = Number((config?.logging?.listener_max)) || 25;
 EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, listenerMax);
+if (AsyncEventEmitter?.prototype && typeof AsyncEventEmitter.prototype._addListener === 'function' && !AsyncEventEmitter.prototype._puroPatched) {
+    const originalAdd = AsyncEventEmitter.prototype._addListener;
+    AsyncEventEmitter.prototype._puroPatched = true;
+    AsyncEventEmitter.prototype._addListener = function patchedAddListener(eventName, listener, prepend) {
+        if (this && this._maxListeners === 10 && listenerMax > 10) {
+            this._maxListeners = listenerMax;
+        }
+        return originalAdd.call(this, eventName, listener, prepend);
+    };
+}
 client.setMaxListeners(listenerMax);
 // Also raise limits on Discord.js websocket layers to avoid AsyncEventEmitter warnings
 if (client.ws?.setMaxListeners) {
-    client.ws.setMaxListeners(0);
+    client.ws.setMaxListeners(listenerMax);
 }
 client.on('shardCreate', (shard) => {
     if (typeof shard?.setMaxListeners === 'function') {
-        shard.setMaxListeners(0);
+        shard.setMaxListeners(listenerMax);
     }
 });
 
