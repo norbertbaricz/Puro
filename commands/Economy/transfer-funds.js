@@ -38,8 +38,6 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
-        const db = readEconomyDB();
-        
         const sender = interaction.user;
         const receiver = interaction.options.getUser('member');
         const amount = interaction.options.getInteger('amount');
@@ -47,10 +45,6 @@ module.exports = {
         const anonymous = interaction.options.getBoolean('anonymous') || false;
         const dmRecipient = interaction.options.getBoolean('dm_recipient') || false;
         const isPrivate = interaction.options.getBoolean('private') || false;
-
-        // --- Ensure users exist in the new DB format ---
-        const senderData = ensureUserRecord(db, sender.id);
-        const receiverData = ensureUserRecord(db, receiver.id);
 
         const baseEmbed = new EmbedBuilder()
             .setFooter({ text: `Transaction initiated by ${sender.username}` })
@@ -93,30 +87,39 @@ module.exports = {
             });
         }
         
+        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+
         // --- Transaction Tax Logic ---
+        const db = readEconomyDB();
+        // --- Ensure users exist in the new DB format ---
+        const senderData = ensureUserRecord(db, sender.id);
+        const receiverData = ensureUserRecord(db, receiver.id);
+
         const taxRate = 0.05; // 5% tax
         const taxAmount = Math.ceil(amount * taxRate);
         const totalDeduction = amount + taxAmount;
 
         if (senderData.balance < totalDeduction) {
-            return await interaction.reply({
-                embeds: [
-                    baseEmbed
-                        .setTitle('🏦 Transaction Failed: Insufficient Funds')
-                        .setDescription(`You do not have enough money to complete this transaction.`)
-                        .addFields(
-                            { name: 'Your Balance', value: `💰 $${senderData.balance.toLocaleString()}`, inline: true },
-                            { name: 'Required Amount', value: `💸 $${amount.toLocaleString()}`, inline: true },
-                            { name: 'Transaction Tax (5%)', value: `🧾 $${taxAmount.toLocaleString()}`, inline: true },
-                            { name: 'Total Needed', value: `🚨 **$${totalDeduction.toLocaleString()}**`, inline: false }
-                        )
-                        .setColor(0xFEE75C) // Yellow
-                ],
-                flags: MessageFlags.Ephemeral
-            });
+            const insufficientEmbed = EmbedBuilder.from(baseEmbed)
+                .setTitle('🏦 Transaction Failed: Insufficient Funds')
+                .setDescription('You do not have enough money to complete this transaction.')
+                .addFields(
+                    { name: 'Your Balance', value: `💰 $${senderData.balance.toLocaleString()}`, inline: true },
+                    { name: 'Required Amount', value: `💸 $${amount.toLocaleString()}`, inline: true },
+                    { name: 'Transaction Tax (5%)', value: `🧾 $${taxAmount.toLocaleString()}`, inline: true },
+                    { name: 'Total Needed', value: `🚨 **$${totalDeduction.toLocaleString()}**`, inline: false }
+                )
+                .setColor(0xFEE75C); // Yellow
+
+            if (isPrivate) {
+                await interaction.editReply({ embeds: [insufficientEmbed], components: [] });
+            } else {
+                await interaction.deleteReply().catch(() => {});
+                await interaction.followUp({ embeds: [insufficientEmbed], flags: MessageFlags.Ephemeral });
+            }
+            return;
         }
         // Preview and confirmation
-        await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
         const preview = new EmbedBuilder()
             .setTitle('Confirm Transfer')
             .setDescription(`Send **$${amount.toLocaleString()}** to ${receiver}?`)
