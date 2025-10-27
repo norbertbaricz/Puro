@@ -42,28 +42,49 @@ const client = new Client({
 });
 
 // Tame listener warnings using config values (read from loaded config)
-const listenerMax = Number((config?.logging?.listener_max)) || 25;
-EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, listenerMax);
+const quietStartupConfig = config?.logging?.quiet_startup ?? true;
+const rawListenerMax = Number(config?.logging?.listener_max);
+let listenerMax = Number.isFinite(rawListenerMax) ? rawListenerMax : 0;
+if (listenerMax < 0) listenerMax = 0;
+const MIN_LISTENER_LIMIT = 64;
+const effectiveListenerMax = listenerMax === 0 ? 0 : Math.max(listenerMax, MIN_LISTENER_LIMIT);
+const applyMaxListeners = (emitter) => {
+    if (emitter && typeof emitter.setMaxListeners === 'function') {
+        emitter.setMaxListeners(effectiveListenerMax);
+    }
+};
+
+if (!quietStartupConfig && listenerMax > 0 && effectiveListenerMax !== listenerMax) {
+    console.warn(`⚠️ listener_max=${listenerMax} is below recommended minimum ${MIN_LISTENER_LIMIT}; using ${effectiveListenerMax} instead.`);
+}
+
+if (effectiveListenerMax === 0) {
+    EventEmitter.defaultMaxListeners = 0;
+} else {
+    EventEmitter.defaultMaxListeners = Math.max(EventEmitter.defaultMaxListeners || 10, effectiveListenerMax);
+}
+
 if (AsyncEventEmitter?.prototype && typeof AsyncEventEmitter.prototype._addListener === 'function' && !AsyncEventEmitter.prototype._puroPatched) {
     const originalAdd = AsyncEventEmitter.prototype._addListener;
     AsyncEventEmitter.prototype._puroPatched = true;
     AsyncEventEmitter.prototype._addListener = function patchedAddListener(eventName, listener, prepend) {
-        if (this && this._maxListeners === 10 && listenerMax > 10) {
-            this._maxListeners = listenerMax;
+        if (!this) return originalAdd.call(this, eventName, listener, prepend);
+        if (this._maxListeners === undefined || this._maxListeners === 10) {
+            this._maxListeners = effectiveListenerMax;
+        } else if (effectiveListenerMax === 0 && this._maxListeners !== 0) {
+            this._maxListeners = 0;
+        } else if (effectiveListenerMax > 0 && this._maxListeners < effectiveListenerMax) {
+            this._maxListeners = effectiveListenerMax;
         }
         return originalAdd.call(this, eventName, listener, prepend);
     };
 }
-client.setMaxListeners(listenerMax);
-// Also raise limits on Discord.js websocket layers to avoid AsyncEventEmitter warnings
-if (client.ws?.setMaxListeners) {
-    client.ws.setMaxListeners(listenerMax);
-}
-client.on('shardCreate', (shard) => {
-    if (typeof shard?.setMaxListeners === 'function') {
-        shard.setMaxListeners(listenerMax);
-    }
-});
+
+applyMaxListeners(client);
+applyMaxListeners(client.ws);
+client.on('shardCreate', (shard) => applyMaxListeners(shard));
+
+client.listenerLimits = { requested: listenerMax, effective: effectiveListenerMax };
 
 client.config = config;
 client.commands = new Collection();
