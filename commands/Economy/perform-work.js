@@ -32,22 +32,27 @@ module.exports = {
             failure: parseColor(config.color_failure || '#ED4245', '#ED4245')
         };
 
-        try {
-            const canUseEphemeral = typeof interaction.inGuild === 'function'
-                ? interaction.inGuild()
-                : Boolean(interaction.guildId);
-            const deferOptions = (isPrivate && canUseEphemeral)
-                ? { flags: MessageFlags.Ephemeral }
-                : {};
+        const canUseEphemeral = typeof interaction.inGuild === 'function'
+            ? interaction.inGuild()
+            : Boolean(interaction.guildId);
+        const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
+        const ackMessage = messages.processing || '⌛ Starting your shift...';
 
-            await interaction.deferReply(deferOptions);
+        try {
+            await interaction.reply({
+                content: ackMessage,
+                ephemeral: shouldBeEphemeral,
+                allowedMentions: { parse: [] },
+            });
         } catch (error) {
             if (error?.code === 10062) {
-                console.warn('[work] Interaction token expired before deferred reply.', { interactionId: interaction.id });
+                console.warn('[work] Interaction token expired before initial reply.', { interactionId: interaction.id });
                 return;
             }
             throw error;
         }
+
+        const updateReply = (payload) => interaction.editReply({ content: null, ...payload });
 
         const db = readEconomyDB();
         const entry = ensureUserRecord(db, interaction.user.id);
@@ -57,7 +62,7 @@ module.exports = {
                 .setColor(colors.neutral)
                 .setTitle(messages.no_job_title || 'No job found')
                 .setDescription(messages.no_job || 'You do not have a job yet. Use /job to browse roles and get hired.');
-            await interaction.editReply({ embeds: [embed] });
+            await updateReply({ embeds: [embed] });
             return;
         }
 
@@ -69,7 +74,7 @@ module.exports = {
                 .setDescription(messages.job_missing || 'Your previous job no longer exists. Please apply for a new one.');
             entry.job = null;
             writeEconomyDB(db);
-            await interaction.editReply({ embeds: [embed] });
+            await updateReply({ embeds: [embed] });
             return;
         }
 
@@ -84,7 +89,7 @@ module.exports = {
                 .setDescription(formatTemplate(messages.cooldown || 'You need to rest for {time} before working again.', {
                     time: `<t:${Math.floor((now + remaining) / 1000)}:R>`
                 }));
-            await interaction.editReply({ embeds: [embed] });
+            await updateReply({ embeds: [embed] });
             return;
         }
 
@@ -129,7 +134,7 @@ module.exports = {
                 });
             }
 
-            await interaction.editReply({ embeds: [embed] });
+            await updateReply({ embeds: [embed] });
             return;
         }
 
@@ -179,6 +184,6 @@ module.exports = {
             });
         }
 
-        await interaction.editReply({ embeds: [embed] });
+        await updateReply({ embeds: [embed] });
     }
 };
