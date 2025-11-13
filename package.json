@@ -4,8 +4,14 @@
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon --quiet --watch . --ignore database.json --trace-warnings app.js",
-    "dev": "nodemon --inspect --verbose --watch . --ignore database.json --trace-warnings app.js"
+    "start": "node app.js",
+    "dev": "nodemon --quiet --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
+    "dev:debug": "nodemon --inspect --verbose --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
+    "lint": "eslint . --ext .js --fix",
+    "lint:check": "eslint . --ext .js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "validate": "npm run lint:check && npm test"
   },
   "dependencies": {
     "@discordjs/opus": "^0.10.0",
@@ -32,7 +38,8 @@
   "company": "Skypixel",
   "license": "ISC",
   "engines": {
-    "node": ">=16.9.0"
+    "node": ">=18.17.0",
+    "npm": ">=9.0.0"
   },
   "repository": {
     "type": "git",

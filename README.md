@@ -1,6 +1,74 @@
 # Puro — Your Discord Pack Companion
 
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.17.0-brightgreen)](https://nodejs.org/)
+[![Discord.js](https://img.shields.io/badge/discord.js-v14-blue)](https://discord.js.org/)
+[![License](https://img.shields.io/badge/license-ISC-orange)](LICENSE)
+
 Puro is a Discord bot built for communities that thrive on energy, friendliness, and playful structure. Every interaction is designed to keep conversations moving, reward participation, and give staff the tools they need without feeling heavy-handed.
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js >= 18.17.0
+- npm >= 9.0.0
+- Discord Bot Token ([Get one here](https://discord.com/developers/applications))
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/norbertbaricz/Puro.git
+cd Puro
+
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and add your bot token
+# TOKEN=your_discord_bot_token
+# clientId=your_client_id
+```
+
+### Running the Bot
+
+```bash
+# Development (with hot reload)
+npm run dev
+
+# Development (with debugging)
+npm run dev:debug
+
+# Production
+npm start
+
+# Run tests
+npm test
+
+# Lint code
+npm run lint
+```
+
+---
+
+## 📋 Environment Configuration
+
+Create a `.env` file with your credentials:
+
+```env
+# Required
+TOKEN=your_discord_bot_token_here
+clientId=your_application_client_id
+
+# Optional
+LOG_LEVEL=INFO
+NODE_ENV=development
+```
+
+See `.env.example` for all available options.
 
 ---
 
@@ -98,4 +166,152 @@ Subscriptions can be adjusted or cancelled within Discord’s subscription manag
 ## Support & Credits
 
 Puro is curated by the **Skypixel Team**, with special thanks to all the dens that helped shape its voice and feature set.  
-Questions, premium activations, or ideas for new interactions? Hop into the Skypixel support hub or DM the team directly on Discord—we’re always listening for the next adorable howl.
+Questions, premium activations, or ideas for new interactions? Hop into the Skypixel support hub or DM the team directly on Discord—we're always listening for the next adorable howl.
+
+---
+
+## 🏗️ Project Structure
+
+```
+Puro/
+├── app.js                  # Main application entry
+├── config.yml              # Bot configuration
+├── database.json           # Economy data (auto-created)
+├── package.json            # Dependencies and scripts
+├── .env                    # Environment variables (create from .env.example)
+│
+├── commands/               # Slash commands
+│   ├── Economy/           # Economy system commands
+│   ├── Fun/               # Entertainment commands
+│   ├── Info/              # Information commands
+│   ├── Management/        # Server management
+│   ├── Media/             # Media fetching
+│   ├── Moderation/        # Moderation tools
+│   └── guilds/            # Premium guild-specific commands
+│
+├── events/                # Event handlers
+│   ├── core/             # Core Discord events
+│   └── guilds/           # Premium guild events
+│
+└── lib/                   # Utility libraries
+    ├── economy.js         # Economy database operations
+    ├── jobs.js            # Job system definitions
+    ├── utils.js           # General utilities
+    ├── logger.js          # Structured logging (NEW)
+    ├── env-validator.js   # Environment validation (NEW)
+    ├── command-helpers.js # Command utilities (NEW)
+    └── health.js          # Health monitoring (NEW)
+```
+
+---
+
+## 🎯 New Features & Optimizations
+
+### ✨ Enhanced Developer Experience
+- **Structured Logging**: Color-coded, level-based logging system
+- **Environment Validation**: Automatic validation of required variables
+- **Hot Reload**: Instant code changes in development mode
+- **Error Handling**: Comprehensive error tracking and reporting
+- **Health Monitoring**: Real-time system health checks
+
+### ⚡ Performance Improvements
+- **Async Database**: Non-blocking database operations
+- **Caching System**: In-memory cache with TTL for frequent data
+- **Write Queue**: Prevents database race conditions
+- **Optimized Startup**: Faster boot times with parallel loading
+
+### 🛡️ Reliability Enhancements
+- **Graceful Shutdown**: Clean exit with data preservation
+- **Auto-Recovery**: Automatic database corruption repair
+- **Health Checks**: Periodic system status monitoring
+- **Error Tracking**: Detailed error logging and metrics
+
+### 🔧 Maintainability
+- **Command Helpers**: Reusable functions for common tasks
+- **Type Validation**: Input validation utilities
+- **Modular Design**: Clean separation of concerns
+- **ESLint Config**: Code quality enforcement
+
+---
+
+## 📊 Health Monitoring
+
+Access health status programmatically:
+
+```javascript
+// Get detailed health status
+const status = client.healthMonitor.getStatus();
+
+// Get simple status
+const simple = client.healthMonitor.getSimpleStatus();
+```
+
+Health checks include:
+- ✅ Discord connection status
+- ✅ Memory usage
+- ✅ Error rate tracking
+- ✅ System uptime
+- ✅ CPU usage metrics
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Generate coverage report
+npm test -- --coverage
+```
+
+---
+
+## 🐛 Debugging
+
+Enable debug logging:
+
+```env
+LOG_LEVEL=DEBUG
+```
+
+Check detailed logs in the console with color-coded output.
+
+---
+
+## 📚 Documentation
+
+- **[Optimization Notes](OPTIMIZATION_NOTES.md)** - Detailed explanation of improvements
+- **[Environment Variables](.env.example)** - All configuration options
+- **[Discord.js Guide](https://discordjs.guide/)** - Framework documentation
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📜 License
+
+This project is licensed under the ISC License.
+
+---
+
+## 🔗 Links
+
+- **Repository**: [github.com/norbertbaricz/Puro](https://github.com/norbertbaricz/Puro)
+- **Issues**: [Report a bug](https://github.com/norbertbaricz/Puro/issues)
+- **Discord Support**: Contact Skypixel Team
+
+---
+
+Made with ❤️ by the Skypixel Team

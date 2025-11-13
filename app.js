@@ -6,6 +6,24 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
+// Import new utilities
+const { logger, createLogger } = require('./lib/logger');
+const { createPuroValidator } = require('./lib/env-validator');
+const { HealthMonitor } = require('./lib/health');
+
+const appLogger = createLogger('APP');
+
+// Validate environment variables before proceeding
+try {
+    const envValidator = createPuroValidator();
+    envValidator.validate();
+} catch (error) {
+    console.error('❌ FATAL: Environment validation failed');
+    console.error(error.message);
+    console.error('\nPlease check your .env file. See .env.example for reference.');
+    process.exit(1);
+}
+
 // Default configuration
 let config = {
     messages: {
@@ -18,15 +36,9 @@ try {
     // Load configuration from config.yml
     const configFile = fs.readFileSync('./config.yml', 'utf8');
     config = yaml.load(configFile);
-    // Optional verbose log below is controlled later
+    appLogger.debug('Configuration loaded successfully');
 } catch (e) {
-    console.warn("⚠️ WARN: Could not load config.yml. Using default configuration. Error:", e.message);
-}
-
-// Check for essential environment variables
-if (!process.env.TOKEN || !process.env.clientId) {
-    console.error("❌ FATAL:", config.messages.environmentVariablesNotSet);
-    process.exit(1);
+    appLogger.warn('Could not load config.yml. Using default configuration.', { error: e.message });
 }
 
 // Initialize Discord Client
@@ -91,6 +103,9 @@ client.commands = new Collection();
 client.guildCommands = new Map();
 client.commandLoadDetails = [];
 client.eventLoadDetails = [];
+
+// Initialize health monitor
+client.healthMonitor = new HealthMonitor(client);
 
 // Verbose/quiet startup logging toggle (default: quiet)
 const quietStartup = client.config?.logging?.quiet_startup ?? true;
@@ -520,33 +535,64 @@ async function main() {
 }
 
 // Graceful shutdown & Error Handling
-process.on('SIGINT', () => {
-    console.log("\n🔴 Shutting down bot...");
-    client.destroy();
-    process.exit(0);
-});
+const gracefulShutdown = async (signal) => {
+    appLogger.info(`Received ${signal}, shutting down gracefully...`);
+    
+    try {
+        // Stop health monitoring
+        if (client.healthMonitor) {
+            client.healthMonitor.stopMonitoring();
+        }
 
-process.on('SIGTERM', () => {
-    console.log("\n🔴 Shutting down bot...");
-    client.destroy();
-    process.exit(0);
-});
+        // Destroy Discord client
+        client.destroy();
+        
+        appLogger.info('Bot shutdown complete');
+        process.exit(0);
+    } catch (error) {
+        appLogger.error('Error during shutdown', { error: error.message });
+        process.exit(1);
+    }
+};
 
-// Aici este corecția. Am eliminat parametrul 'origin' pentru compatibilitate maximă.
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Global error handlers
 process.on('uncaughtException', (err) => {
-    console.error('🚨 UNCAUGHT EXCEPTION! Shutting down...');
-    console.error(err);
+    appLogger.fatal('Uncaught exception detected', {
+        error: err.message,
+        stack: err.stack
+    });
+    
+    // Log to file in production
+    if (process.env.NODE_ENV === 'production') {
+        const errorLog = path.join(__dirname, 'logs', 'crash.log');
+        fs.appendFileSync(errorLog, `\n[${new Date().toISOString()}] UNCAUGHT EXCEPTION\n${err.stack}\n`);
+    }
+    
     process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('🚫 UNHANDLED REJECTION:');
-    console.error('Reason:', reason);
+    appLogger.error('Unhandled promise rejection', {
+        reason: reason instanceof Error ? reason.message : String(reason),
+        stack: reason instanceof Error ? reason.stack : undefined
+    });
+    
+    // Record in health monitor
+    if (client.healthMonitor) {
+        client.healthMonitor.recordError(reason instanceof Error ? reason : new Error(String(reason)));
+    }
 });
 
 // Surface Node warnings clearly (including deprecation notices)
 process.on('warning', (warning) => {
-    console.warn('⚠️ Node Warning:', warning.message);
+    appLogger.warn('Node.js warning', {
+        name: warning.name,
+        message: warning.message,
+        stack: warning.stack
+    });
 });
 
 // Start the bot
