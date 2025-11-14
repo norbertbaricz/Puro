@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { readEconomyDB, writeEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { withEconomy, ensureUserRecord } = require('../../lib/economy');
 const { parseColor, randomInt, pickRandom, formatTemplate, formatCurrency } = require('../../lib/utils');
 
 const SUITS = ['♠️', '♥️', '♦️', '♣️'];
@@ -178,18 +178,22 @@ module.exports = {
         const shouldBeEphemeral = Boolean(isPrivate);
         await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
 
-        const db = readEconomyDB();
-        const entry = ensureUserRecord(db, interaction.user.id);
-        if (entry.balance < bet) {
+        const betResult = await withEconomy((db) => {
+            const entry = ensureUserRecord(db, interaction.user.id);
+            if (entry.balance < bet) {
+                return { status: 'insufficient', balance: entry.balance };
+            }
+            entry.balance -= bet;
+            return { status: 'ok', balance: entry.balance };
+        });
+
+        if (betResult.status === 'insufficient') {
             return interaction.editReply({
                 content: formatTemplate(msgs.insufficient_funds || '❌ You only have ${balance}.', {
-                    balance: `$${entry.balance.toLocaleString()}`
+                    balance: `$${betResult.balance.toLocaleString()}`
                 })
             });
         }
-
-        entry.balance -= bet;
-        writeEconomyDB(db);
 
         const state = {
             deck: createDeck(),
@@ -198,7 +202,7 @@ module.exports = {
             bet,
             status: 'playing',
             canDouble: true,
-            balance: entry.balance,
+            balance: betResult.balance,
             outcomeMessage: null
         };
 
@@ -212,10 +216,6 @@ module.exports = {
         const dealInitial = () => {
             state.player.push(draw(), draw());
             state.dealer.push(draw(), draw());
-        };
-
-        const updateBalance = () => {
-            state.balance = entry.balance;
         };
 
         const outcomeTemplates = {
@@ -299,10 +299,13 @@ module.exports = {
             }
 
             if (winnings > 0) {
-                entry.balance += winnings;
+                const payout = await withEconomy((db) => {
+                    const entry = ensureUserRecord(db, interaction.user.id);
+                    entry.balance += winnings;
+                    return { balance: entry.balance };
+                });
+                state.balance = payout.balance;
             }
-
-            state.balance = entry.balance;
             const replacements = {
                 bet: formatCurrency(state.bet),
                 payout: formatCurrency(winnings),
@@ -313,8 +316,6 @@ module.exports = {
 
             const templateKey = outcomeTemplates[status] ? status : (status === 'timeout' ? 'timeout' : status);
             state.outcomeMessage = formatTemplate(outcomeTemplates[templateKey], replacements);
-
-            writeEconomyDB(db);
 
             const disabledRow = createControls(state, buttons, true);
             const embed = buildEmbed({ revealDealer: true, statusMessage: state.outcomeMessage });
@@ -369,8 +370,6 @@ module.exports = {
         };
 
         dealInitial();
-        updateBalance();
-
         if (await concludeIfNeeded()) {
             return;
         }
@@ -431,16 +430,28 @@ module.exports = {
             }
 
             if (i.customId === 'bj_double') {
-                if (!state.canDouble || entry.balance < state.bet) {
+                if (!state.canDouble) {
+                    await i.reply({ content: msgs.double_unavailable || 'You cannot double right now.', flags: MessageFlags.Ephemeral });
+                    return;
+                }
+
+                const doubleResult = await withEconomy((db) => {
+                    const entry = ensureUserRecord(db, interaction.user.id);
+                    if (entry.balance < state.bet) {
+                        return { status: 'insufficient', balance: entry.balance };
+                    }
+                    entry.balance -= state.bet;
+                    return { status: 'ok', balance: entry.balance };
+                });
+
+                if (doubleResult.status === 'insufficient') {
                     await i.reply({ content: msgs.double_unavailable || 'You cannot double right now.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 await safeDeferUpdate(i);
-                entry.balance -= state.bet;
                 state.bet *= 2;
                 state.canDouble = false;
-                updateBalance();
-                writeEconomyDB(db);
+                state.balance = doubleResult.balance;
                 state.player.push(draw());
                 const evalPlayer = calculateHand(state.player);
                 if (evalPlayer.isBust) {

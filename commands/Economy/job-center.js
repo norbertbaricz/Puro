@@ -7,7 +7,7 @@ const {
     ButtonStyle,
     MessageFlags
 } = require('discord.js');
-const { readEconomyDB, writeEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../lib/economy');
 const { getAllJobs, getJobById, formatPayRange } = require('../../lib/jobs');
 const { parseColor, pickRandom, formatTemplate } = require('../../lib/utils');
 
@@ -49,13 +49,21 @@ module.exports = {
             failure: parseColor(config.color_failure || '#ED4245', '#ED4245')
         };
 
-        const db = readEconomyDB();
-        const entry = ensureUserRecord(db, interaction.user.id);
         const jobs = getAllJobs();
 
+        const loadProfile = async () => {
+            return withEconomy((db) => {
+                const record = ensureUserRecord(db, interaction.user.id);
+                return { entry: snapshotEntry(record) };
+            });
+        };
+
+        const profile = await loadProfile();
+
         const state = {
-            selectedJobId: entry.job?.id || null,
-            currentJobId: entry.job?.id || null,
+            entry: profile.entry,
+            selectedJobId: profile.entry.job?.id || null,
+            currentJobId: profile.entry.job?.id || null,
             flashMessage: null,
             flashVariant: 'info'
         };
@@ -108,6 +116,7 @@ module.exports = {
             const banner = state.flashMessage || messages.list_description || 'Select a job from the menu to view details and apply.';
             embed.setDescription(banner);
 
+            const entry = state.entry;
             const jobIdToShow = state.selectedJobId;
             const job = jobIdToShow ? getJobById(jobIdToShow) : null;
             if (job) {
@@ -118,8 +127,8 @@ module.exports = {
                 });
             }
 
-            if (state.currentJobId) {
-                const activeJob = getJobById(state.currentJobId);
+            if (entry?.job?.id) {
+                const activeJob = getJobById(entry.job.id);
                 const stats = entry.jobStats || {};
                 const details = [
                     activeJob ? `${activeJob.emoji} ${activeJob.name}` : state.currentJobId,
@@ -205,40 +214,71 @@ module.exports = {
 
                     await componentInteraction.deferUpdate();
 
-                    const hireRoll = Math.random();
-                    const hired = hireRoll <= (job.apply.baseSuccessRate || 0);
+                    const outcome = await withEconomy((db) => {
+                        const record = ensureUserRecord(db, interaction.user.id);
 
-                    if (hired) {
-                        entry.job = {
-                            id: job.id,
-                            hiredAt: Date.now(),
-                            lastWorkedAt: 0,
-                            streak: 0
-                       };
-                       entry.jobStats = {
-                           shiftsCompleted: 0,
-                           failedShifts: 0,
-                           totalEarned: 0
-                       };
-                        state.currentJobId = job.id;
-                        state.selectedJobId = job.id;
+                        if (record.job) {
+                            return { status: 'already-employed', entry: snapshotEntry(record) };
+                        }
+
+                        if (!job) {
+                            return { status: 'missing', entry: snapshotEntry(record) };
+                        }
+
+                        const hireRoll = Math.random();
+                        const hired = hireRoll <= (job.apply.baseSuccessRate || 0);
+
+                        if (hired) {
+                            record.job = {
+                                id: job.id,
+                                hiredAt: Date.now(),
+                                lastWorkedAt: 0,
+                                streak: 0
+                            };
+                            record.jobStats = {
+                                shiftsCompleted: 0,
+                                failedShifts: 0,
+                                totalEarned: 0
+                            };
+                        }
+
+                        return {
+                            status: hired ? 'hired' : 'rejected',
+                            entry: snapshotEntry(record),
+                            job
+                        };
+                    });
+
+                    if (outcome.status === 'already-employed') {
+                        await componentInteraction.followUp({
+                            content: messages.already_employed || 'You already have a job. Quit first before applying again.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                        return;
+                    }
+
+                    state.entry = outcome.entry;
+                    state.currentJobId = outcome.entry.job?.id || null;
+                    state.selectedJobId = outcome.entry.job?.id || state.selectedJobId;
+
+                    if (outcome.status === 'hired') {
                         state.flashMessage = `${formatTemplate(messages.apply_title || 'You are hired for {job}!', {
                             job: `${job.emoji} ${job.name}`
                         })}\n${pickRandom(job.apply.successMessages, messages.apply_success || 'Welcome aboard!')}`;
                         state.flashVariant = 'success';
-                        writeEconomyDB(db);
                         await interaction.editReply({
                             embeds: [buildEmbed()],
                             components: [buildSelect({ disabled: true }), buildButtons()]
                         });
-                    } else {
-                        state.flashMessage = pickRandom(job.apply.failureMessages, messages.apply_failure || 'Unfortunately you were not hired this time.');
-                        state.flashVariant = 'failure';
-                        await interaction.editReply({
-                            embeds: [buildEmbed()],
-                            components: [buildSelect(), buildButtons()]
-                        });
+                        return;
                     }
+
+                    state.flashMessage = pickRandom(job.apply.failureMessages, messages.apply_failure || 'Unfortunately you were not hired this time.');
+                    state.flashVariant = 'failure';
+                    await interaction.editReply({
+                        embeds: [buildEmbed()],
+                        components: [buildSelect(), buildButtons()]
+                    });
                     return;
                 }
 
@@ -251,20 +291,43 @@ module.exports = {
                         return;
                     }
 
-                    const oldJob = getJobById(state.currentJobId);
-                    entry.job = null;
-                    if (entry.jobStats) {
-                        entry.jobStats.shiftsCompleted = 0;
-                        entry.jobStats.failedShifts = 0;
-                        entry.jobStats.totalEarned = 0;
+                    const outcome = await withEconomy((db) => {
+                        const record = ensureUserRecord(db, interaction.user.id);
+                        if (!record.job) {
+                            return { status: 'no-job', entry: snapshotEntry(record) };
+                        }
+
+                        const previousJob = record.job.id;
+                        record.job = null;
+                        if (record.jobStats) {
+                            record.jobStats.shiftsCompleted = 0;
+                            record.jobStats.failedShifts = 0;
+                            record.jobStats.totalEarned = 0;
+                        }
+
+                        return {
+                            status: 'quit',
+                            entry: snapshotEntry(record),
+                            previousJob
+                        };
+                    });
+
+                    if (outcome.status === 'no-job') {
+                        await componentInteraction.reply({
+                            content: messages.quit_no_job || 'You are not currently employed.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                        return;
                     }
+
+                    state.entry = outcome.entry;
+                    state.currentJobId = null;
+                    state.selectedJobId = null;
+                    const oldJob = getJobById(outcome.previousJob);
                     state.flashMessage = formatTemplate(messages.quit_success || 'You left your job as {job}.', {
                         job: oldJob ? `${oldJob.emoji} ${oldJob.name}` : 'your previous position'
                     });
-                    state.currentJobId = null;
-                    state.selectedJobId = null;
                     state.flashVariant = 'success';
-                    writeEconomyDB(db);
 
                     await componentInteraction.update({
                         embeds: [buildEmbed()],

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { readEconomyDB, ensureUserRecord, writeEconomyDB } = require('../../lib/economy');
+const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../lib/economy');
 
 module.exports = {
     category: 'Economy',
@@ -36,11 +36,16 @@ module.exports = {
 
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
-        const db = readEconomyDB();
-        const normalizedEntries = Object.entries(db).map(([id]) => [id, ensureUserRecord(db, id)]);
-        writeEconomyDB(db);
+        const { entries, selfBalance } = await withEconomy((db) => {
+            const normalized = Object.entries(db).map(([id]) => [id, snapshotEntry(ensureUserRecord(db, id))]);
+            const self = ensureUserRecord(db, interaction.user.id);
+            return {
+                entries: normalized,
+                selfBalance: self.balance || 0
+            };
+        });
 
-        let sortedUsers = normalizedEntries
+        let sortedUsers = entries
             .filter(([, data]) => data && typeof data.balance === 'number')
             .sort(([, a], [, b]) => b.balance - a.balance);
 
@@ -51,7 +56,7 @@ module.exports = {
         }
 
         const yourIndex = sortedUsers.findIndex(([id]) => id === interaction.user.id);
-        const yourBalance = db[interaction.user.id]?.balance || 0;
+        const yourBalance = selfBalance;
 
         const pages = Math.max(1, Math.ceil(sortedUsers.length / perPage));
         let page = 0;
