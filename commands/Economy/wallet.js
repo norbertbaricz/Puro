@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { readEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../lib/economy');
 const { getJobById, formatPayRange } = require('../../lib/jobs');
 
 module.exports = {
@@ -45,9 +45,15 @@ module.exports = {
             }
         };
 
+        const fetchEntry = async () => {
+            return withEconomy((db) => {
+                const entry = ensureUserRecord(db, targetUser.id);
+                return { entry: snapshotEntry(entry) };
+            });
+        };
+
         const render = async () => {
-            const db = readEconomyDB();
-            const entry = ensureUserRecord(db, targetUser.id);
+            const { entry } = await fetchEntry();
             const balance = entry.balance || 0;
             const color = conf.color || 0x2ECC71;
             const title = conf.messages?.title || '💰 Wallet Balance Inquiry';

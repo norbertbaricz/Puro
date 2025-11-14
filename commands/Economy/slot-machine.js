@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { readEconomyDB, writeEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { withEconomy, ensureUserRecord } = require('../../lib/economy');
 const { pickRandom, formatCurrency } = require('../../lib/utils');
 
 // --- Slot machine configuration ---
@@ -137,42 +137,44 @@ module.exports = {
         const baseBet = interaction.options.getInteger('amount');
 
         const userId = interaction.user.id;
-        let db = readEconomyDB();
-        const user = ensureUserRecord(db, userId);
 
         if (baseBet <= 0 || !Number.isFinite(baseBet)) {
             return interaction.reply({ content: errors.invalid_bet || '❌ Bet amount must be a positive number.', flags: MessageFlags.Ephemeral });
         }
-        if (user.balance < baseBet) {
-            const msg = fmt(errors.insufficient_funds || '❌ Insufficient funds. You only have ${balance}.', {
-                balance: formatCurrency(user.balance)
-            });
-            return interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
-        }
 
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
-
-        const play = (bet) => {
-            // Re-load DB fresh each spin to avoid race conditions within collector
-            const dbNow = readEconomyDB();
-            const u = ensureUserRecord(dbNow, userId);
-            if (bet <= 0 || u.balance < bet) {
+        const resolveSpin = (bet) => withEconomy((dbNow) => {
+            const userRecord = ensureUserRecord(dbNow, userId);
+            if (bet <= 0 || userRecord.balance < bet) {
                 const err = fmt(errors.insufficient_funds_bet || '❌ Insufficient funds to bet ${bet}. Balance: ${balance}.', {
                     bet: formatCurrency(bet),
-                    balance: formatCurrency(u.balance)
+                    balance: formatCurrency(userRecord.balance)
                 });
                 return { error: err };
             }
-            // Deduct bet first
-            u.balance -= bet;
+            userRecord.balance -= bet;
 
             const grid = spinGrid();
-            const { multiplier, payout, label, result } = evaluateGrid(grid, bet);
-            const gridArt = renderGrid(grid);
+            const evaluation = evaluateGrid(grid, bet);
+            userRecord.balance += evaluation.payout;
 
-            // Credit payout (could be zero)
-            u.balance += payout;
-            writeEconomyDB(dbNow);
+            return {
+                balance: userRecord.balance,
+                grid,
+                evaluation,
+                bet
+            };
+        });
+
+        const play = async (bet) => {
+            const spin = await resolveSpin(bet);
+            if (spin.error) {
+                return { error: spin.error };
+            }
+
+            const { grid, evaluation } = spin;
+            const { multiplier, payout, label, result } = evaluation;
+            const gridArt = renderGrid(grid);
 
             const win = payout > 0;
             const comboLabel = label && payout > 0 ? `**${label}!**` : null;
@@ -224,11 +226,16 @@ module.exports = {
                 new ButtonBuilder().setCustomId('slots_close').setLabel(btnLabels.close).setEmoji('🗑️').setStyle(ButtonStyle.Danger)
             );
 
-            return { embed, controls, lastBet: bet, newBalance: u.balance };
+            return {
+                embed,
+                controls,
+                lastBet: bet,
+                newBalance: spin.balance
+            };
         };
 
         // First spin
-        let view = play(baseBet);
+        let view = await play(baseBet);
         if (view.error) {
             await interaction.editReply({ content: view.error });
             return;
@@ -254,15 +261,13 @@ module.exports = {
             if (i.customId === 'slots_half') {
                 nextBet = Math.max(1, Math.floor(view.lastBet / 2));
             } else if (i.customId === 'slots_allin') {
-                const dbNow = readEconomyDB();
-                const uNow = ensureUserRecord(dbNow, userId);
-                nextBet = Math.max(1, uNow.balance);
+                nextBet = Math.max(1, view.newBalance);
             } else if (i.customId === 'slots_again') {
                 // keep as lastBet
             }
 
             // Play next round
-            const nextView = play(nextBet);
+            const nextView = await play(nextBet);
             if (nextView.error) {
                 await i.reply({ content: nextView.error, flags: MessageFlags.Ephemeral });
                 return;

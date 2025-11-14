@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { readEconomyDB, writeEconomyDB, ensureUserRecord } = require('../../lib/economy');
+const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../lib/economy');
 
 module.exports = {
     category: 'Economy',
@@ -89,22 +89,25 @@ module.exports = {
         
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
-        // --- Transaction Tax Logic ---
-        const db = readEconomyDB();
-        // --- Ensure users exist in the new DB format ---
-        const senderData = ensureUserRecord(db, sender.id);
-        const receiverData = ensureUserRecord(db, receiver.id);
+        const initialSnapshot = await withEconomy((db) => {
+            const senderData = ensureUserRecord(db, sender.id);
+            const receiverData = ensureUserRecord(db, receiver.id);
+            return {
+                sender: snapshotEntry(senderData),
+                receiver: snapshotEntry(receiverData)
+            };
+        });
 
         const taxRate = 0.05; // 5% tax
         const taxAmount = Math.ceil(amount * taxRate);
         const totalDeduction = amount + taxAmount;
 
-        if (senderData.balance < totalDeduction) {
+        if (initialSnapshot.sender.balance < totalDeduction) {
             const insufficientEmbed = EmbedBuilder.from(baseEmbed)
                 .setTitle('🏦 Transaction Failed: Insufficient Funds')
                 .setDescription('You do not have enough money to complete this transaction.')
                 .addFields(
-                    { name: 'Your Balance', value: `💰 $${senderData.balance.toLocaleString()}`, inline: true },
+                    { name: 'Your Balance', value: `💰 $${initialSnapshot.sender.balance.toLocaleString()}`, inline: true },
                     { name: 'Required Amount', value: `💸 $${amount.toLocaleString()}`, inline: true },
                     { name: 'Transaction Tax (5%)', value: `🧾 $${taxAmount.toLocaleString()}`, inline: true },
                     { name: 'Total Needed', value: `🚨 **$${totalDeduction.toLocaleString()}**`, inline: false }
@@ -165,40 +168,76 @@ module.exports = {
         });
         if (!decision) return;
 
-        // Random negative events (15%)
-        const eventChance = Math.random();
-        if (eventChance < 0.15) {
-            senderData.balance -= amount;
-            if (senderData.balance < 0) senderData.balance = 0;
-            writeEconomyDB(db);
+        const negativeEvents = [
+            { title: '💀 Transaction Intercepted by Hackers! 💀', description: 'A shadowy group of hackers intercepted the data packet! The money is gone.', color: 0x9B59B6 },
+            { title: '🔌 Network Error: Packet Lost! 🔌', description: 'A critical network failure occurred. Your transaction vanished into the digital void.', color: 0x34495E },
+            { title: '💸 Corrupt Financier Fee! 💸', description: 'A corrupt banker skimmed your entire transaction off the top as a "processing fee".', color: 0xA84300 }
+        ];
 
-            const events = [
-                { title: '💀 Transaction Intercepted by Hackers! 💀', description: 'A shadowy group of hackers intercepted the data packet! The money is gone.', color: 0x9B59B6 },
-                { title: '🔌 Network Error: Packet Lost! 🔌', description: 'A critical network failure occurred. Your transaction vanished into the digital void.', color: 0x34495E },
-                { title: '💸 Corrupt Financier Fee! 💸', description: 'A corrupt banker skimmed your entire transaction off the top as a "processing fee".', color: 0xA84300 }
-            ];
-            const randomEvent = events[Math.floor(Math.random() * events.length)];
+        const triggeredEvent = Math.random() < 0.15 ? negativeEvents[Math.floor(Math.random() * negativeEvents.length)] : null;
 
+        const txResult = await withEconomy((db) => {
+            const senderRecord = ensureUserRecord(db, sender.id);
+            const receiverRecord = ensureUserRecord(db, receiver.id);
+
+            if (senderRecord.balance < totalDeduction) {
+                return {
+                    status: 'insufficient',
+                    sender: snapshotEntry(senderRecord),
+                    receiver: snapshotEntry(receiverRecord)
+                };
+            }
+
+            if (triggeredEvent) {
+                senderRecord.balance = Math.max(0, senderRecord.balance - amount);
+                return {
+                    status: 'hacked',
+                    sender: snapshotEntry(senderRecord),
+                    receiver: snapshotEntry(receiverRecord)
+                };
+            }
+
+            senderRecord.balance -= totalDeduction;
+            receiverRecord.balance += amount;
+            return {
+                status: 'success',
+                sender: snapshotEntry(senderRecord),
+                receiver: snapshotEntry(receiverRecord)
+            };
+        });
+
+        if (txResult.status === 'insufficient') {
+            const insufficientEmbed = EmbedBuilder.from(baseEmbed)
+                .setTitle('🏦 Transaction Failed: Insufficient Funds')
+                .setDescription('Your balance changed before confirmation. Please try again.')
+                .addFields(
+                    { name: 'Your Balance', value: `💰 $${txResult.sender.balance.toLocaleString()}`, inline: true },
+                    { name: 'Required Amount', value: `💸 $${amount.toLocaleString()}`, inline: true },
+                    { name: 'Transaction Tax (5%)', value: `🧾 $${taxAmount.toLocaleString()}`, inline: true },
+                    { name: 'Total Needed', value: `🚨 **$${totalDeduction.toLocaleString()}**`, inline: false }
+                )
+                .setColor(0xFEE75C);
+
+            await interaction.editReply({ embeds: [insufficientEmbed], components: [] });
+            return;
+        }
+
+        if (txResult.status === 'hacked' && triggeredEvent) {
             const hackedEmbed = new EmbedBuilder()
-                .setTitle(randomEvent.title)
-                .setDescription(randomEvent.description)
+                .setTitle(triggeredEvent.title)
+                .setDescription(triggeredEvent.description)
                 .addFields(
                     { name: 'Amount Lost', value: `**-$${amount.toLocaleString()}**`, inline: true },
                     { name: 'Recipient', value: `${receiver.username} (Received nothing)`, inline: true },
-                    { name: 'Your New Balance', value: `💰 **$${senderData.balance.toLocaleString()}**`, inline: false }
+                    { name: 'Your New Balance', value: `💰 **$${txResult.sender.balance.toLocaleString()}**`, inline: false }
                 )
-                .setColor(randomEvent.color)
+                .setColor(triggeredEvent.color)
                 .setFooter({ text: `Transaction initiated by ${sender.username}` })
                 .setTimestamp();
 
             await interaction.editReply({ embeds: [hackedEmbed], components: [] });
             return;
         }
-
-        // Success path
-        senderData.balance -= totalDeduction;
-        receiverData.balance += amount;
-        writeEconomyDB(db);
 
         if (dmRecipient) {
             const recipientName = anonymous ? 'Someone' : sender.username;
@@ -214,8 +253,8 @@ module.exports = {
             .setTitle('✅ Transaction Successful! ✅')
             .setDescription(`You successfully sent **$${amount.toLocaleString()}** to ${receiver.username}!`)
             .addFields(
-                { name: 'Your New Balance', value: `💰 $${senderData.balance.toLocaleString()}`, inline: true },
-                { name: "Recipient's New Balance", value: `💰 $${receiverData.balance.toLocaleString()}`, inline: true },
+                { name: 'Your New Balance', value: `💰 $${txResult.sender.balance.toLocaleString()}`, inline: true },
+                { name: "Recipient's New Balance", value: `💰 $${txResult.receiver.balance.toLocaleString()}`, inline: true },
                 { name: 'Tax Paid (5%)', value: `🧾 $${taxAmount.toLocaleString()}`, inline: false },
                 ...(note ? [{ name: 'Note', value: note, inline: false }] : [])
             )
