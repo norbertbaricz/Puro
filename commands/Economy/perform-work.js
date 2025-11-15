@@ -41,7 +41,7 @@ module.exports = {
         try {
             await interaction.reply({
                 content: ackMessage,
-                ephemeral: shouldBeEphemeral,
+                flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined,
                 allowedMentions: { parse: [] },
             });
         } catch (error) {

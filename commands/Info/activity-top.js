@@ -74,11 +74,11 @@ module.exports = {
 
             if (typeof interaction.inGuild === 'function' ? !interaction.inGuild() : !interaction.guild) {
                 const response = topMsg.guild_only || '❌ This command can only be used inside a server.';
-                return await interaction.reply({ content: response, ephemeral: true });
+                return await interaction.reply({ content: response, flags: MessageFlags.Ephemeral });
             }
 
             const shouldBeEphemeral = Boolean(isPrivate);
-            await interaction.deferReply(shouldBeEphemeral ? { ephemeral: true } : {});
+            await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
 
             // --- Obținerea opțiunilor ---
             const type = interaction.options.getString('type');
