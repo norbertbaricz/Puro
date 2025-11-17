@@ -105,15 +105,16 @@ module.exports = {
                     if (i.customId === 'e621_close') {
                         collector.stop('closed');
                         const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                        await i.update({ components: [disabled] });
+                        await i.update({ components: [disabled] }).catch(() => {});
                         return;
                     }
                     if (i.customId === 'e621_next') {
                         collector.stop('reroll');
-                        await i.deferUpdate();
+                        // Update immediately to acknowledge the interaction
                         const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                        await interaction.editReply({ components: [disabled] });
-                        setTimeout(() => render(rerolls + 1), 600);
+                        await i.update({ components: [disabled] }).catch(() => {});
+                        // Render next image without delay
+                        setImmediate(() => render(rerolls + 1));
                     }
                 });
                 collector.on('end', async (c, reason) => {
