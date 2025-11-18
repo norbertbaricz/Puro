@@ -112,6 +112,7 @@ module.exports = {
             const reply = await interaction.fetchReply();
             const collector = reply.createMessageComponentCollector({ time: 30000 });
             let proceed = false;
+            let replyDeleted = false;
             collector.on('collect', async i => {
                 if (i.user.id !== interaction.user.id) {
                     await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
@@ -131,31 +132,44 @@ module.exports = {
                     await i.update({ components: [disabled] });
 
                     try {
+                        // Check if the confirmation message would be deleted
+                        const replyId = reply.id;
+                        const willDeleteReply = toDelete.some(msg => msg.id === replyId);
+                        
+                        if (willDeleteReply) {
+                            replyDeleted = true;
+                        }
+
                         // Delete the selected messages directly
                         const deleted = await interaction.channel.bulkDelete(toDelete, true);
 
-                        const done = new EmbedBuilder()
-                            .setColor(config.color || '#00ff00')
-                            .setTitle('✅ Messages Deleted')
-                            .setDescription(
-                                config.messages.success
-                                    .replace('{count}', deleted.size)
-                                    .replace('{s}', deleted.size === 1 ? '' : 's')
-                            );
-                        await interaction.editReply({ embeds: [done] });
+                        // Only try to edit if reply wasn't deleted
+                        if (!willDeleteReply) {
+                            const done = new EmbedBuilder()
+                                .setColor(config.color || '#00ff00')
+                                .setTitle('✅ Messages Deleted')
+                                .setDescription(
+                                    config.messages.success
+                                        .replace('{count}', deleted.size)
+                                        .replace('{s}', deleted.size === 1 ? '' : 's')
+                                );
+                            await interaction.editReply({ embeds: [done] });
+                        }
                     } catch (err) {
                         console.error('Clear confirm error:', err);
-                        const fail = new EmbedBuilder()
-                            .setColor('#ff0000')
-                            .setTitle('❌ Error')
-                            .setDescription(config.messages.error || 'An error occurred while clearing messages.');
-                        await interaction.editReply({ embeds: [fail] }).catch(() => {});
+                        if (!replyDeleted) {
+                            const fail = new EmbedBuilder()
+                                .setColor('#ff0000')
+                                .setTitle('❌ Error')
+                                .setDescription(config.messages.error || 'An error occurred while clearing messages.');
+                            await interaction.editReply({ embeds: [fail] }).catch(() => {});
+                        }
                     }
                 }
             });
 
             collector.on('end', async (_c, reason) => {
-                if (!proceed && reason === 'time') {
+                if (!proceed && reason === 'time' && !replyDeleted) {
                     const timed = new EmbedBuilder().setColor('#ffcc00').setTitle('Timed out').setDescription('No action taken.');
                     const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
                     await interaction.editReply({ embeds: [timed], components: [disabled] }).catch(() => {});

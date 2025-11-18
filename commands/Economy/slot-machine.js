@@ -210,7 +210,7 @@ module.exports = {
                     { name: labels.bet, value: `\`${formatCurrency(bet)}\``, inline: true },
                     { name: labels.multiplier, value: `\`${multiplierDisplay}\``, inline: true },
                     { name: win ? labels.win : labels.loss, value: `\`${formatCurrency(win ? payout : -bet, { sign: 'always' })}\``, inline: true },
-                    { name: labels.newBalance, value: `💰 **${formatCurrency(u.balance)}**`, inline: false }
+                    { name: labels.newBalance, value: `💰 **${formatCurrency(spin.balance)}**`, inline: false }
                 )
                 .setFooter({ text: footerText })
                 .setTimestamp();
