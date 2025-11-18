@@ -74,6 +74,9 @@ module.exports = {
             const buttonUrl = interaction.options.getString('button_url') || null;
             const isPrivate = interaction.options.getBoolean('private') || false;
 
+            // Defer early to avoid timeout during member fetching
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+
             // Build DM payload factory
             const buildPayload = (user) => {
                 const text = (messageContent || '').replace(/{user}/g, `${user}`);
@@ -115,10 +118,8 @@ module.exports = {
             }
 
             if (targets.length === 0) {
-                return interaction.reply({ content: 'No eligible recipients were found.', flags: MessageFlags.Ephemeral });
+                return interaction.editReply({ content: 'No eligible recipients were found.' });
             }
-
-            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
 
             // Preview + confirm for multi-recipient
             if (!targetUser) {
@@ -215,11 +216,11 @@ module.exports = {
                 .setTitle('Error')
                 .setDescription(messages.error_generic)
                 .setColor(0xff0000);
-            const payload = { embeds: [embed], flags: MessageFlags.Ephemeral };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(payload);
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [embed] }).catch(() => {});
             } else {
-                await interaction.reply(payload);
+                await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral }).catch(() => {});
             }
         }
     },
