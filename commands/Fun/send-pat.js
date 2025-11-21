@@ -110,34 +110,42 @@ module.exports = {
 
         const collector = message.createMessageComponentCollector({ time: 30000 });
         collector.on('collect', async i => {
-            if (i.customId === 'pat_close') {
-                if (i.user.id !== sender.id && i.user.id !== receiver.id) {
-                    await i.reply({ content: 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
+            try {
+                if (i.customId === 'pat_close') {
+                    if (i.user.id !== sender.id && i.user.id !== receiver.id) {
+                        await i.reply({ content: 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
+                        return;
+                    }
+                    collector.stop('closed');
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ components: [disabled] });
                     return;
                 }
-                collector.stop('closed');
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                await i.update({ components: [disabled] });
-                return;
-            }
 
-            if (i.customId === 'pat_return') {
-                if (i.user.id !== receiver.id) {
-                    await i.reply({ content: 'Only the mentioned member can pat back.', flags: MessageFlags.Ephemeral });
+                if (i.customId === 'pat_return') {
+                    if (i.user.id !== receiver.id) {
+                        await i.reply({ content: 'Only the mentioned member can pat back.', flags: MessageFlags.Ephemeral });
+                        return;
+                    }
+                    collector.stop('returned');
+                    const newGif = pickRandom(gifs);
+                    const returned = new EmbedBuilder()
+                        .setColor(patConfig.color || '#add8e6')
+                        .setTitle('🫶 Pat Returned!')
+                        .setDescription(`**${receiver.username}** gently pats **${sender.username}** back!`)
+                        .setImage(newGif)
+                        .setFooter({ text: `Started by ${sender.username}`, iconURL: sender.displayAvatarURL() })
+                        .setTimestamp();
+                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await i.update({ embeds: [returned], components: [disabled] });
                     return;
                 }
-                collector.stop('returned');
-                const newGif = pickRandom(gifs);
-                const returned = new EmbedBuilder()
-                    .setColor(patConfig.color || '#add8e6')
-                    .setTitle('🫶 Pat Returned!')
-                    .setDescription(`**${receiver.username}** gently pats **${sender.username}** back!`)
-                    .setImage(newGif)
-                    .setFooter({ text: `Started by ${sender.username}`, iconURL: sender.displayAvatarURL() })
-                    .setTimestamp();
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                await i.update({ embeds: [returned], components: [disabled] });
-                return;
+            } catch (error) {
+                if (error.code === 10062 || error.message?.includes('Unknown interaction')) {
+                    console.warn('Skipped error reply for expired interaction (pat).');
+                } else {
+                    console.error('Interaction handler error:', error);
+                }
             }
         });
 
