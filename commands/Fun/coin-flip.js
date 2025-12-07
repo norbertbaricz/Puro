@@ -41,6 +41,26 @@ module.exports = {
                 .setTimestamp();
             await interaction.editReply({ embeds: [suspense], components: [] });
 
+            const handleInteractionError = async (error, componentInteraction) => {
+                if (error?.code === 10062 || error?.rawError?.code === 10062) {
+                    return;
+                }
+                console.error('Coinflip interaction error:', error);
+                if (componentInteraction && !componentInteraction.replied && !componentInteraction.deferred) {
+                    await componentInteraction.reply({ content: config.messages.error, flags: MessageFlags.Ephemeral }).catch(() => {});
+                }
+            };
+
+            const scheduleRender = (nextRerolls) => {
+                setTimeout(async () => {
+                    try {
+                        await render(nextRerolls);
+                    } catch (error) {
+                        await handleInteractionError(error);
+                    }
+                }, 800);
+            };
+
             const render = async (rerolls = 0) => {
                 const results = doFlips(flips);
                 const heads = results.filter(r => r === 'Heads').length;
@@ -91,27 +111,33 @@ module.exports = {
                 const collector = msg.createMessageComponentCollector({ time: 30000 });
 
                 collector.on('collect', async i => {
-                    if (i.user.id !== interaction.user.id) {
-                        await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
-                        return;
-                    }
-                    if (i.customId === 'coin_close') {
-                        collector.stop('closed');
-                        const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                        await i.update({ components: [disabled] });
-                        return;
-                    }
-                    if (i.customId === 'coin_reroll') {
-                        collector.stop('reroll');
-                        await i.deferUpdate();
-                        const rolling = new EmbedBuilder()
-                            .setColor(config.color)
-                            .setTitle('🪙 Flipping again...')
-                            .setDescription('The coin spins once more!')
-                            .setTimestamp();
-                        const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                        await interaction.editReply({ embeds: [rolling], components: [disabled] });
-                        setTimeout(() => render(rerolls + 1), 800);
+                    try {
+                        if (i.user.id !== interaction.user.id) {
+                            await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
+                            return;
+                        }
+                        if (i.customId === 'coin_close') {
+                            collector.stop('closed');
+                            const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                            await i.deferUpdate();
+                            await interaction.editReply({ components: [disabled] });
+                            return;
+                        }
+                        if (i.customId === 'coin_reroll') {
+                            collector.stop('reroll');
+                            await i.deferUpdate();
+                            const rolling = new EmbedBuilder()
+                                .setColor(config.color)
+                                .setTitle('🪙 Flipping again...')
+                                .setDescription('The coin spins once more!')
+                                .setTimestamp();
+                            const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                            await interaction.editReply({ embeds: [rolling], components: [disabled] });
+                            scheduleRender(rerolls + 1);
+                            return;
+                        }
+                    } catch (error) {
+                        await handleInteractionError(error, i);
                     }
                 });
 
@@ -123,7 +149,7 @@ module.exports = {
                 });
             };
 
-            setTimeout(() => render(0), 800);
+            scheduleRender(0);
         } catch (error) {
             console.error('Coinflip error:', error);
             await interaction.reply({ content: config.messages.error, flags: MessageFlags.Ephemeral });
