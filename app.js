@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { Client, GatewayIntentBits, REST, Routes, Collection } = require('discord.js');
 const { AsyncEventEmitter } = require('@vladfrangu/async_event_emitter');
 const { EventEmitter } = require('events');
