@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
+const { isUnknownInteractionError, safeDeferUpdate, safeReply, safeUpdate } = require('../../lib/interactionSafety');
 
 // Folosim o Mapă globală pentru a stoca jocurile active, cheia fiind ID-ul canalului
 const activeGames = new Map();
@@ -132,7 +133,7 @@ module.exports = {
 
             inviteCollector.on('collect', async i => {
                 if (i.user.id !== opponent.id) {
-                    await i.reply({ content: 'Only the challenged opponent can respond.', flags: MessageFlags.Ephemeral });
+                    await safeReply(i, { content: 'Only the challenged opponent can respond.', flags: MessageFlags.Ephemeral });
                     return;
                 }
                 if (i.customId === 'ttt_decline') {
@@ -141,14 +142,14 @@ module.exports = {
                         .setDescription(`${opponent} declined the challenge.`)
                         .setColor('#ff0000');
                     const disabled = new ActionRowBuilder().addComponents(inviteRow.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                    await i.update({ embeds: [declined], components: [disabled] });
+                    await safeUpdate(i, { embeds: [declined], components: [disabled] });
                     return;
                 }
                 if (i.customId === 'ttt_accept') {
                     accepted = true;
                     inviteCollector.stop('accepted');
                     const disabled = new ActionRowBuilder().addComponents(inviteRow.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                    await i.update({ components: [disabled] });
+                    await safeUpdate(i, { components: [disabled] });
                 }
             });
 
@@ -186,6 +187,16 @@ module.exports = {
 
                     activeGames.set(channelId, game);
 
+                    const safeBoardEdit = async (payload) => {
+                        try {
+                            await interaction.editReply(payload);
+                        } catch (error) {
+                            if (!isUnknownInteractionError(error)) {
+                                throw error;
+                            }
+                        }
+                    };
+
                     const getEmbedDescription = (winner = null) => {
                         if (winner) {
                             return winner === 'tie'
@@ -202,7 +213,7 @@ module.exports = {
                         .setFooter({ text: 'Game ends after 5 minutes of inactivity.' })
                         .setTimestamp();
 
-                    await interaction.editReply({ embeds: [embed], components: createGameBoard(game) });
+                    await safeBoardEdit({ embeds: [embed], components: createGameBoard(game) });
                     const message = await interaction.fetchReply();
 
                     const allowedIds = new Set([players.X.id, players.O.id]);
@@ -211,81 +222,90 @@ module.exports = {
                         time: 300000
                     });
 
-                    const safeDeferUpdate = async (componentInteraction) => {
-                        try {
-                            await componentInteraction.deferUpdate();
-                        } catch (err) {
-                            if (err?.code !== 10062) {
-                                throw err;
-                            }
-                        }
-                    };
-
+                    collector.on('collect', async i => {
                     collector.on('collect', async i => {
                         if (!i.customId.startsWith('ttt_')) return;
-                        const currentPlayerUser = players[game.currentPlayer];
-                        if (!currentPlayerUser || !currentPlayerUser.id) {
-                            await i.reply({ content: 'Game state no longer valid. Ending game.', flags: MessageFlags.Ephemeral }).catch(() => {});
+                        try {
+                            const currentPlayerUser = players[game.currentPlayer];
+                            if (!currentPlayerUser || !currentPlayerUser.id) {
+                                await safeReply(i, { content: 'Game state no longer valid. Ending game.', flags: MessageFlags.Ephemeral });
+                                collector.stop('error');
+                                activeGames.delete(channelId);
+                                return;
+                            }
+                            if (i.user.id !== currentPlayerUser.id) {
+                                await safeReply(i, { content: cfg.messages.not_your_turn.replace('{player}', players[game.currentPlayer]), flags: MessageFlags.Ephemeral });
+                                return;
+                            }
+                            const position = parseInt(i.customId.split('_')[1], 10);
+                            if (!game.makeMove(position)) {
+                                await safeReply(i, { content: 'That spot is already taken!', flags: MessageFlags.Ephemeral });
+                                return;
+                            }
+
+                            await safeDeferUpdate(i);
+
+                            const winner = game.checkWinner();
+
+                            if (winner) {
+                                collector.stop('game_over');
+                                embed.setDescription(getEmbedDescription(winner))
+                                     .setColor(winner === 'tie' ? '#FFD700' : '#00FF00');
+
+                                const endRow = new ActionRowBuilder().addComponents(
+                                    new ButtonBuilder().setCustomId('ttt_rematch').setLabel('Rematch').setStyle(ButtonStyle.Secondary).setEmoji('🔁').setDisabled(rematches >= 1),
+                                    new ButtonBuilder().setCustomId('ttt_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+                                );
+                                await safeBoardEdit({ embeds: [embed], components: [ ...createGameBoard(game, true), endRow ] });
+
+                                const endMsg = await interaction.fetchReply();
+                                const endCollector = endMsg.createMessageComponentCollector({ time: 60000 });
+                                endCollector.on('collect', async btn => {
+                                    try {
+                                        if (![players.X.id, players.O.id].includes(btn.user.id)) {
+                                            await safeReply(btn, { content: 'Only players can use these buttons.', flags: MessageFlags.Ephemeral });
+                                            return;
+                                        }
+                                        if (btn.customId === 'ttt_close') {
+                                            endCollector.stop('closed');
+                                            const disabled = new ActionRowBuilder().addComponents(endRow.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                                            await safeUpdate(btn, { components: [ ...createGameBoard(game, true), disabled ] });
+                                            activeGames.delete(channelId);
+                                            return;
+                                        }
+                                        if (btn.customId === 'ttt_rematch' && rematches < 1) {
+                                            rematches += 1;
+                                            players = { X: players.O, O: players.X };
+                                            await safeDeferUpdate(btn);
+                                            await startMatch();
+                                            endCollector.stop('rematch');
+                                        }
+                                    } catch (error) {
+                                        if (!isUnknownInteractionError(error)) {
+                                            console.error('TicTacToe end-state interaction error:', error);
+                                        }
+                                    }
+                                });
+
+                                endCollector.on('end', async (_c2, reason2) => {
+                                    if (reason2 === 'time') {
+                                        const disabled = new ActionRowBuilder().addComponents(endRow.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                                        await safeBoardEdit({ components: [ ...createGameBoard(game, true), disabled ] });
+                                        activeGames.delete(channelId);
+                                    }
+                                });
+                            } else {
+                                embed.setDescription(getEmbedDescription());
+                                await safeBoardEdit({ embeds: [embed], components: createGameBoard(game) });
+                            }
+                        } catch (error) {
+                            if (isUnknownInteractionError(error)) {
+                                return;
+                            }
+                            console.error('TicTacToe move handling error:', error);
                             collector.stop('error');
                             activeGames.delete(channelId);
-                            return;
-                        }
-                        if (i.user.id !== currentPlayerUser.id) {
-                            await i.reply({ content: cfg.messages.not_your_turn.replace('{player}', players[game.currentPlayer]), flags: MessageFlags.Ephemeral });
-                            return;
-                        }
-                        const position = parseInt(i.customId.split('_')[1]);
-                        if (!game.makeMove(position)) {
-                            await i.reply({ content: 'That spot is already taken!', flags: MessageFlags.Ephemeral });
-                            return;
-                        }
-                        const winner = game.checkWinner();
-
-                        if (winner) {
-                            collector.stop('game_over');
-                            embed.setDescription(getEmbedDescription(winner))
-                                 .setColor(winner === 'tie' ? '#FFD700' : '#00FF00');
-
-                            const endRow = new ActionRowBuilder().addComponents(
-                                new ButtonBuilder().setCustomId('ttt_rematch').setLabel('Rematch').setStyle(ButtonStyle.Secondary).setEmoji('🔁').setDisabled(rematches >= 1),
-                                new ButtonBuilder().setCustomId('ttt_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
-                            );
-                            await i.update({ embeds: [embed], components: [ ...createGameBoard(game, true), endRow ] });
-
-                            const endMsg = await interaction.fetchReply();
-                            const endCollector = endMsg.createMessageComponentCollector({ time: 60000 });
-                            endCollector.on('collect', async btn => {
-                                if (![players.X.id, players.O.id].includes(btn.user.id)) {
-                                    await btn.reply({ content: 'Only players can use these buttons.', flags: MessageFlags.Ephemeral });
-                                    return;
-                                }
-                                if (btn.customId === 'ttt_close') {
-                                    endCollector.stop('closed');
-                                    const disabled = new ActionRowBuilder().addComponents(endRow.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                                    await btn.update({ components: [ ...createGameBoard(game, true), disabled ] });
-                                    activeGames.delete(channelId);
-                                    return;
-                                }
-                                if (btn.customId === 'ttt_rematch' && rematches < 1) {
-                                    rematches += 1;
-                                    // swap players for fairness
-                                    players = { X: players.O, O: players.X };
-                                    await safeDeferUpdate(btn);
-                                    await startMatch();
-                                    endCollector.stop('rematch');
-                                }
-                            });
-
-                            endCollector.on('end', async (_c2, reason2) => {
-                                if (reason2 === 'time') {
-                                    const disabled = new ActionRowBuilder().addComponents(endRow.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                                    await interaction.editReply({ components: [ ...createGameBoard(game, true), disabled ] }).catch(() => {});
-                                    activeGames.delete(channelId);
-                                }
-                            });
-                        } else {
-                            embed.setDescription(getEmbedDescription());
-                            await i.update({ embeds: [embed], components: createGameBoard(game) });
+                            await safeBoardEdit({ content: 'Game ended due to an unexpected error.', components: [] });
                         }
                     });
 
@@ -294,11 +314,11 @@ module.exports = {
                             embed.setDescription(cfg.messages.timeout)
                                  .setColor('#FF0000')
                                  .setFooter({ text: 'Game timed out.' });
-                            interaction.editReply({ embeds: [embed], components: createGameBoard(game, true) }).catch(() => {});
+                            safeBoardEdit({ embeds: [embed], components: createGameBoard(game, true) }).catch(() => {});
                             activeGames.delete(channelId);
                         }
                         if (reason === 'error') {
-                            interaction.editReply({ content: 'Game ended due to an unexpected error.', components: [] }).catch(() => {});
+                            safeBoardEdit({ content: 'Game ended due to an unexpected error.', components: [] }).catch(() => {});
                         }
                     });
                 };

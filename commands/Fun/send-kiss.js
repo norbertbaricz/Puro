@@ -84,6 +84,16 @@ module.exports = {
 
         await interaction.reply({ embeds: [embed], components: [row], ...(isPrivate ? { flags: MessageFlags.Ephemeral } : {}) });
 
+        let dmNoticeSent = false;
+        const notifyDmFailure = async () => {
+            if (dmNoticeSent) {
+                return;
+            }
+            dmNoticeSent = true;
+            const dmFailedMessage = kissMessages.dm_failed || 'I could not send them a DM. They might have DMs disabled.';
+            await interaction.followUp({ content: dmFailedMessage, flags: MessageFlags.Ephemeral }).catch(() => {});
+        };
+
         if (!receiver.bot) {
             const guildName = interaction.guild?.name || 'Direct Message';
             const channel = interaction.channel;
@@ -117,8 +127,10 @@ module.exports = {
                 await receiver.send({ content: dmContent, embeds: [dmEmbed] });
             } catch (error) {
                 if (!kissConfig.silent_dm_failures) {
-                    console.warn('Unable to DM kiss target:', error?.message || error);
+                    const logger = interaction.client.logger?.warn ? interaction.client.logger : console;
+                    (logger.warn || console.warn).call(logger, 'Unable to DM kiss target:', error?.message || error);
                 }
+                await notifyDmFailure();
             }
         }
 
