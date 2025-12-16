@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { safeDeferUpdate, isUnknownInteractionError } = require('../../lib/interactionSafety');
 
 module.exports = {
     category: 'Fun',
@@ -42,7 +43,7 @@ module.exports = {
             await interaction.editReply({ embeds: [suspense], components: [] });
 
             const handleInteractionError = async (error, componentInteraction) => {
-                if (error?.code === 10062 || error?.rawError?.code === 10062) {
+                if (isUnknownInteractionError(error)) {
                     return;
                 }
                 console.error('Coinflip interaction error:', error);
@@ -119,13 +120,13 @@ module.exports = {
                         if (i.customId === 'coin_close') {
                             collector.stop('closed');
                             const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                            await i.deferUpdate();
+                            await safeDeferUpdate(i);
                             await interaction.editReply({ components: [disabled] });
                             return;
                         }
                         if (i.customId === 'coin_reroll') {
                             collector.stop('reroll');
-                            await i.deferUpdate();
+                            await safeDeferUpdate(i);
                             const rolling = new EmbedBuilder()
                                 .setColor(config.color)
                                 .setTitle('🪙 Flipping again...')
