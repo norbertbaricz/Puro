@@ -223,7 +223,6 @@ module.exports = {
                     });
 
                     collector.on('collect', async i => {
-                    collector.on('collect', async i => {
                         if (!i.customId.startsWith('ttt_')) return;
                         try {
                             const currentPlayerUser = players[game.currentPlayer];
