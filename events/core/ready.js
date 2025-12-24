@@ -4,10 +4,11 @@ module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
-        const config = client.config.events.ready;
+        const readyConfig = client.config?.events?.ready || {};
+        const messages = readyConfig.messages || {};
         const quiet = client.config?.logging?.quiet_startup ?? true;
-        if (!quiet) {
-            console.log(config.messages.login_success.replace('{tag}', client.user.tag));
+        if (!quiet && messages.login_success) {
+            console.log(messages.login_success.replace('{tag}', client.user.tag));
         }
 
         const computeStats = () => {
@@ -22,14 +23,14 @@ module.exports = {
         // Log stats once on ready
         const { members: totalMembers, channels: totalChannels } = computeStats();
         if (!quiet) {
-            console.log(config.messages.stats.servers.replace('{count}', client.guilds.cache.size));
-            console.log(config.messages.stats.members.replace('{count}', totalMembers));
-            console.log(config.messages.stats.channels.replace('{count}', totalChannels));
+            if (messages.stats?.servers) console.log(messages.stats.servers.replace('{count}', client.guilds.cache.size));
+            if (messages.stats?.members) console.log(messages.stats.members.replace('{count}', totalMembers));
+            if (messages.stats?.channels) console.log(messages.stats.channels.replace('{count}', totalChannels));
         }
 
-        const statusConfig = client.config.status;
-        if (!statusConfig?.texts?.length) { // Am schimbat asta, verifica doar lungimea array-ului
-            console.log(config.messages.no_status);
+        const statusConfig = client.config?.status || {};
+        if (!statusConfig.texts || statusConfig.texts.length === 0) {
+            if (messages.no_status) console.log(messages.no_status);
             await client.user.setPresence({
                 activities: [{ name: 'Error' }],
                 status: statusConfig?.status || 'dnd'
@@ -97,7 +98,8 @@ module.exports = {
             try {
                 await client.user.setPresence({ activities: [activity], status: statusConfig.status || 'online' });
             } catch (error) {
-                console.error(config.messages.status_error, error);
+                if (messages.status_error) console.error(messages.status_error, error);
+                else console.error('Status set error', error);
             }
         };
 
@@ -135,5 +137,15 @@ module.exports = {
                 console.log(lines.join('\n'));
             } catch {}
         }, 800);
+
+        // Start health monitoring when bot is fully ready
+        try {
+            if (client.healthMonitor && typeof client.healthMonitor.startMonitoring === 'function') {
+                const intervalMs = Number(client.config?.health?.interval_ms) || 300000;
+                client.healthMonitor.startMonitoring(intervalMs);
+            }
+        } catch (err) {
+            console.error('Health monitor start failed:', err);
+        }
     },
 };
