@@ -517,13 +517,14 @@ async function main() {
             console.error('❌ Database validation failed:', dbErr.message);
             process.exit(1);
         }
-        console.log("🔧 Loading events...");
-        await loadEvents();
-        console.log("✅ Events loaded.");
 
-        console.log("🔧 Registering commands...");
-        await loadAndRegisterCommands();
-        console.log("✅ Commands registered.");
+        // Load events and commands in parallel to shave startup time
+        console.log("🔧 Loading events & registering commands...");
+        await Promise.all([
+            loadEvents(),
+            loadAndRegisterCommands(),
+        ]);
+        console.log("✅ Events and commands ready.");
 
         console.log("📡 Connecting to Discord...");
         await client.login(process.env.TOKEN);
