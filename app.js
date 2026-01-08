@@ -1,5 +1,5 @@
 require('dotenv').config({ quiet: true });
-const { Client, GatewayIntentBits, REST, Routes, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, Collection, Partials } = require('discord.js');
 const { AsyncEventEmitter } = require('@vladfrangu/async_event_emitter');
 const { EventEmitter } = require('events');
 const fs = require('fs');
@@ -49,7 +49,16 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildModeration
+    ],
+    partials: [
+        Partials.Message,
+        Partials.Channel,
+        Partials.GuildMember,
+        Partials.User,
+        Partials.Reaction
     ]
 });
 
