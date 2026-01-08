@@ -381,6 +381,15 @@ async function loadAndRegisterCommands() {
 
         for (const [gid, scopedCommands] of guildScopedPayloads.entries()) {
             try {
+                // Check if bot is still in the guild before registering commands
+                const guild = client.guilds.cache.get(gid);
+                if (!guild) {
+                    const warnMessage = `⚠️ Skipping command registration for guild ${gid} (bot not in guild).`;
+                    verboseLog(warnMessage);
+                    client.commandLoadDetails.push({ type: 'summary', message: warnMessage, status: 'warning' });
+                    continue;
+                }
+
                 const data = await rest.put(
                     Routes.applicationGuildCommands(process.env.clientId, gid),
                     { body: scopedCommands }
