@@ -422,8 +422,13 @@ async function loadEvents() {
     const findGuildInArgs = (args) => {
         for (const arg of args) {
             if (!arg) continue;
+            // Direct Guild object (discord.js Guild class)
+            if (arg.constructor?.name === 'Guild') return arg;
+            // Direct guild property
             if (arg.guild) return arg.guild;
+            // Member has guild
             if (arg.member?.guild) return arg.member.guild;
+            // User events might have guildId
             if (arg.guildId && client.guilds?.cache?.get) {
                 const fetched = client.guilds.cache.get(arg.guildId);
                 if (fetched) return fetched;
