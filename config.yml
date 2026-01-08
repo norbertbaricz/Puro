@@ -28,10 +28,6 @@ guilds:
     id: '1217588804328620163'
     slug: 'the-wolf-den'
     tier: 'premium'
-  - name: "Mastera's Animation Empire"
-    id: '1299378352301539398'  # Set this to the guild ID if available
-    slug: 'masteras-animation-empire'
-    tier: 'premium'
   - name: "Spencer's Cave"
     id: '1010638602004340787'  # Set this to the guild ID if available
     slug: 'spencers-cave'
@@ -1234,18 +1230,6 @@ events:
             - "🧣 Hi {user}! Wrapped you in warmth, coziness, and care."
             - "🛡️ Hey {user}! Courage and comfort stand at attention for you!"
             - "💐 Hello {user}! We gathered the loveliest petals just to greet you!"
-        messages:
-          error: "❌ Error sending greeting!"
-
-    masteras-animation-empire:
-      messageCreate:
-        allowed_guilds:
-          - '1299378352301539398'
-          - "Mastera's Animation Empire"
-          - 'masteras-animation-empire'
-        greetings:
-          patterns: []
-          responses: []
         messages:
           error: "❌ Error sending greeting!"
 
