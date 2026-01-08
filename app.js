@@ -381,15 +381,6 @@ async function loadAndRegisterCommands() {
 
         for (const [gid, scopedCommands] of guildScopedPayloads.entries()) {
             try {
-                // Check if bot is still in the guild before registering commands
-                const guild = client.guilds.cache.get(gid);
-                if (!guild) {
-                    const warnMessage = `⚠️ Skipping command registration for guild ${gid} (bot not in guild).`;
-                    verboseLog(warnMessage);
-                    client.commandLoadDetails.push({ type: 'summary', message: warnMessage, status: 'warning' });
-                    continue;
-                }
-
                 const data = await rest.put(
                     Routes.applicationGuildCommands(process.env.clientId, gid),
                     { body: scopedCommands }
@@ -398,8 +389,15 @@ async function loadAndRegisterCommands() {
                 verboseLog(`\n✅ ${refreshMessage}`);
                 client.commandLoadDetails.push({ type: 'summary', message: refreshMessage, status: 'success' });
             } catch (error) {
-                console.error(`❌ Discord API command registration error for guild ${gid}:`, error);
-                client.commandLoadDetails.push({ type: 'summary', message: `Guild ${gid} API Error: ${error.message}`, status: 'error' });
+                // Handle "Missing Access" errors (bot no longer in guild)
+                if (error.code === 50001 || error.rawError?.code === 50001) {
+                    const warnMessage = `⚠️ Skipping guild ${gid} (bot removed or missing access).`;
+                    verboseLog(warnMessage);
+                    client.commandLoadDetails.push({ type: 'summary', message: warnMessage, status: 'warning' });
+                } else {
+                    console.error(`❌ Discord API command registration error for guild ${gid}:`, error);
+                    client.commandLoadDetails.push({ type: 'summary', message: `Guild ${gid} API Error: ${error.message}`, status: 'error' });
+                }
             }
         }
     } catch (error) {
