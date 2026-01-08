@@ -45,6 +45,30 @@ guilds:
     slug: 'thunderhoof-tavern'
     tier: 'premium'
 
+# Premium guild logging configuration
+# Enables comprehensive audit logging for premium guilds
+premium_logging:
+  the-wolf-den:
+    enabled: true
+    guild_id: '1217588804328620163'
+    log_channel_id: '1229630651536375899'
+    events:
+      members: true        # Join, leave, update (nickname, roles)
+      invites: true        # Create, delete
+      messages: true       # Delete, edit, bulk delete
+      reactions: true      # Add, remove
+      voice: true          # Join, leave, move
+      moderation: true     # Ban, unban, kick
+      roles: true          # Create, delete, update
+      channels: true       # Create, delete, update
+      threads: true        # Create, delete, update
+      emojis: true         # Create, delete, update
+      stickers: true       # Create, delete, update
+      events: true         # Scheduled events
+      webhooks: true       # Webhook updates
+      automod: true        # AutoMod actions
+      audit: true          # All audit log entries
+
 # General limits
 limits:
   message: 2000  # Max message length
