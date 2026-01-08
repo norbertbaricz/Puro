@@ -1,26 +1,23 @@
 {
   "name": "puro",
-  "version": "1.2.11",
+  "version": "1.2.13",
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon --quiet --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
-    "dev:debug": "nodemon --inspect --verbose --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
+    "start": "nodemon --quiet --watch . --ignore database.json --ignore '*.log' app.js",
+    "dev": "nodemon --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
+    "dev:debug": "nodemon --inspect --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
     "lint": "eslint . --ext .js --fix",
-    "lint:check": "eslint . --ext .js",
-    "test": "jest --coverage --passWithNoTests",
-    "test:watch": "jest --watch",
-    "validate": "npm run lint:check && npm test"
+    "lint:check": "eslint . --ext .js"
   },
   "dependencies": {
     "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.17.0",
     "@vladfrangu/async_event_emitter": "2.4.8-1.0",
     "axios": "^1.13.2",
     "discord.js": "^14.25.1",
     "dotenv": "^17.2.3",
     "js-yaml": "^4.1.1",
-    "@discordjs/voice": "^0.17.0",
     "prism-media": "^1.3.5"
   },
   "devDependencies": {
