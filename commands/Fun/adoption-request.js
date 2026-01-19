@@ -51,6 +51,8 @@ module.exports = {
       return interaction.reply({ content: messages.bot_adopt, flags: MessageFlags.Ephemeral });
     }
 
+    await interaction.deferReply();
+
     const description = (messages.prompt || '')
       .replace('{adopter}', adopter)
       .replace('{target}', target);
@@ -68,8 +70,7 @@ module.exports = {
       new ButtonBuilder().setCustomId('adopt_decline').setLabel(messages.decline_label || 'Decline').setStyle(ButtonStyle.Danger).setEmoji('❌'),
     );
 
-    await interaction.reply({ embeds: [embed], components: [row] });
-    const msg = await interaction.fetchReply();
+    const msg = await interaction.editReply({ embeds: [embed], components: [row] });
     const collector = msg.createMessageComponentCollector({ time: 30_000 });
 
     collector.on('collect', async i => {

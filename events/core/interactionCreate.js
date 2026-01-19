@@ -11,6 +11,12 @@ module.exports = {
         try {
             // Handle Slash Commands
             if (interaction.isChatInputCommand()) {
+                const ageMs = Date.now() - interaction.createdTimestamp;
+                if (ageMs > 2500) {
+                    console.warn(`Dropping stale interaction ${interaction.commandName} (age ${ageMs}ms)`);
+                    return;
+                }
+
                 const commandName = interaction.commandName;
                 let command = null;
 
