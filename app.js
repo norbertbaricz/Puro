@@ -1,8 +1,7 @@
 require('dotenv').config({ quiet: true });
-const { Client, GatewayIntentBits, REST, Routes, Collection, Partials, ShardingManager } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, Collection, Partials } = require('discord.js');
 const { AsyncEventEmitter } = require('@vladfrangu/async_event_emitter');
 const { EventEmitter } = require('events');
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
@@ -32,71 +31,6 @@ let config = {
         errorLoggingIn: "Error logging in:"
     }
 };
-
-// Sharding configuration (auto by default if >1 CPU core)
-const shardingMode = (process.env.ENABLE_SHARDING || 'auto').toLowerCase();
-const isShardWorker = process.env.PURO_SHARD_WORKER === '1';
-
-function launchShardManager() {
-    const token = process.env.TOKEN;
-    if (!token) {
-        console.error('TOKEN is missing from environment.');
-        process.exit(1);
-    }
-
-    const cpuCount = Math.max(os.cpus().length, 1);
-    const shardTotalEnv = process.env.SHARD_TOTAL || process.env.SHARD_COUNT || process.env.SHARDS_TOTAL;
-    const totalShards = shardTotalEnv && shardTotalEnv !== 'auto'
-        ? Math.max(Number(shardTotalEnv) || 1, 1)
-        : 'auto';
-
-    const enableSharding = shardingMode === 'true' || (shardingMode === 'auto' && cpuCount > 1);
-    if (!enableSharding || isShardWorker) {
-        return false;
-    }
-
-    const manager = new ShardingManager(__filename, {
-        token,
-        respawn: true,
-        totalShards,
-        env: {
-            ...process.env,
-            PURO_SHARD_WORKER: '1',
-            COMMAND_REGISTRATION_SHARD: process.env.COMMAND_REGISTRATION_SHARD ?? '0',
-        },
-    });
-
-    manager.on('shardCreate', (shard) => {
-        console.log(`🚀 Launched shard ${shard.id}`);
-        shard.on('ready', () => console.log(`✅ Shard ${shard.id} ready`));
-        shard.on('disconnect', (event) => console.warn(`⚠️ Shard ${shard.id} disconnected (${event?.code || 'code?'})`));
-        shard.on('reconnecting', () => console.warn(`♻️ Reconnecting shard ${shard.id}`));
-        shard.on('death', (info) => console.error(`💀 Shard ${shard.id} died (code ${info?.exitCode ?? 'unknown'})`));
-        shard.on('error', (err) => console.error(`❌ Shard ${shard.id} error`, err));
-        shard.on('close', (event) => console.warn(`🔌 Shard ${shard.id} close (${event?.code || 'code?'})`));
-        shard.on('spawn', () => console.log(`🧠 Shard ${shard.id} spawn acknowledged`));
-    });
-
-    (async () => {
-        try {
-            const spawned = await manager.spawn({
-                amount: totalShards,
-                delay: 5000,
-                timeout: 30000,
-            });
-            const shardCount = spawned?.size ?? spawned?.length ?? totalShards;
-            console.log(`🧠 Detected ${cpuCount} CPU cores; running ${shardCount} shard worker(s).`);
-        } catch (error) {
-            console.error('❌ Sharding bootstrap failed:', error);
-            process.exit(1);
-        }
-    })();
-
-    return true;
-}
-
-const startedShardManager = launchShardManager();
-if (!startedShardManager) {
 
 try {
     // Load configuration from config.yml
@@ -169,7 +103,6 @@ if (AsyncEventEmitter?.prototype && typeof AsyncEventEmitter.prototype._addListe
 
 applyMaxListeners(client);
 applyMaxListeners(client.ws);
-client.on('shardCreate', (shard) => applyMaxListeners(shard));
 
 client.listenerLimits = { requested: listenerMax, effective: effectiveListenerMax };
 
@@ -584,14 +517,6 @@ async function loadEvents() {
     client.eventLoadDetails.push({ type: 'summary', message: loadMsg, status: 'success' });
 }
 
-function shouldRegisterCommandsForShard() {
-    const target = Number(process.env.COMMAND_REGISTRATION_SHARD ?? 0);
-    if (client.shard && Array.isArray(client.shard.ids)) {
-        return client.shard.ids.includes(target);
-    }
-    return true;
-}
-
 // Main function to start the bot
 async function main() {
     try {
@@ -613,16 +538,11 @@ async function main() {
             process.exit(1);
         }
 
-        const registerCommands = shouldRegisterCommandsForShard();
-        if (!registerCommands) {
-            console.log(`ℹ️ Skipping command registration on shard ${client.shard?.ids?.join(',') ?? 'unknown'} (handled by shard ${process.env.COMMAND_REGISTRATION_SHARD ?? 0}).`);
-        }
-
         // Load events and commands in parallel to shave startup time
         console.log("🔧 Loading events & registering commands...");
         await Promise.all([
             loadEvents(),
-            registerCommands ? loadAndRegisterCommands() : Promise.resolve(),
+            loadAndRegisterCommands(),
         ]);
         console.log("✅ Events and commands ready.");
 
@@ -698,5 +618,3 @@ process.on('warning', (warning) => {
 
 // Start the bot
 main();
-
-}
