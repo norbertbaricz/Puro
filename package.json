@@ -4,7 +4,7 @@
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon --quiet --watch . --ignore database.json --ignore '*.log' app.js",
+    "start": "node app.js",
     "dev": "nodemon --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
     "dev:debug": "nodemon --inspect --watch . --ignore database.json --ignore '*.log' --trace-warnings app.js",
     "lint": "eslint . --ext .js --fix",
