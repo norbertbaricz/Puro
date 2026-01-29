@@ -664,6 +664,21 @@ commands:
       note_label: 'Note'
       dm: '{sender} gave you a pat from {guild} in {channelMention}!'
 
+  bellyrub:
+    color: '#ff9ff3'
+    gifs:
+      - 'https://media1.tenor.com/m/pb7eyPp7eb0AAAAC/mofumofu-nyaro-kemono.gif'
+      - 'https://media1.tenor.com/m/4BItFn9rfZoAAAAC/belly-rub-sergal.gif'
+      - 'https://media1.tenor.com/m/fdD8vLpUaYYAAAAC/furry-meme.gif'
+      - 'https://media1.tenor.com/m/n0EA_aBbOOIAAAAC/hyaku-cute.gif'
+      - 'https://media1.tenor.com/m/0I_X54t4myEAAAAC/belly-rub.gif'
+      - 'https://media1.tenor.com/m/3-jhhOv5P8EAAAAd/arcanine-pokemon.gif'
+    messages:
+      self_bellyrub: "You can't belly rub yourself! 🐾"
+      bot_bellyrub: "Bots aren't squishy enough for belly rubs. 🤖"
+      success_title: "🫶 Belly Rub!"
+      success_desc: "{sender} gives {receiver} a cozy belly rub!"
+
   pay:
     color_error: '#e74c3c'
     color_hacked: '#8e44ad'
