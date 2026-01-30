@@ -136,6 +136,13 @@ module.exports = {
             return interaction.reply({ content: botMessage, flags: MessageFlags.Ephemeral });
         }
 
+        try {
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+        } catch (err) {
+            if ((err?.code ?? err?.rawError?.code) === 10062) return;
+            throw err;
+        }
+
         const selectedGif = pickRandom(gifPool) || null;
         const descriptionTemplate = messages.success_desc || '{sender} gives {receiver} a gentle belly rub!';
         const description = formatTemplate(descriptionTemplate, {
@@ -160,7 +167,7 @@ module.exports = {
             new ButtonBuilder().setCustomId('bellyrub_close').setLabel(messages.close_button || 'Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
         );
 
-        await interaction.reply({ embeds: [embed], files, components: [row], flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+        await interaction.editReply({ embeds: [embed], files, components: [row] });
 
         let dmNoticeSent = false;
         const notifyDmFailure = async () => {

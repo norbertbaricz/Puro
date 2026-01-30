@@ -34,10 +34,15 @@ module.exports = {
                 return interaction.reply({ content: config.messages.nsfw_required, flags: MessageFlags.Ephemeral });
             }
 
-            if (isPrivate) {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-            } else {
-                await interaction.deferReply();
+            try {
+                if (isPrivate) {
+                    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                } else {
+                    await interaction.deferReply();
+                }
+            } catch (err) {
+                if ((err?.code ?? err?.rawError?.code) === 10062) return;
+                throw err;
             }
 
             const rawQuery = interaction.options.getString('search') || '';
