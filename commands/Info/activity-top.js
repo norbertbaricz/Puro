@@ -78,7 +78,7 @@ module.exports = {
             }
 
             const shouldBeEphemeral = Boolean(isPrivate);
-            await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
+            await interaction.deferReply({ flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined });
 
             // --- Obținerea opțiunilor ---
             const type = interaction.options.getString('type');

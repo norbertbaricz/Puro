@@ -13,8 +13,7 @@ module.exports = {
             if (interaction.isChatInputCommand()) {
                 const ageMs = Date.now() - interaction.createdTimestamp;
                 if (ageMs > 2500) {
-                    console.warn(`Dropping stale interaction ${interaction.commandName} (age ${ageMs}ms)`);
-                    return;
+                    console.warn(`Stale interaction ${interaction.commandName} (age ${ageMs}ms) - proceeding anyway`);
                 }
 
                 const commandName = interaction.commandName;

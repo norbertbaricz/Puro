@@ -21,7 +21,7 @@ module.exports = {
             : Boolean(interaction.guildId);
         const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
 
-        await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
+        await interaction.deferReply({ flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined });
 
         let activeCollector = null;
         const stopCollector = (reason = 'replaced') => {

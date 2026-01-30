@@ -95,7 +95,7 @@ module.exports = {
         );
 
         const shouldBeEphemeral = Boolean(isPrivate && (typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId)));
-        await interaction.deferReply(shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {});
+        await interaction.deferReply({ flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined });
         let gameEmbed = buildEmbed();
         const reply = await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
 
