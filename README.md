@@ -137,7 +137,7 @@ Each command is a slash command. The text below summarizes what happens when mem
 
 Premium dens are supercharged versions of the bot tailored to a specific Discord server. They unlock guild-scoped automations and slash commands that live in `commands/guilds/<slug>` and `events/guilds/<slug>`. Current highlights include:
 
-- **Wolf Den greeting suite**: Dozens of affirmative responses triggered by everyday greetings, making members feel adored the moment they walk in.
+- **Lunar Pack greeting suite**: Dozens of affirmative responses triggered by everyday greetings, making members feel adored the moment they walk in.
 - **Temporary voice dens**: Private voice channels created on demand with automatic cleanup and ownership transfers.
 - **Guild-branded slash commands**: `/howl-greeting`, `/cave-briefing`, and `/directors-cut` give each premium community a unique spotlight moment.
 

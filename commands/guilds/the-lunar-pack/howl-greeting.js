@@ -4,7 +4,7 @@ module.exports = {
     category: 'Premium',
     data: new SlashCommandBuilder()
         .setName('howl-greeting')
-        .setDescription('Premium greeting for The Wolf Den pack members.')
+        .setDescription('Premium greeting for The Lunar Pack members.')
         .addUserOption(option =>
             option.setName('member')
                 .setDescription('Optional member to highlight in the howl')
@@ -24,7 +24,7 @@ module.exports = {
             .setColor('#ff1493')
             .setTitle('🐺 Premium Howl')
             .setDescription(`The pack gathers and howls for ${target}!`)
-            .setFooter({ text: 'The Wolf Den • Premium vibes only' })
+            .setFooter({ text: 'The Lunar Pack • Premium vibes only' })
             .setTimestamp();
 
         await interaction.reply({

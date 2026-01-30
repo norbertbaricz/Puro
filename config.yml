@@ -14,7 +14,7 @@ status:
     - "🎉 Greeting {membersGreeted} friends"
     - "🚀 Online for {uptime}"
     - "🤝 Backing {servers} communities"
-    - "✨ Powered by THE WOLF DEN"
+    - "✨ Powered by THE LUNAR PACK"
     - "💡 Crafted by Skypixel™"
   type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
   url: "https://thewolfdenvr.carrd.co/"  # URL pentru Streaming (opțional)
@@ -24,9 +24,9 @@ status:
 # Known guilds where the bot is active
 # Set tier: premium to enable features under events/guilds/<slug>
 guilds:
-  - name: 'The Wolf Den'
+  - name: 'The Lunar Pack'
     id: '1217588804328620163'
-    slug: 'the-wolf-den'
+    slug: 'the-lunar-pack'
     tier: 'premium'
   - name: "Spencer's Cave"
     id: '1010638602004340787'  # Set this to the guild ID if available
@@ -44,7 +44,7 @@ guilds:
 # Premium guild logging configuration
 # Enables comprehensive audit logging for premium guilds
 premium_logging:
-  the-wolf-den:
+  the-lunar-pack:
     enabled: true
     guild_id: '1217588804328620163'
     log_channel_id: '1229630651536375899'
@@ -1110,12 +1110,12 @@ events:
         - "🚫 Unknown command: /{command}."
 
   guilds:
-    the-wolf-den:
+    the-lunar-pack:
       messageCreate:
         allowed_guilds:
           - '1217588804328620163'
-          - 'The Wolf Den'
-          - 'the-wolf-den'
+          - 'The Lunar Pack'
+          - 'the-lunar-pack'
         greetings:
           patterns:
             - '^h+e+l+o+$'
