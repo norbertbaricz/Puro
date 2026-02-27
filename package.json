@@ -1,6 +1,6 @@
 {
   "name": "puro",
-  "version": "1.2.16",
+  "version": "1.2.17",
   "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
   "main": "app.js",
   "scripts": {
@@ -11,6 +11,8 @@
     "lint:check": "eslint . --ext .js"
   },
   "dependencies": {
+    "@discordjs/voice": "^0.19.0",
+    "@snazzah/davey": "^0.1.9",
     "@vladfrangu/async_event_emitter": "^2.4.7",
     "axios": "^1.13.5",
     "discord.js": "^14.25.1",
