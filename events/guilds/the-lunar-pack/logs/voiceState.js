@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatUser, formatChannel } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatUser, formatChannel } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.VoiceStateUpdate,

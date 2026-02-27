@@ -17,7 +17,7 @@ status:
     - "✨ Powered by THE LUNAR PACK"
     - "💡 Crafted by Skypixel™"
   type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
-  url: "https://thewolfdenvr.carrd.co/"  # URL pentru Streaming (opțional)
+  url: "https://thelunarpackvr.carrd.co/"  # URL pentru Streaming (opțional)
   status: "idle"  # Poate fi "online", "dnd", "idle" sau "invisible"
   interval_ms: 10000  # Interval for rotating presence/status
 

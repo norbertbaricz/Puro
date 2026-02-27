@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatUser, formatChannel, truncate, timeTag } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatUser, formatChannel, truncate, timeTag } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.MessageDelete,

@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatChannel } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatChannel } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.WebhooksUpdate,

@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatChannel, truncate } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatChannel, truncate } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.ThreadUpdate,

@@ -19,4 +19,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Removed
 - Removed unused dependencies from `package.json`.
 - Removed sharding support and related configurations (after rollout adjustments).
-- Removed `howl-greeting.js` and `greetingMessageCreate.js` from The Wolf Den.
+- Removed `howl-greeting.js` and `greetingMessageCreate.js` from The Lunar Pack.

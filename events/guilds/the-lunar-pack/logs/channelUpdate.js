@@ -1,5 +1,5 @@
 const { Events, ChannelType } = require('discord.js');
-const { sendLog, formatChannel, truncate } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatChannel, truncate } = require('../../../../lib/lunarPackLogger');
 
 function typeName(type) {
   return ChannelType[type] || 'Channel';

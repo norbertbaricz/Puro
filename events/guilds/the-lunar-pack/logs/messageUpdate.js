@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatUser, formatChannel, truncate } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatUser, formatChannel, truncate } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.MessageUpdate,

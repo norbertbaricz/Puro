@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatUser, timeTag } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatUser, timeTag } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.InviteCreate,

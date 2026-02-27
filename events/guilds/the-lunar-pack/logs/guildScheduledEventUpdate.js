@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, timeTag, truncate } = require('../../../../lib/wolfDenLogger');
+const { sendLog, timeTag, truncate } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.GuildScheduledEventUpdate,

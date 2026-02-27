@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog } = require('../../../../lib/wolfDenLogger');
+const { sendLog } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.GuildStickerDelete,

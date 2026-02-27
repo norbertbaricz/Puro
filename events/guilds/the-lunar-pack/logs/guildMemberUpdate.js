@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatUser, formatRole } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatUser, formatRole } = require('../../../../lib/lunarPackLogger');
 
 function diffRoles(before, after) {
   const beforeIds = new Set(before?.map((r) => r.id));

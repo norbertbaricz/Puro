@@ -1,5 +1,5 @@
 const { Events, AuditLogEvent } = require('discord.js');
-const { sendLog, formatUser, formatChannel, formatRole, truncate, timeTag } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatUser, formatChannel, formatRole, truncate, timeTag } = require('../../../../lib/lunarPackLogger');
 
 const actionNames = {
   [AuditLogEvent.ChannelCreate]: 'Channel Created',

@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatRole, truncate } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatRole, truncate } = require('../../../../lib/lunarPackLogger');
 
 function diff(oldRole, newRole) {
   const changes = [];

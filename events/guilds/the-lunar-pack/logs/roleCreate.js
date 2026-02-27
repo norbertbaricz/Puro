@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { sendLog, formatRole } = require('../../../../lib/wolfDenLogger');
+const { sendLog, formatRole } = require('../../../../lib/lunarPackLogger');
 
 module.exports = {
   name: Events.GuildRoleCreate,
