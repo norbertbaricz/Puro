@@ -37,7 +37,7 @@ function normalizePlatformList(platforms) {
 function getAllowedPlatforms(config) {
   const rawPlatforms = Array.isArray(config.platforms) && config.platforms.length
     ? config.platforms
-    : ['steam', 'ps4', 'ps5'];
+    : ['steam', 'ps4', 'ps5', 'epic-games-store'];
 
   return new Set(rawPlatforms.map(normalizePlatformToken).filter(Boolean));
 }
@@ -54,22 +54,45 @@ function getPlatformLabels(giveaway) {
     labels.push('PlayStation Store');
   }
 
+  if (tokens.has('epic-games-store') || tokens.has('epic-games') || tokens.has('epicgames')) {
+    labels.push('Epic Games Store');
+  }
+
   return labels.length ? labels : ['Unknown'];
 }
 
 function getPlatformAccent(giveaway) {
   const tokens = new Set(normalizePlatformList(giveaway.platforms));
+  const hasSteam = tokens.has('steam');
+  const hasPlayStation = tokens.has('ps4') || tokens.has('ps5') || tokens.has('playstation');
+  const hasEpic = tokens.has('epic-games-store') || tokens.has('epic-games') || tokens.has('epicgames');
 
-  if (tokens.has('steam') && (tokens.has('ps4') || tokens.has('ps5') || tokens.has('playstation'))) {
+  if (hasSteam && hasPlayStation && hasEpic) {
+    return { color: 0x20bf6b, label: 'Steam + PlayStation + Epic' };
+  }
+
+  if (hasSteam && hasPlayStation) {
     return { color: 0x20bf6b, label: 'Steam + PlayStation' };
   }
 
-  if (tokens.has('steam')) {
+  if (hasSteam && hasEpic) {
+    return { color: 0x2d3436, label: 'Steam + Epic' };
+  }
+
+  if (hasPlayStation && hasEpic) {
+    return { color: 0x4b4b9f, label: 'PlayStation + Epic' };
+  }
+
+  if (hasSteam) {
     return { color: 0x1b2838, label: 'Steam Giveaway' };
   }
 
-  if (tokens.has('ps4') || tokens.has('ps5') || tokens.has('playstation')) {
+  if (hasPlayStation) {
     return { color: 0x003087, label: 'PlayStation Store Giveaway' };
+  }
+
+  if (hasEpic) {
+    return { color: 0x313131, label: 'Epic Games Store Giveaway' };
   }
 
   return { color: 0x00b894, label: 'Game Giveaway' };

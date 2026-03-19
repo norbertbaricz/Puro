@@ -1120,6 +1120,7 @@ events:
           - 'steam'
           - 'ps4'
           - 'ps5'
+          - 'epic-games-store'
       messageCreate:
         allowed_guilds:
           - '1217588804328620163'
