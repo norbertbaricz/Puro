@@ -476,8 +476,30 @@ async function loadEvents() {
             const event = require(filePath);
 
             if (event.name && typeof event.name === 'string' && typeof event.execute === 'function') {
-                const handler = (...args) => {
+                const handler = async (...args) => {
                     if (guildMeta) {
+                        if (event.name === 'clientReady' || event.name === 'ready') {
+                            const candidateIds = guildMeta.aliasIds instanceof Set
+                                ? Array.from(guildMeta.aliasIds).filter(Boolean)
+                                : [guildMeta.id].filter(Boolean);
+
+                            let targetGuild = candidateIds
+                                .map((guildId) => client.guilds?.cache?.get(guildId))
+                                .find(Boolean);
+
+                            if (!targetGuild && guildMeta.id) {
+                                try {
+                                    targetGuild = await client.guilds.fetch(guildMeta.id);
+                                } catch (error) {
+                                    console.error(`❌ Failed to resolve premium guild ${guildMeta.slug} for event ${file}:`, error);
+                                    return;
+                                }
+                            }
+
+                            if (!targetGuild) return;
+                            return event.execute(targetGuild, ...args);
+                        }
+
                         const targetGuild = findGuildInArgs(args);
                         if (!targetGuild) return;
 

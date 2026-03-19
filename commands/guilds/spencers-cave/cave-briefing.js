@@ -1,10 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Premium',
+    category: 'Special',
     data: new SlashCommandBuilder()
         .setName('cave-briefing')
-        .setDescription("Premium mission briefing for Spencer's Cave.")
+        .setDescription('Generate a mission briefing.')
         .addStringOption(option =>
             option.setName('mission')
                 .setDescription('Name or code of the mission')
@@ -24,8 +24,8 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor('#1abc9c')
             .setTitle('🕳️ Cave Briefing')
-            .setDescription(`Premium dossier unlocked for **${mission}**. Gear up, Spencer's Cave!`)
-            .setFooter({ text: "Spencer's Cave • Premium" })
+            .setDescription(`Mission dossier unlocked for **${mission}**. Gear up.`)
+            .setFooter({ text: 'Stay sharp' })
             .setTimestamp();
 
         await interaction.reply({

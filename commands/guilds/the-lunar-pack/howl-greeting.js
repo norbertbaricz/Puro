@@ -1,10 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
-    category: 'Premium',
+    category: 'Special',
     data: new SlashCommandBuilder()
         .setName('howl-greeting')
-        .setDescription('Premium greeting for The Lunar Pack members.')
+        .setDescription('Send a dramatic howl greeting.')
         .addUserOption(option =>
             option.setName('member')
                 .setDescription('Optional member to highlight in the howl')
@@ -22,9 +22,9 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor('#ff1493')
-            .setTitle('🐺 Premium Howl')
+            .setTitle('🐺 Howl Greeting')
             .setDescription(`The pack gathers and howls for ${target}!`)
-            .setFooter({ text: 'The Lunar Pack • Premium vibes only' })
+            .setFooter({ text: 'Pack energy activated' })
             .setTimestamp();
 
         await interaction.reply({

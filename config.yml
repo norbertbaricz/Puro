@@ -14,7 +14,6 @@ status:
     - "🎉 Greeting {membersGreeted} friends"
     - "🚀 Online for {uptime}"
     - "🤝 Backing {servers} communities"
-    - "✨ Powered by THE LUNAR PACK"
     - "💡 Crafted by Skypixel™"
   type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
   url: "https://thelunarpackvr.carrd.co/"  # URL pentru Streaming (opțional)
@@ -1111,6 +1110,16 @@ events:
 
   guilds:
     the-lunar-pack:
+      gamerpower_giveaways:
+        enabled: true
+        channel_id: '1484286265175048273'
+        role_id: '1484283917149274272'
+        role_name: 'Ping'
+        interval_minutes: 60
+        platforms:
+          - 'steam'
+          - 'ps4'
+          - 'ps5'
       messageCreate:
         allowed_guilds:
           - '1217588804328620163'
