@@ -23,6 +23,8 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.clear;
         try {
+            const isPrivate = interaction.options.getBoolean('private') || false;
+
             // Guild-only guard and robust permission checks
             if (!interaction.inGuild()) {
                 const embed = new EmbedBuilder()
@@ -32,12 +34,14 @@ module.exports = {
                 return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
+            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
+
             if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages)) {
                 const embed = new EmbedBuilder()
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ No Permission')
                     .setDescription(config.messages.no_permission);
-                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+                return interaction.editReply({ embeds: [embed] });
             }
 
             if (!interaction.guild.members.me?.permissions?.has(PermissionFlagsBits.ManageMessages)) {
@@ -45,7 +49,7 @@ module.exports = {
                     .setColor(config.color || '#ff0000')
                     .setTitle('⛔ Missing Bot Permission')
                     .setDescription(config.messages.no_bot_permission);
-                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+                return interaction.editReply({ embeds: [embed] });
             }
 
             const amount = interaction.options.getInteger('amount');
@@ -54,13 +58,8 @@ module.exports = {
             const botsOnly = interaction.options.getBoolean('bots_only') || false;
             const attachmentsOnly = interaction.options.getBoolean('attachments_only') || false;
             const includePinned = interaction.options.getBoolean('include_pinned') || false;
-            const isPrivate = interaction.options.getBoolean('private') || false;
-
-            await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
-
             // Fetch up to 100 recent messages for filtering (bulkDelete limit anyway)
             const messages = await interaction.channel.messages.fetch({ limit: 100 });
-            const fourteenDays = 14 * 24 * 60 * 60 * 1000;
             const containsLower = contains ? contains.toLowerCase() : null;
 
             const matched = messages.filter(msg => {

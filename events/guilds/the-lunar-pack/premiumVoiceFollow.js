@@ -1,5 +1,5 @@
 const { Events, Routes } = require('discord.js');
-const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
+const { joinVoiceChannel, getVoiceConnection, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
 
 const TARGET_GUILD_ID = '1217588804328620163';
 const TARGET_MEMBER_ID = '486412940199591967';
@@ -39,14 +39,25 @@ module.exports = {
         connection.destroy();
       }
 
-      joinVoiceChannel({
+      const nextConnection = joinVoiceChannel({
         channelId: targetChannel.id,
         guildId: guild.id,
         adapterCreator: guild.voiceAdapterCreator,
         selfDeaf: false,
       });
 
-      await wait(1200);
+      try {
+        await entersState(nextConnection, VoiceConnectionStatus.Ready, 7_500);
+      } catch {
+        await wait(1500);
+      }
+
+      const botVoiceState = guild.members.me?.voice;
+      if (!botVoiceState?.channelId || botVoiceState.channelId !== targetChannel.id) {
+        console.warn('[PremiumVoiceFollow] Soundboard skipped: bot is not connected to the target voice channel yet.');
+        return;
+      }
+
       try {
         await newState.client.rest.post(Routes.sendSoundboardSound(targetChannel.id), {
           body: {
@@ -57,6 +68,8 @@ module.exports = {
       } catch (soundboardError) {
         if (soundboardError?.code === 50167) {
           console.warn('[PremiumVoiceFollow] Soundboard skipped: bot is muted/deafened/suppressed in channel.');
+        } else if (soundboardError?.code === 50168) {
+          console.warn('[PremiumVoiceFollow] Soundboard skipped: Discord still reports the bot as outside the voice channel.');
         } else {
           console.error('[PremiumVoiceFollow] Failed to play soundboard:', soundboardError);
         }
