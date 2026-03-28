@@ -1113,8 +1113,6 @@ events:
       gamerpower_giveaways:
         enabled: true
         channel_id: '1484286265175048273'
-        role_id: '1484283917149274272'
-        role_name: 'Ping'
         interval_minutes: 60
         platforms:
           - 'steam'

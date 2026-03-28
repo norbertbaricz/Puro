@@ -5,8 +5,6 @@ const { withGuildEventState } = require('../../../lib/guildEventState');
 
 const TARGET_GUILD_ID = '1217588804328620163';
 const DEFAULT_CHANNEL_ID = '1484286265175048273';
-const DEFAULT_ROLE_ID = '1484283917149274272';
-const DEFAULT_ROLE_NAME = 'Ping';
 const DEFAULT_INTERVAL_MINUTES = 60;
 const MIN_INTERVAL_MS = 15 * 60 * 1000;
 const API_URL = 'https://www.gamerpower.com/api/filter';
@@ -179,59 +177,10 @@ function buildComponents(giveaway) {
   return row.components.length ? [row] : [];
 }
 
-function extractRoleId(value) {
-  const input = String(value || '').trim();
-  if (!input) return null;
-
-  const mentionMatch = input.match(/^<@&(\d+)>$/);
-  if (mentionMatch) {
-    return mentionMatch[1];
-  }
-
-  return /^\d{16,22}$/.test(input) ? input : null;
-}
-
-async function resolveMentionRole(guild, config) {
-  const configuredRoleId = extractRoleId(config.role_id) || extractRoleId(DEFAULT_ROLE_ID);
-  const configuredRoleName = String(config.role_name || DEFAULT_ROLE_NAME).trim().toLowerCase();
-
-  if (configuredRoleId) {
-    const cachedRole = guild.roles.cache.get(configuredRoleId);
-    if (cachedRole) {
-      return cachedRole;
-    }
-
-    try {
-      const fetchedRole = await guild.roles.fetch(configuredRoleId);
-      if (fetchedRole) {
-        return fetchedRole;
-      }
-    } catch {
-      console.warn(`[GamerPowerGiveaways] Role ${configuredRoleId} could not be resolved, trying by name instead.`);
-    }
-  }
-
-  if (!configuredRoleName) {
-    return null;
-  }
-
-  try {
-    await guild.roles.fetch();
-  } catch (error) {
-    console.warn('[GamerPowerGiveaways] Failed to refresh guild roles before name lookup:', error.message);
-  }
-
-  return guild.roles.cache.find((role) => role.name.trim().toLowerCase() === configuredRoleName) || null;
-}
-
-function buildAnnouncementPayload(giveaway, role) {
-  const roleId = role?.id || null;
-
+function buildAnnouncementPayload(giveaway) {
   return {
-    content: roleId ? `<@&${roleId}>` : undefined,
     embeds: [buildEmbed(giveaway)],
     components: buildComponents(giveaway),
-    allowedMentions: roleId ? { roles: [roleId] } : undefined,
   };
 }
 
@@ -332,7 +281,6 @@ async function pollGiveaways(guild, client) {
   const config = getEventConfig(client);
   const channelId = String(config.channel_id || DEFAULT_CHANNEL_ID);
   const channel = await resolveAnnouncementChannel(guild, channelId);
-  const role = await resolveMentionRole(guild, config);
 
   if (!channel) {
     return;
@@ -346,7 +294,7 @@ async function pollGiveaways(guild, client) {
 
   for (const giveaway of pendingGiveaways) {
     try {
-      await channel.send(buildAnnouncementPayload(giveaway, role));
+      await channel.send(buildAnnouncementPayload(giveaway));
       newlyAnnouncedIds.add(String(giveaway.id));
     } catch (error) {
       console.error(`[GamerPowerGiveaways] Failed to announce giveaway ${giveaway.id}:`, error.message);
