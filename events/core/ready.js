@@ -125,7 +125,7 @@ module.exports = {
                         const ms = Number(now - client.bootStartedAt) / 1e6;
                         bootSeconds = (ms / 1000).toFixed(2);
                     }
-                } catch {}
+                } catch { /* hrtime may not be available */ }
 
                 const lines = [
                     '\n══════════════════════════════════════════════════════════════════════════',
@@ -135,7 +135,7 @@ module.exports = {
                     '══════════════════════════════════════════════════════════════════════════\n',
                 ];
                 console.log(lines.join('\n'));
-            } catch {}
+            } catch { /* non-critical display error */ }
         }, 800);
 
         // Start health monitoring when bot is fully ready

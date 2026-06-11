@@ -33,7 +33,7 @@ module.exports = {
         if (!member) {
             try {
                 member = await interaction.guild.members.fetch(targetUser.id);
-            } catch (e) {
+            } catch (_e) {
                 member = null;
             }
         }
@@ -52,7 +52,7 @@ module.exports = {
         try {
             const fetched = await interaction.client.users.fetch(targetUser.id, { force: true });
             bannerUrl = fetched.bannerURL({ size: 1024 });
-        } catch {}
+        } catch { /* banner unavailable */ }
 
         // Calculate account age in milliseconds
         const accountCreatedTimestamp = (member ? member.user : targetUser).createdTimestamp;
@@ -75,7 +75,7 @@ module.exports = {
             if (usedInvite && usedInvite.inviter) {
                 inviterTag = usedInvite.inviter.tag;
             }
-        } catch (e) {
+        } catch (_e) {
             inviterTag = 'NaN';
         }
 

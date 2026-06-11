@@ -233,7 +233,7 @@ module.exports = {
           const disabled = new ActionRowBuilder().addComponents(controls.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
           await announceChannel.send({ embeds: [embed] });
           await i.update({ components: [disabled] });
-        } catch (e) {
+        } catch (_e) {
           await i.reply({ content: 'Failed to post to the selected channel. Check my permissions.', flags: MessageFlags.Ephemeral });
         }
         return;

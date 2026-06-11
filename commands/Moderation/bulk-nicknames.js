@@ -100,7 +100,7 @@ module.exports = {
             new ButtonBuilder().setCustomId('allnick_cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger).setEmoji('🛑')
         );
 
-        const previewMsg = await interaction.editReply({ embeds: [preview], components: [row] });
+        await interaction.editReply({ embeds: [preview], components: [row] });
         const collector = (await interaction.fetchReply()).createMessageComponentCollector({ time: 30000 });
 
         let proceed = false;
@@ -157,7 +157,7 @@ module.exports = {
                 try {
                     await member.setNickname(newNick || null, reason);
                     changed++;
-                } catch (err) {
+                } catch (_err) {
                     failed++;
                 }
                 processed++; idx++;

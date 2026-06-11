@@ -28,7 +28,7 @@ module.exports = {
             if (activeCollector) {
                 try {
                     activeCollector.stop(reason);
-                } catch (err) {
+                } catch (_err) {
                     // Collector might already be stopped, ignore.
                 }
                 activeCollector = null;

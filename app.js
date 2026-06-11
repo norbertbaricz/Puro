@@ -7,7 +7,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 // Import new utilities
-const { logger, createLogger } = require('./lib/logger');
+const { createLogger } = require('./lib/logger');
 const { createPuroValidator } = require('./lib/env-validator');
 const { HealthMonitor } = require('./lib/health');
 
@@ -52,11 +52,6 @@ const client = new Client({
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildInvites,
         GatewayIntentBits.GuildModeration,
-        GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildScheduledEvents,
-        GatewayIntentBits.GuildWebhooks,
-        GatewayIntentBits.AutoModerationConfiguration,
-        GatewayIntentBits.AutoModerationExecution
     ],
     partials: [
         Partials.Message,
@@ -228,9 +223,9 @@ function ensureDatabase(dbPath, options = {}) {
     try {
         JSON.parse(raw);
         return { ok: true, path: absPath };
-    } catch (e) {
+    } catch (_e) {
         if (!autoRepair) {
-            throw new Error('Database JSON is invalid and autoRepair=false');
+            throw new Error('Database JSON is invalid and autoRepair=false', { cause: _e });
         }
         const stamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backup = path.join(__dirname, `database.bak.${stamp}.json`);
@@ -272,8 +267,6 @@ async function loadAndRegisterCommands() {
         const file = path.relative(localCommandsPath, filePath);
         const segments = file.split(path.sep);
         const isGuildScoped = segments[0] === 'guilds' && segments.length >= 2;
-        let guildMeta = null;
-        let guildIds = [];
 
         try {
             delete require.cache[require.resolve(filePath)];
@@ -288,7 +281,7 @@ async function loadAndRegisterCommands() {
                         continue;
                     }
 
-                    guildMeta = bySlug.get(slugCandidate) || null;
+                    const guildMeta = bySlug.get(slugCandidate) || null;
                     if (!guildMeta) {
                         verboseLog(`⚠️ Skipping command ${file} (no guild config for slug ${slugCandidate}).`);
                         client.commandLoadDetails.push({ file, status: 'skipped', message: `No guild config for slug ${slugCandidate}.` });
@@ -303,7 +296,7 @@ async function loadAndRegisterCommands() {
 
                     const aliasIds = guildMeta.aliasIds instanceof Set ? Array.from(guildMeta.aliasIds) : [];
                     if (guildMeta.id && !aliasIds.includes(guildMeta.id)) aliasIds.unshift(guildMeta.id);
-                    guildIds = aliasIds.filter(Boolean);
+                    const guildIds = aliasIds.filter(Boolean);
 
                     if (!guildIds.length) {
                         verboseLog(`⚠️ Skipping command ${file} (premium guild ${guildMeta.slug} missing ID).`);
@@ -565,20 +558,6 @@ async function main() {
             process.exit(1);
         }
 
-        const logsPathCfg = client.config?.audit_logs?.path || 'logs.json';
-        const logsAutoRepair = client.config?.audit_logs?.auto_repair !== false;
-        console.log('📚 Validating audit log database...');
-        try {
-            const logsStatus = ensureDatabase(logsPathCfg, { autoRepair: logsAutoRepair });
-            if (logsStatus.created) console.log(`✅ Audit logs ready (created new at ${path.basename(logsStatus.path)}).`);
-            else if (logsStatus.resetEmpty) console.log('✅ Audit logs ready (reset empty file to valid JSON).');
-            else if (logsStatus.repaired) console.log(`⚠️  Audit logs were corrupted. Backed up to ${path.basename(logsStatus.backup)} and reset.`);
-            else console.log('✅ Audit logs ready.');
-        } catch (logsErr) {
-            console.error('❌ Audit log database validation failed:', logsErr.message);
-            process.exit(1);
-        }
-
         // Load events and commands in parallel to shave startup time
         console.log("🔧 Loading events & registering commands...");
         await Promise.all([
@@ -636,7 +615,7 @@ process.on('uncaughtException', (err) => {
     process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason, _promise) => {
     appLogger.error('Unhandled promise rejection', {
         reason: reason instanceof Error ? reason.message : String(reason),
         stack: reason instanceof Error ? reason.stack : undefined

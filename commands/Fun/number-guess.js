@@ -70,7 +70,7 @@ module.exports = {
             return '█'.repeat(filled) + '░'.repeat(blocks - filled) + ` ${left}/${total}`;
         };
 
-        const buildEmbed = (feedback = null, rerolls = 0) => new EmbedBuilder()
+        const buildEmbed = (feedback = null, _rerolls = 0) => new EmbedBuilder()
             .setColor(guessConfig.color)
             .setTitle(guessConfig.messages.title)
             .setDescription(
@@ -97,7 +97,7 @@ module.exports = {
         const shouldBeEphemeral = Boolean(isPrivate && (typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId)));
         await interaction.deferReply({ flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined });
         let gameEmbed = buildEmbed();
-        const reply = await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
+        await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
 
         const filter = m => m.author.id === player.id;
         const collector = channel.createMessageCollector({ filter, time: 120000 });

@@ -80,7 +80,7 @@ module.exports = {
             // Build DM payload factory
             const buildPayload = (user) => {
                 const text = (messageContent || '').replace(/{user}/g, `${user}`);
-                let payload = {};
+                let payload;
                 const components = [];
                 if (buttonLabel && buttonUrl) {
                     const row = new ActionRowBuilder().addComponents(
@@ -193,7 +193,7 @@ module.exports = {
                 try {
                     await user.send(buildPayload(user));
                     sentCount++;
-                } catch (dmError) {
+                } catch (_dmError) {
                     failedCount++;
                 }
                 processed++;

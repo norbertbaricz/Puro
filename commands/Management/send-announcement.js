@@ -159,7 +159,7 @@ module.exports = {
                     // Send and optionally crosspost
                     const sent = await channel.send(payload);
                     if (publish && channel.type === ChannelType.GuildAnnouncement) {
-                        try { await sent.crosspost(); } catch {}
+                        try { await sent.crosspost(); } catch { /* crosspost may fail if already published */ }
                     }
 
                     const done = new EmbedBuilder()

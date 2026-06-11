@@ -278,7 +278,7 @@ module.exports = {
         const settle = async (status) => {
             state.status = status;
             let winnings = 0;
-            let profit = 0;
+            let profit;
 
             if (status === 'player-blackjack') {
                 winnings = Math.floor(state.bet * 2.5);

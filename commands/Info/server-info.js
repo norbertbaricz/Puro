@@ -35,13 +35,11 @@ module.exports = {
         const bannerUrl = guild.bannerURL({ size: 1024 });
 
         // Count open invites
-        let inviteCount = 'NaN';
+        let inviteCount = 'N/A';
         try {
             const invites = await guild.invites.fetch();
             inviteCount = invites.size.toString();
-        } catch (e) {
-            inviteCount = 'NaN';
-        }
+        } catch { /* permission denied or invites unavailable */ }
 
         // Member stats
         const members = await guild.members.fetch();
@@ -56,7 +54,6 @@ module.exports = {
         const emojisCount = guild.emojis?.cache?.size ?? 0;
         const stickersCount = guild.stickers?.cache?.size ?? 0;
         const verification = guild.verificationLevel || 'Unknown';
-        const features = (guild.features || []).length ? guild.features.join(', ') : 'None';
         const afkChannel = guild.afkChannel ? `${guild.afkChannel} (${guild.afkTimeout / 60}m)` : 'None';
 
         // Boost progress bar (max Tier 3 at 14 boosts)

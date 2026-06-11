@@ -136,7 +136,7 @@ module.exports = {
         try {
           await thread.members.add(u.id);
           invited++;
-        } catch {}
+        } catch { /* member may have left or DMs disabled */ }
       }
 
       const embed = new EmbedBuilder()
