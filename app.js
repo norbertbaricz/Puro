@@ -51,7 +51,12 @@ const client = new Client({
         GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildInvites,
-        GatewayIntentBits.GuildModeration
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildScheduledEvents,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.AutoModerationConfiguration,
+        GatewayIntentBits.AutoModerationExecution
     ],
     partials: [
         Partials.Message,
@@ -557,6 +562,20 @@ async function main() {
             else console.log('✅ Database ready.');
         } catch (dbErr) {
             console.error('❌ Database validation failed:', dbErr.message);
+            process.exit(1);
+        }
+
+        const logsPathCfg = client.config?.audit_logs?.path || 'logs.json';
+        const logsAutoRepair = client.config?.audit_logs?.auto_repair !== false;
+        console.log('📚 Validating audit log database...');
+        try {
+            const logsStatus = ensureDatabase(logsPathCfg, { autoRepair: logsAutoRepair });
+            if (logsStatus.created) console.log(`✅ Audit logs ready (created new at ${path.basename(logsStatus.path)}).`);
+            else if (logsStatus.resetEmpty) console.log('✅ Audit logs ready (reset empty file to valid JSON).');
+            else if (logsStatus.repaired) console.log(`⚠️  Audit logs were corrupted. Backed up to ${path.basename(logsStatus.backup)} and reset.`);
+            else console.log('✅ Audit logs ready.');
+        } catch (logsErr) {
+            console.error('❌ Audit log database validation failed:', logsErr.message);
             process.exit(1);
         }
 

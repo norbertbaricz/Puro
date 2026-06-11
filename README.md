@@ -128,6 +128,7 @@ Each command is a slash command. The text below summarizes what happens when mem
 | `/serverinfo`, `/userinfo`, `/activity-top`, `/top` | Surfaces community statistics, top performers, or individual snapshots with friendly formatting. |
 | `/info` | Displays creator credits, uptime, latency, system statistics, and optional invite buttons. |
 | `/help` | Opens a category-aware selector that lists every command accessible to the user. |
+| `/log` | Lets members browse and search per-server audit history (commands, moderation actions, channel/member changes, voice, invites, reactions, AutoMod, and more). |
 | `/bot-info` (alias via `/info`) | Includes real-time hardware data when available (CPU temperature, memory usage, node versions). |
 | `/fetch-e621` | Searches e621 with safety checks, NSFW gating, and per-command rate limits to keep moderation comfortable. |
 
@@ -159,6 +160,7 @@ Subscriptions can be adjusted or cancelled within Discord’s subscription manag
 - All text, emojis, colors, cooldowns, and probabilities come from `config.yml`. Update strings without touching code and the bot reacts immediately on restart.
 - Randomized arrays ensure variety: add more greetings, jokes, or economy outcomes by editing the relevant list.
 - Economy data lives in `database.json`; Puro repairs corrupt files automatically and maintains balances across restarts.
+- Server audit logs live in `logs.json`, fully separate from economy data, and are searchable via `/log`.
 - Jobs, payouts, and scenario texts are defined in `lib/jobs.js`, making it easy to extend or rebalance your economy.
 
 ---
@@ -177,6 +179,7 @@ Puro/
 ├── app.js                  # Main application entry
 ├── config.yml              # Bot configuration
 ├── database.json           # Economy data (auto-created)
+├── logs.json               # Server audit logs (auto-created)
 ├── package.json            # Dependencies and scripts
 ├── .env                    # Environment variables (create from .env.example)
 │
@@ -195,6 +198,8 @@ Puro/
 │
 └── lib/                   # Utility libraries
     ├── economy.js         # Economy database operations
+    ├── serverLogs.js      # Server audit log database operations
+    ├── auditLogListeners.js # Global event-to-log listeners
     ├── jobs.js            # Job system definitions
     ├── utils.js           # General utilities
     ├── logger.js          # Structured logging (NEW)

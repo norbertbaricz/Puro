@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon --watch . --ignore database.json --ignore data/guild-event-state.json --ignore '*.log' --trace-warnings app.js",
-    "dev:debug": "nodemon --inspect --watch . --ignore database.json --ignore data/guild-event-state.json --ignore '*.log' --trace-warnings app.js",
+    "dev": "nodemon --watch . --ignore database.json --ignore logs.json --ignore data/guild-event-state.json --ignore '*.log' --trace-warnings app.js",
+    "dev:debug": "nodemon --inspect --watch . --ignore database.json --ignore logs.json --ignore data/guild-event-state.json --ignore '*.log' --trace-warnings app.js",
     "lint": "eslint . --ext .js --fix",
     "lint:check": "eslint . --ext .js"
   },

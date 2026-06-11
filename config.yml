@@ -1306,6 +1306,15 @@ api:
   registration: global     # global | guild
   guild_id: ''             # If registration=guild, put guild ID here
 
+# Server audit logs (separate from economy database.json)
+audit_logs:
+  enabled: true
+  path: 'logs.json'
+  auto_repair: true
+  max_entries_per_guild: 5000
+  events:
+    all: true
+
 # Database options
 database:
   path: 'database.json'

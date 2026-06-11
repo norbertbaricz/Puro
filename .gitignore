@@ -1,4 +1,5 @@
 node_modules/
 database.json
+logs.json
 .env
 .venv
