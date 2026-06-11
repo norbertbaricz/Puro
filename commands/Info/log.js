@@ -1,327 +1,354 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const {
-    searchGuildLogs,
-    getGuildLogTypeStats,
-    getKnownLogTypes,
-    normalizeType,
-} = require('../../lib/serverLogs');
+const { searchGuildLogs } = require('../../lib/serverLogs');
 
-const MAX_RESULTS = 25;
+// ──────────────────────────────────────────────────────────────────
+// Categories with friendly labels + associated internal types
+// ──────────────────────────────────────────────────────────────────
+const CATEGORIES = {
+    members: {
+        label: '👥 Members',
+        color: 0x3498db,
+        types: ['MEMBER_JOINED', 'MEMBER_LEFT', 'MEMBER_UPDATED'],
+    },
+    moderation: {
+        label: '🔨 Moderation',
+        color: 0xe74c3c,
+        types: ['MEMBER_BANNED', 'MEMBER_UNBANNED'],
+    },
+    messages: {
+        label: '💬 Messages',
+        color: 0x2ecc71,
+        types: ['MESSAGE_DELETED', 'MESSAGE_EDITED', 'MESSAGE_BULK_DELETED'],
+    },
+    reactions: {
+        label: '😀 Reactions',
+        color: 0xf1c40f,
+        types: ['REACTION_ADDED', 'REACTION_REMOVED', 'REACTIONS_CLEARED', 'REACTION_EMOJI_REMOVED'],
+    },
+    voice: {
+        label: '🎙️ Voice',
+        color: 0x9b59b6,
+        types: ['VOICE_STATE_UPDATED'],
+    },
+    channels: {
+        label: '📢 Channels',
+        color: 0x1abc9c,
+        types: ['CHANNEL_CREATED', 'CHANNEL_UPDATED', 'CHANNEL_DELETED', 'CHANNEL_PINS_UPDATED'],
+    },
+    roles: {
+        label: '🎭 Roles',
+        color: 0xe67e22,
+        types: ['ROLE_CREATED', 'ROLE_UPDATED', 'ROLE_DELETED'],
+    },
+    threads: {
+        label: '🧵 Threads',
+        color: 0x95a5a6,
+        types: ['THREAD_CREATED', 'THREAD_UPDATED', 'THREAD_DELETED'],
+    },
+    invites: {
+        label: '📨 Invites',
+        color: 0x2980b9,
+        types: ['INVITE_CREATED', 'INVITE_DELETED'],
+    },
+    automod: {
+        label: '🤖 AutoMod',
+        color: 0xc0392b,
+        types: ['AUTOMOD_ACTION_EXECUTED', 'AUTOMOD_RULE_CREATED', 'AUTOMOD_RULE_UPDATED', 'AUTOMOD_RULE_DELETED'],
+    },
+    events: {
+        label: '📅 Events',
+        color: 0x8e44ad,
+        types: ['SCHEDULED_EVENT_CREATED', 'SCHEDULED_EVENT_UPDATED', 'SCHEDULED_EVENT_DELETED', 'SCHEDULED_EVENT_USER_ADD', 'SCHEDULED_EVENT_USER_REMOVE'],
+    },
+    emojis: {
+        label: '😄 Emoji & Stickers',
+        color: 0xf39c12,
+        types: ['EMOJI_CREATED', 'EMOJI_UPDATED', 'EMOJI_DELETED', 'STICKER_CREATED', 'STICKER_UPDATED', 'STICKER_DELETED'],
+    },
+    server: {
+        label: '⚙️ Server',
+        color: 0x7f8c8d,
+        types: ['GUILD_UPDATED', 'WEBHOOKS_UPDATED'],
+    },
+    commands: {
+        label: '⚡ Commands',
+        color: 0xf1c40f,
+        types: ['COMMAND_USED'],
+    },
+    audit: {
+        label: '🛡️ Audit',
+        color: 0x2c3e50,
+        types: ['AUDIT_ENTRY_CREATED'],
+    },
+};
 
-function prettifyType(type) {
-    return String(type || 'UNKNOWN')
-        .split('_')
-        .filter(Boolean)
-        .map(part => part.charAt(0) + part.slice(1).toLowerCase())
-        .join(' ');
+// Human-readable label displayed in embeds for each internal type
+const TYPE_LABELS = {
+    MEMBER_JOINED:              '👋 Member Joined',
+    MEMBER_LEFT:                '🚪 Member Left',
+    MEMBER_UPDATED:             '✏️ Member Updated',
+    MEMBER_BANNED:              '🔨 Member Banned',
+    MEMBER_UNBANNED:            '✅ Member Unbanned',
+    MESSAGE_DELETED:            '🗑️ Message Deleted',
+    MESSAGE_EDITED:             '✏️ Message Edited',
+    MESSAGE_BULK_DELETED:       '🗑️ Bulk Message Delete',
+    REACTION_ADDED:             '😀 Reaction Added',
+    REACTION_REMOVED:           '❌ Reaction Removed',
+    REACTIONS_CLEARED:          '🧹 All Reactions Cleared',
+    REACTION_EMOJI_REMOVED:     '❌ Reaction Emoji Removed',
+    VOICE_STATE_UPDATED:        '🎙️ Voice State Changed',
+    CHANNEL_CREATED:            '📢 Channel Created',
+    CHANNEL_UPDATED:            '📢 Channel Updated',
+    CHANNEL_DELETED:            '📢 Channel Deleted',
+    CHANNEL_PINS_UPDATED:       '📌 Pinned Messages Updated',
+    ROLE_CREATED:               '🎭 Role Created',
+    ROLE_UPDATED:               '🎭 Role Updated',
+    ROLE_DELETED:               '🎭 Role Deleted',
+    THREAD_CREATED:             '🧵 Thread Created',
+    THREAD_UPDATED:             '🧵 Thread Updated',
+    THREAD_DELETED:             '🧵 Thread Deleted',
+    INVITE_CREATED:             '📨 Invite Created',
+    INVITE_DELETED:             '📨 Invite Deleted',
+    AUTOMOD_ACTION_EXECUTED:    '🤖 AutoMod Action Taken',
+    AUTOMOD_RULE_CREATED:       '🤖 AutoMod Rule Created',
+    AUTOMOD_RULE_UPDATED:       '🤖 AutoMod Rule Updated',
+    AUTOMOD_RULE_DELETED:       '🤖 AutoMod Rule Deleted',
+    SCHEDULED_EVENT_CREATED:    '📅 Scheduled Event Created',
+    SCHEDULED_EVENT_UPDATED:    '📅 Scheduled Event Updated',
+    SCHEDULED_EVENT_DELETED:    '📅 Scheduled Event Deleted',
+    SCHEDULED_EVENT_USER_ADD:   '📅 User RSVP to Event',
+    SCHEDULED_EVENT_USER_REMOVE:'📅 User Un-RSVP from Event',
+    EMOJI_CREATED:              '😄 Emoji Added',
+    EMOJI_UPDATED:              '😄 Emoji Updated',
+    EMOJI_DELETED:              '😄 Emoji Removed',
+    STICKER_CREATED:            '🎨 Sticker Added',
+    STICKER_UPDATED:            '🎨 Sticker Updated',
+    STICKER_DELETED:            '🎨 Sticker Removed',
+    GUILD_UPDATED:              '⚙️ Server Settings Updated',
+    WEBHOOKS_UPDATED:           '⚙️ Webhooks Updated',
+    COMMAND_USED:               '⚡ Slash Command Used',
+    AUDIT_ENTRY_CREATED:        '🛡️ Audit Log Entry Created',
+    PRESENCE_UPDATED:           '🔵 User Status Changed',
+    GENERAL_EVENT:              '📋 General Event',
+};
+
+// ──────────────────────────────────────────────────────────────────
+// Utilities
+// ──────────────────────────────────────────────────────────────────
+
+function labelForType(rawType) {
+    return TYPE_LABELS[rawType] || `📋 ${rawType}`;
+}
+
+function typesForCategory(categoryKey) {
+    return CATEGORIES[categoryKey]?.types || null;
+}
+
+function colorForCategory(categoryKey) {
+    return CATEGORIES[categoryKey]?.color || 0x5865f2;
+}
+
+function colorForEntry(entry) {
+    for (const cat of Object.values(CATEGORIES)) {
+        if (cat.types.includes(entry.type)) return cat.color;
+    }
+    return 0x5865f2;
 }
 
 function formatEntry(entry, index) {
-    const pieces = [];
-    pieces.push(`**${index + 1}.** \`${entry.type}\` ${entry.summary}`);
+    const label = labelForType(entry.type);
+    const ts = Math.floor(Number(entry.timestamp || Date.now()) / 1000);
+    const lines = [`**${index + 1}.** ${label}`];
 
-    const details = [`<t:${Math.floor(Number(entry.timestamp || Date.now()) / 1000)}:R>`];
-    if (entry.actorId) details.push(`actor: <@${entry.actorId}>`);
-    if (entry.targetId) details.push(`target: <@${entry.targetId}>`);
-    if (entry.channelId) details.push(`channel: <#${entry.channelId}>`);
-    pieces.push(details.join(' | '));
-
-    if (entry.content) {
-        pieces.push(`msg: ${entry.content}`);
+    // Use the stored summary — it has the username captured at log time,
+    // so it stays readable even after the user has left the server.
+    if (entry.summary && entry.summary !== 'No summary provided.') {
+        lines.push(`> ${entry.summary}`);
     }
 
-    return pieces.join('\n');
+    // Timestamp + channel (channels stay in the server so <#id> is safe)
+    const meta = [`<t:${ts}:R>`];
+    if (entry.channelId) meta.push(`<#${entry.channelId}>`);
+    lines.push(meta.join('  ·  '));
+
+    // Content preview (deleted / edited messages)
+    if (entry.content) {
+        const preview = entry.content.length > 120
+            ? `${entry.content.slice(0, 117)}...`
+            : entry.content;
+        lines.push(`\`${preview}\``);
+    }
+
+    return lines.join('\n');
 }
 
-function buildFilterLine({ type, userId, channelId, query, hours }) {
-    const filters = [];
-    if (type) filters.push(`type=${normalizeType(type)}`);
-    if (userId) filters.push(`user=<@${userId}>`);
-    if (channelId) filters.push(`channel=<#${channelId}>`);
-    if (query) filters.push(`query="${query}"`);
-    if (hours) filters.push(`window=${hours}h`);
-
-    return filters.length ? filters.join(' | ') : 'none';
+function buildActiveFilters({ categoryKey, user, channel, query, hours }) {
+    const parts = [];
+    if (categoryKey) parts.push(`Category: **${CATEGORIES[categoryKey]?.label || categoryKey}**`);
+    if (user) parts.push(`User: <@${user.id}>`);
+    if (channel) parts.push(`Channel: <#${channel.id}>`);
+    if (query) parts.push(`Search: \`${query}\``);
+    if (hours) parts.push(`Last **${hours}** hours`);
+    return parts.length ? parts.join('  ·  ') : '—';
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Command definition
+// ──────────────────────────────────────────────────────────────────
 
 module.exports = {
     category: 'Info',
     data: new SlashCommandBuilder()
         .setName('log')
-        .setDescription('Search and inspect this server audit log database.')
+        .setDescription('View the server activity log. All filters are optional.')
         .setDMPermission(false)
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('latest')
-                .setDescription('Show latest server logs.')
-                .addIntegerOption(option =>
-                    option
-                        .setName('amount')
-                        .setDescription('How many records to show (1-25).')
-                        .setMinValue(1)
-                        .setMaxValue(MAX_RESULTS)
-                        .setRequired(false)
-                )
-                .addStringOption(option =>
-                    option
-                        .setName('type')
-                        .setDescription('Optional log type filter.')
-                        .setAutocomplete(true)
-                        .setRequired(false)
-                )
-                .addUserOption(option =>
-                    option
-                        .setName('user')
-                        .setDescription('Filter by actor or target user.')
-                        .setRequired(false)
-                )
-                .addChannelOption(option =>
-                    option
-                        .setName('channel')
-                        .setDescription('Filter by channel.')
-                        .setRequired(false)
-                )
-                .addIntegerOption(option =>
-                    option
-                        .setName('hours')
-                        .setDescription('Only include logs from the last N hours.')
-                        .setMinValue(1)
-                        .setMaxValue(720)
-                        .setRequired(false)
-                )
-                .addBooleanOption(option =>
-                    option
-                        .setName('private')
-                        .setDescription('Reply privately (only visible to you).')
-                        .setRequired(false)
-                )
+        .addStringOption(opt =>
+            opt.setName('search')
+                .setDescription('Search for a specific word or phrase in the logs')
+                .setRequired(false)
         )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('search')
-                .setDescription('Search logs by text query.')
-                .addStringOption(option =>
-                    option
-                        .setName('query')
-                        .setDescription('Keyword(s) to search in logs.')
-                        .setRequired(true)
+        .addStringOption(opt =>
+            opt.setName('category')
+                .setDescription('Filter by a specific activity category')
+                .addChoices(
+                    ...Object.entries(CATEGORIES).map(([key, cat]) => ({
+                        name: cat.label,
+                        value: key,
+                    }))
                 )
-                .addIntegerOption(option =>
-                    option
-                        .setName('amount')
-                        .setDescription('How many records to show (1-25).')
-                        .setMinValue(1)
-                        .setMaxValue(MAX_RESULTS)
-                        .setRequired(false)
-                )
-                .addStringOption(option =>
-                    option
-                        .setName('type')
-                        .setDescription('Optional log type filter.')
-                        .setAutocomplete(true)
-                        .setRequired(false)
-                )
-                .addUserOption(option =>
-                    option
-                        .setName('user')
-                        .setDescription('Filter by actor or target user.')
-                        .setRequired(false)
-                )
-                .addChannelOption(option =>
-                    option
-                        .setName('channel')
-                        .setDescription('Filter by channel.')
-                        .setRequired(false)
-                )
-                .addIntegerOption(option =>
-                    option
-                        .setName('hours')
-                        .setDescription('Only include logs from the last N hours.')
-                        .setMinValue(1)
-                        .setMaxValue(720)
-                        .setRequired(false)
-                )
-                .addBooleanOption(option =>
-                    option
-                        .setName('private')
-                        .setDescription('Reply privately (only visible to you).')
-                        .setRequired(false)
-                )
+                .setRequired(false)
         )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('types')
-                .setDescription('Show top log types for this server.')
-                .addIntegerOption(option =>
-                    option
-                        .setName('top')
-                        .setDescription('How many log types to list (1-25).')
-                        .setMinValue(1)
-                        .setMaxValue(25)
-                        .setRequired(false)
-                )
-                .addIntegerOption(option =>
-                    option
-                        .setName('hours')
-                        .setDescription('Only include logs from the last N hours.')
-                        .setMinValue(1)
-                        .setMaxValue(720)
-                        .setRequired(false)
-                )
-                .addBooleanOption(option =>
-                    option
-                        .setName('private')
-                        .setDescription('Reply privately (only visible to you).')
-                        .setRequired(false)
-                )
+        .addUserOption(opt =>
+            opt.setName('user')
+                .setDescription('Only show activity from or about this user')
+                .setRequired(false)
+        )
+        .addChannelOption(opt =>
+            opt.setName('channel')
+                .setDescription('Only show activity in this channel')
+                .setRequired(false)
+        )
+        .addIntegerOption(opt =>
+            opt.setName('hours')
+                .setDescription('Only show logs from the last N hours')
+                .setMinValue(1)
+                .setMaxValue(720)
+                .setRequired(false)
+        )
+        .addIntegerOption(opt =>
+            opt.setName('results')
+                .setDescription('How many entries to show (default: 10, max: 25)')
+                .setMinValue(1)
+                .setMaxValue(25)
+                .setRequired(false)
+        )
+        .addBooleanOption(opt =>
+            opt.setName('private')
+                .setDescription('Only show the response to you')
+                .setRequired(false)
         ),
-
-    async autocomplete(interaction) {
-        try {
-            const focused = interaction.options.getFocused(true);
-            if (focused.name !== 'type') {
-                return interaction.respond([]);
-            }
-
-            const text = String(focused.value || '').toLowerCase();
-            const types = await getKnownLogTypes(interaction.guildId);
-            const matches = types
-                .filter(type => type.toLowerCase().includes(text))
-                .slice(0, 25)
-                .map(type => ({
-                    name: `${type} (${prettifyType(type)})`,
-                    value: type,
-                }));
-
-            await interaction.respond(matches);
-        } catch {
-            await interaction.respond([]).catch(() => {});
-        }
-    },
 
     async execute(interaction) {
         if (!interaction.inGuild()) {
             return interaction.reply({
-                content: 'This command can only be used inside a server.',
+                content: '❌ This command can only be used inside a server.',
                 flags: MessageFlags.Ephemeral,
             });
         }
 
-        const subcommand = interaction.options.getSubcommand();
-        const isPrivate = interaction.options.getBoolean('private') || false;
-        const flags = isPrivate ? MessageFlags.Ephemeral : undefined;
+        const query      = interaction.options.getString('search') || null;
+        const categoryKey = interaction.options.getString('category') || null;
+        const user       = interaction.options.getUser('user') || null;
+        const channel    = interaction.options.getChannel('channel') || null;
+        const hours      = interaction.options.getInteger('hours') || null;
+        const amount     = interaction.options.getInteger('results') || 10;
+        const isPrivate  = interaction.options.getBoolean('private') || false;
+        const replyFlags = isPrivate ? MessageFlags.Ephemeral : undefined;
+        const sinceMs    = hours ? Date.now() - hours * 3_600_000 : null;
+
+        await interaction.deferReply({ flags: replyFlags });
 
         try {
-            if (subcommand === 'types') {
-                const top = interaction.options.getInteger('top') || 10;
-                const hours = interaction.options.getInteger('hours') || null;
-                const sinceMs = hours ? Date.now() - (hours * 60 * 60 * 1000) : null;
+            const typeFilters = typesForCategory(categoryKey);
 
-                const stats = await getGuildLogTypeStats(interaction.guildId, {
-                    limit: top,
+            let results = [];
+            if (typeFilters) {
+                const perType = await Promise.all(
+                    typeFilters.map(t =>
+                        searchGuildLogs(interaction.guildId, {
+                            limit: amount,
+                            query,
+                            type: t,
+                            userId: user?.id || null,
+                            channelId: channel?.id || null,
+                            sinceMs,
+                        })
+                    )
+                );
+                results = perType
+                    .flat()
+                    .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
+                    .slice(0, amount);
+            } else {
+                results = await searchGuildLogs(interaction.guildId, {
+                    limit: amount,
+                    query,
+                    userId: user?.id || null,
+                    channelId: channel?.id || null,
                     sinceMs,
                 });
-
-                if (!stats.length) {
-                    return interaction.reply({
-                        content: 'No log types found for the selected filters.',
-                        flags: MessageFlags.Ephemeral,
-                    });
-                }
-
-                const lines = stats.map((item, idx) => `${idx + 1}. \`${item.type}\` - ${item.count}`);
-
-                const embed = new EmbedBuilder()
-                    .setColor(0x00a8ff)
-                    .setTitle('Server Log Type Stats')
-                    .setDescription(lines.join('\n'))
-                    .addFields({
-                        name: 'Window',
-                        value: hours ? `Last ${hours} hour(s)` : 'All stored logs',
-                        inline: true,
-                    })
-                    .setFooter({ text: `Guild: ${interaction.guild.name}` })
-                    .setTimestamp();
-
-                return interaction.reply({ embeds: [embed], flags });
             }
-
-            const query = subcommand === 'search' ? interaction.options.getString('query', true) : null;
-            const amount = interaction.options.getInteger('amount') || 10;
-            const type = interaction.options.getString('type') || null;
-            const user = interaction.options.getUser('user');
-            const channel = interaction.options.getChannel('channel');
-            const hours = interaction.options.getInteger('hours') || null;
-            const sinceMs = hours ? Date.now() - (hours * 60 * 60 * 1000) : null;
-
-            await interaction.deferReply({ flags });
-
-            const results = await searchGuildLogs(interaction.guildId, {
-                limit: amount,
-                query,
-                type,
-                userId: user?.id || null,
-                channelId: channel?.id || null,
-                sinceMs,
-            });
 
             if (!results.length) {
                 return interaction.editReply({
-                    content: 'No logs found for the selected filters.',
+                    content: '📭 No activity found. Try adjusting your filters.',
                 });
             }
 
+            // Render entries
             const rendered = [];
-            let totalLength = 0;
-
+            let totalLen = 0;
             for (let i = 0; i < results.length; i++) {
                 const chunk = formatEntry(results[i], i);
-                if (totalLength + chunk.length + 2 > 3700) {
-                    rendered.push(`...and ${results.length - i} more result(s).`);
+                if (totalLen + chunk.length + 2 > 3_800) {
+                    rendered.push(`*... and ${results.length - i} more entries*`);
                     break;
                 }
                 rendered.push(chunk);
-                totalLength += chunk.length + 2;
+                totalLen += chunk.length + 2;
             }
 
+            const embedColor = categoryKey
+                ? colorForCategory(categoryKey)
+                : colorForEntry(results[0]);
+
             const embed = new EmbedBuilder()
-                .setColor(0x5865f2)
-                .setTitle(subcommand === 'search' ? 'Log Search Results' : 'Latest Server Logs')
+                .setColor(embedColor)
+                .setTitle('📋 Server Activity Log')
                 .setDescription(rendered.join('\n\n'))
-                .addFields(
-                    {
-                        name: 'Filters',
-                        value: buildFilterLine({
-                            type,
-                            userId: user?.id || null,
-                            channelId: channel?.id || null,
-                            query,
-                            hours,
-                        }),
-                    },
-                    {
-                        name: 'Result Count',
-                        value: String(results.length),
-                        inline: true,
-                    }
-                )
-                .setFooter({ text: `Guild: ${interaction.guild.name}` })
+                .addFields({
+                    name: '🔍 Filters',
+                    value: buildActiveFilters({ categoryKey, user, channel, query, hours }),
+                }, {
+                    name: '📊 Showing',
+                    value: `**${results.length}** entries`,
+                    inline: true,
+                })
+                .setFooter({
+                    text: `${interaction.guild.name}  ·  Requested by ${interaction.user.tag}`,
+                    iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
+                })
                 .setTimestamp();
 
             return interaction.editReply({ embeds: [embed] });
+
         } catch (error) {
             console.error('/log command failed:', error);
-
-            const payload = {
-                content: 'An error occurred while reading server logs.',
-                flags: MessageFlags.Ephemeral,
-            };
-
+            const errMsg = '❌ An error occurred while reading the logs. Please try again.';
             if (interaction.deferred || interaction.replied) {
-                return interaction.editReply({ content: payload.content }).catch(() => {});
+                return interaction.editReply({ content: errMsg }).catch(() => {});
             }
-
-            return interaction.reply(payload).catch(() => {});
+            return interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
         }
     },
 };
