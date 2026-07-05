@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../lib/economy');
+const { safeEditReply, safeReply, safeUpdate, isUnknownInteractionError } = require('../../lib/interactionSafety');
 
 module.exports = {
     category: 'Economy',
@@ -101,26 +102,38 @@ module.exports = {
         const msg = await interaction.fetchReply();
         const collector = msg.createMessageComponentCollector({ time: 60000 });
         collector.on('collect', async i => {
-            if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
-                return;
+            try {
+                if (i.user.id !== interaction.user.id) {
+                    await safeReply(i, { content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
+                    return;
+                }
+                if (i.customId === 'lb_close') {
+                    collector.stop('closed');
+                    const disabled = new ActionRowBuilder().addComponents(first.row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await safeUpdate(i, { components: [disabled] });
+                    return;
+                }
+                if (i.customId === 'lb_prev' && page > 0) page -= 1;
+                if (i.customId === 'lb_next' && page < pages - 1) page += 1;
+                const view = await buildPage(page);
+                await safeUpdate(i, { embeds: [view.embed], components: [view.row] });
+            } catch (error) {
+                if (!isUnknownInteractionError(error)) {
+                    console.error('Leaderboard collector error:', error);
+                }
             }
-            if (i.customId === 'lb_close') {
-                collector.stop('closed');
-                const disabled = new ActionRowBuilder().addComponents(first.row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                await i.update({ components: [disabled] });
-                return;
-            }
-            if (i.customId === 'lb_prev' && page > 0) page -= 1;
-            if (i.customId === 'lb_next' && page < pages - 1) page += 1;
-            const view = await buildPage(page);
-            await i.update({ embeds: [view.embed], components: [view.row] });
         });
 
         collector.on('end', async (_c, reason) => {
-            if (reason === 'time') {
-                const disabled = new ActionRowBuilder().addComponents(first.row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
-                await interaction.editReply({ components: [disabled] }).catch(() => {});
+            try {
+                if (reason === 'time') {
+                    const disabled = new ActionRowBuilder().addComponents(first.row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    await safeEditReply(interaction, { components: [disabled] });
+                }
+            } catch (error) {
+                if (!isUnknownInteractionError(error)) {
+                    console.error('Leaderboard collector end error:', error);
+                }
             }
         });
     }
