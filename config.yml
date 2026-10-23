@@ -8,13 +8,12 @@ colors:
 # Bot status configuration
 status:
   texts:  # Listă de texte care se schimbă random la 10 secunde
-    - "🐺 Guiding {servers} server packs"
-    - "⚙️ Supporting {members} members"
-    - "🌐 Premium dens active: {premiumGuilds}"
-    - "🎉 Greeting {membersGreeted} friends"
-    - "🚀 Online for {uptime}"
-    - "🤝 Backing {servers} communities"
-    - "💡 Crafted by Skypixel™"
+    - "🚀 Running the new update!"
+    - "💡 Created by Skypixel"
+    - "✨ Discover the new update!"
+    - "⚙️ Managing {servers} servers"
+    - "👥 Assisting {members} members"
+    - "⏱️ Online for {uptime}"
   type: "Custom"  # Tipul activității (Playing, Streaming, Listening, Watching, Competing)
   url: "https://thelunarpackvr.carrd.co/"  # URL pentru Streaming (opțional)
   status: "idle"  # Poate fi "online", "dnd", "idle" sau "invisible"
@@ -26,18 +25,6 @@ guilds:
   - name: 'The Lunar Pack'
     id: '1217588804328620163'
     slug: 'the-lunar-pack'
-    tier: 'premium'
-  - name: "Spencer's Cave"
-    id: '1010638602004340787'  # Set this to the guild ID if available
-    slug: 'spencers-cave'
-    tier: 'premium'
-  - name: "~Icy's Chill Floofy Server~"
-    id: '1328613051670200340'
-    slug: 'icys-chill-floofy-server'
-    tier: 'premium'
-  - name: 'Thunderhoof Tavern'
-    id: '1401355259573698691'
-    slug: 'thunderhoof-tavern'
     tier: 'premium'
 
 # Premium guild logging configuration
