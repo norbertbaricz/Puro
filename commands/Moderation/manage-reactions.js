@@ -1,33 +1,36 @@
 const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Moderation',
     data: new SlashCommandBuilder()
         .setName('react')
         .setDescription('React to one or more messages with one or more emojis.')
-        .addStringOption(option =>
-            option.setName('message_ids')
+        .addStringOption((option) =>
+            option
+                .setName('message_ids')
                 .setDescription('Message ID(s), separated by spaces or commas')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('emojis')
-                .setDescription('Emoji(s), separated by spaces or commas')
-                .setRequired(true))
-        .addChannelOption(option =>
-            option.setName('channel')
-                .setDescription('Channel (if messages are not in this channel)')
-                .addChannelTypes(ChannelType.GuildText, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildAnnouncement)
-                .setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('remove')
-                .setDescription("Remove the bot's reactions instead of adding")
-                .setRequired(false)
+                .setRequired(true),
         )
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Reply privately')
-                .setRequired(false)
-        ),
+        .addStringOption((option) =>
+            option.setName('emojis').setDescription('Emoji(s), separated by spaces or commas').setRequired(true),
+        )
+        .addChannelOption((option) =>
+            option
+                .setName('channel')
+                .setDescription('Channel (if messages are not in this channel)')
+                .addChannelTypes(
+                    ChannelType.GuildText,
+                    ChannelType.PublicThread,
+                    ChannelType.PrivateThread,
+                    ChannelType.GuildAnnouncement,
+                )
+                .setRequired(false),
+        )
+        .addBooleanOption((option) =>
+            option.setName('remove').setDescription("Remove the bot's reactions instead of adding").setRequired(false),
+        )
+        .addBooleanOption((option) => option.setName('private').setDescription('Reply privately').setRequired(false)),
     async execute(interaction) {
         const cfg = interaction.client.config.commands.react || {};
         const msgs = cfg.messages || {};
@@ -46,20 +49,28 @@ module.exports = {
             return match ? match[1] : token;
         };
 
-        const messageIds = messageIdsRaw.split(/[\s,]+/).filter(Boolean).map(linkOrIdToId);
+        const messageIds = messageIdsRaw
+            .split(/[\s,]+/)
+            .filter(Boolean)
+            .map(linkOrIdToId);
 
         // Normalize emojis: support unicode or custom <a:name:id>/<:name:id>
         const normalizeEmoji = (e) => {
             const m = e.match(/^<a?:\w+:(\d+)>$/);
             return m ? m[1] : e; // use id for custom, unicode as-is
         };
-        const emojis = emojisRaw.split(/[\s,]+/).filter(Boolean).map(normalizeEmoji);
+        const emojis = emojisRaw
+            .split(/[\s,]+/)
+            .filter(Boolean)
+            .map(normalizeEmoji);
 
         // Use specified channel or current channel
         const channel = selectedChannel || interaction.channel;
 
         if (!channel || !channel.isTextBased()) {
-            return interaction.editReply({ content: msgs.channel_not_found || 'Channel not found or not a text channel.' });
+            return interaction.editReply({
+                content: msgs.channel_not_found || 'Channel not found or not a text channel.',
+            });
         }
 
         // Permission checks for bot
@@ -82,7 +93,9 @@ module.exports = {
                 for (const emoji of emojis) {
                     try {
                         if (remove) {
-                            const reaction = message.reactions.cache.get(emoji) || message.reactions.cache.find(r => r.emoji.id === emoji || r.emoji.name === emoji);
+                            const reaction =
+                                message.reactions.cache.get(emoji) ||
+                                message.reactions.cache.find((r) => r.emoji.id === emoji || r.emoji.name === emoji);
                             if (reaction) {
                                 await reaction.users.remove(interaction.client.user.id);
                                 successCount++;
@@ -107,17 +120,24 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setTitle(msgs.title || 'Reaction Results')
-            .setColor(successCount > 0 ? (interaction.client.config.commands.react?.color_success || 0x00b300) : (interaction.client.config.commands.react?.color_error || 0xff0000))
+            .setColor(
+                successCount > 0
+                    ? interaction.client.config.commands.react?.color_success || 0x00b300
+                    : interaction.client.config.commands.react?.color_error || 0xff0000,
+            )
             .addFields(
                 { name: msgs.field_success || 'Reactions Added', value: `${successCount}`, inline: true },
-                { name: msgs.field_failed || 'Failed', value: `${failCount}`, inline: true }
+                { name: msgs.field_failed || 'Failed', value: `${failCount}`, inline: true },
             )
             .setTimestamp();
 
         if (failedMessages.length > 0) {
-            embed.addFields({ name: msgs.field_failures || 'Failures', value: failedMessages.join('\n').slice(0, 1024) });
+            embed.addFields({
+                name: msgs.field_failures || 'Failures',
+                value: failedMessages.join('\n').slice(0, 1024),
+            });
         }
 
         await interaction.editReply({ embeds: [embed] });
-    }
+    },
 };

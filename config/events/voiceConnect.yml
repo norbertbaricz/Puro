@@ -1,0 +1,7 @@
+# Previously hard-coded lobby ID; empty disables new channel creation.
+lobby_channel_id: '1385321890675032174'
+bitrate: 64000
+user_limit: 5
+rtc_region: rotterdam
+name_template: "{user}'s Channel"
+cooldown_seconds: 15

@@ -1,27 +1,30 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Fun',
     data: new SlashCommandBuilder()
         .setName('guess')
         .setDescription('Starts a number guessing minigame.')
-        .setDMPermission(false)
-        .addIntegerOption(option =>
-            option.setName('min')
-                .setDescription('The minimum value of the range.')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('max')
-                .setDescription('The maximum value of the range.')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('chances')
-                .setDescription('The number of attempts you have.')
-                .setRequired(true))
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('If enabled, only you will see the game')
-                .setRequired(false)
+        .addIntegerOption((option) =>
+            option.setName('min').setDescription('The minimum value of the range.').setRequired(true),
+        )
+        .addIntegerOption((option) =>
+            option.setName('max').setDescription('The maximum value of the range.').setRequired(true),
+        )
+        .addIntegerOption((option) =>
+            option.setName('chances').setDescription('The number of attempts you have.').setRequired(true),
+        )
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('If enabled, only you will see the game').setRequired(false),
         ),
 
     async execute(interaction) {
@@ -37,21 +40,22 @@ module.exports = {
 
         if (!channel || typeof channel.isTextBased !== 'function' || !channel.isTextBased()) {
             return interaction.reply({
-                content: guessConfig.messages?.unsupported_channel || '❌ This game can only be played in text channels.',
-                flags: MessageFlags.Ephemeral
+                content:
+                    guessConfig.messages?.unsupported_channel || '❌ This game can only be played in text channels.',
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (min >= max) {
             return interaction.reply({
                 content: guessConfig.messages.invalid_range,
-                flags: MessageFlags.Ephemeral
+                flags: MessageFlags.Ephemeral,
             });
         }
         if (chances <= 0) {
             return interaction.reply({
                 content: guessConfig.messages.invalid_chances,
-                flags: MessageFlags.Ephemeral
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -70,36 +74,50 @@ module.exports = {
             return '█'.repeat(filled) + '░'.repeat(blocks - filled) + ` ${left}/${total}`;
         };
 
-        const buildEmbed = (feedback = null, _rerolls = 0) => new EmbedBuilder()
-            .setColor(guessConfig.color)
-            .setTitle(guessConfig.messages.title)
-            .setDescription(
-                guessConfig.messages.description
-                    .replace('{user}', player.username)
-                    .replace('{min}', rangeMin)
-                    .replace('{max}', rangeMax)
-                    .replace('{chances}', chances)
-            )
-            .addFields(
-                { name: 'Attempts', value: bar(chances, totalChances), inline: false },
-                { name: guessConfig.messages.prompt, value: guessConfig.messages.prompt_value, inline: false },
-                ...(feedback ? [{ name: 'Hint', value: feedback, inline: false }] : []),
-                { name: 'Hints used', value: `\`${hintsUsed}/${maxHints}\``, inline: true }
-            )
-            .setFooter({ text: guessConfig.messages.footer.replace('{userTag}', player.tag) })
-            .setTimestamp();
+        const buildEmbed = (feedback = null, _rerolls = 0) =>
+            new EmbedBuilder()
+                .setColor(guessConfig.color)
+                .setTitle(guessConfig.messages.title)
+                .setDescription(
+                    guessConfig.messages.description
+                        .replace('{user}', player.username)
+                        .replace('{min}', rangeMin)
+                        .replace('{max}', rangeMax)
+                        .replace('{chances}', chances),
+                )
+                .addFields(
+                    { name: 'Attempts', value: bar(chances, totalChances), inline: false },
+                    { name: guessConfig.messages.prompt, value: guessConfig.messages.prompt_value, inline: false },
+                    ...(feedback ? [{ name: 'Hint', value: feedback, inline: false }] : []),
+                    { name: 'Hints used', value: `\`${hintsUsed}/${maxHints}\``, inline: true },
+                )
+                .setFooter({ text: guessConfig.messages.footer.replace('{userTag}', player.tag) })
+                .setTimestamp();
 
-        const row = () => new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('guess_hint').setLabel('Hint (-1 attempt)').setStyle(ButtonStyle.Secondary).setEmoji('💡').setDisabled(hintsUsed >= maxHints || chances <= 1),
-            new ButtonBuilder().setCustomId('guess_giveup').setLabel('Give up').setStyle(ButtonStyle.Danger).setEmoji('🏳️')
+        const row = () =>
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('guess_hint')
+                    .setLabel('Hint (-1 attempt)')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('💡')
+                    .setDisabled(hintsUsed >= maxHints || chances <= 1),
+                new ButtonBuilder()
+                    .setCustomId('guess_giveup')
+                    .setLabel('Give up')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🏳️'),
+            );
+
+        const shouldBeEphemeral = Boolean(
+            isPrivate &&
+            (typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId)),
         );
-
-        const shouldBeEphemeral = Boolean(isPrivate && (typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId)));
         await interaction.deferReply({ flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined });
         let gameEmbed = buildEmbed();
         await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
 
-        const filter = m => m.author.id === player.id;
+        const filter = (m) => m.author.id === player.id;
         const collector = channel.createMessageCollector({ filter, time: 120000 });
 
         const safeDeferUpdate = async (componentInteraction) => {
@@ -119,7 +137,7 @@ module.exports = {
 
         // Button collector
         const btnCollector = (await interaction.fetchReply()).createMessageComponentCollector({ time: 120000 });
-        btnCollector.on('collect', async i => {
+        onCollect(btnCollector, async (i) => {
             if (i.user.id !== player.id) {
                 await i.reply({ content: 'Only the game owner can use these buttons.', flags: MessageFlags.Ephemeral });
                 return;
@@ -159,14 +177,14 @@ module.exports = {
             }
         });
 
-        collector.on('collect', async m => {
+        onCollect(collector, async (m) => {
             const guess = parseInt(m.content);
             await m.delete().catch(() => {});
 
             if (isNaN(guess)) {
-                const msg = await interaction.followUp({ 
-                    content: guessConfig.messages.invalid_guess.replace('{guess}', m.content), 
-                    flags: MessageFlags.Ephemeral 
+                const msg = await interaction.followUp({
+                    content: guessConfig.messages.invalid_guess.replace('{guess}', m.content),
+                    flags: MessageFlags.Ephemeral,
                 });
                 setTimeout(() => msg.delete?.().catch(() => {}), 2500);
                 return;
@@ -210,10 +228,10 @@ module.exports = {
             await interaction.editReply({ embeds: [timeoutEmbed], components: [] }).catch(() => {});
         };
 
-        collector.on('end', async (_collected, reason) => {
+        onEnd(collector, async (_collected, reason) => {
             if (reason === 'time') await endGameTimeout();
         });
-        btnCollector.on('end', async (_c, reason) => {
+        onEnd(btnCollector, async (_c, reason) => {
             if (reason === 'time') await endGameTimeout();
         });
     },

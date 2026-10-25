@@ -1,0 +1,18 @@
+color: '#5865F2'
+messages:
+    created: '🧵 Thread created: {thread}'
+    created_title: 🧵 Thread Created
+    forum_post_message: Thread created via /thread.
+    seed_message: Creating a new thread…
+    invited_some: Invited {count} members.
+    no_permission: ❌ I don't have permission to create threads in that channel.
+    invalid_channel: ❌ Please select a text or forum channel.
+    error_create: ❌ Could not create the thread.
+    created_variants:
+        - '🧵 New thread: {thread}'
+        - '✨ Thread is live: {thread}'
+        - '📌 Spun up a thread: {thread}'
+    seed_message_variants:
+        - Starting a discussion…
+        - One moment, making space for the topic…
+        - Spawning a thread…

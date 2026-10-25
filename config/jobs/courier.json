@@ -1,0 +1,41 @@
+{
+    "id": "courier",
+    "emoji": "🚲",
+    "name": "Courier",
+    "description": "Zip around town delivering urgent parcels.",
+    "apply": {
+        "baseSuccessRate": 0.78,
+        "successMessages": ["Your navigation skills impressed dispatch. You got the job!"],
+        "failureMessages": ["They were hoping for faster delivery averages. Train a bit and retry!"]
+    },
+    "work": {
+        "cooldownSeconds": 90,
+        "payRange": {
+            "min": 70,
+            "max": 150
+        },
+        "bonusChance": 0.2,
+        "bonusMultiplier": {
+            "min": 1.15,
+            "max": 1.5
+        },
+        "failureChance": 0.12,
+        "failurePenaltyRange": {
+            "min": 10,
+            "max": 20
+        },
+        "successMessages": [
+            "Every package arrived ahead of schedule — clients cheered!",
+            "You discovered a shortcut and saved the day.",
+            "Zero traffic and perfect timing. A textbook delivery run."
+        ],
+        "bonusMessages": [
+            "A grateful client tipped extra for urgent handling.",
+            "Dispatch rewarded you for taking a double route."
+        ],
+        "failureMessages": [
+            "A flat tire forced you to cancel half the route.",
+            "Traffic jams ruined the delivery schedule."
+        ]
+    }
+}

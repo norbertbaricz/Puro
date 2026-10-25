@@ -1,0 +1,12 @@
+color: '#5865F2'
+messages:
+    bot_opponent: You cannot play against a bot.
+    self_challenge: You cannot challenge yourself.
+    not_your_turn: It's not your turn! It's {player}'s turn.
+    tie: It's a tie!
+    win: '{player} wins as {symbol}! 🎉'
+    timeout: ⏳ The game timed out due to inactivity.
+    start_prompts:
+        - Game on! X starts first.
+        - Battle begins — may the best win.
+        - Ready… set… tic‑tac‑toe!

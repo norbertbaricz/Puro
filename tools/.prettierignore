@@ -1,0 +1,8 @@
+node_modules/
+.runtime/
+logs/
+data/
+database.json
+*.bak.*.json
+coverage/
+.env*

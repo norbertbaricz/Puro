@@ -1,0 +1,41 @@
+{
+    "id": "pilot",
+    "emoji": "✈️",
+    "name": "Aviation Pilot",
+    "description": "Fly high-value routes and keep passengers safe across the skies.",
+    "apply": {
+        "baseSuccessRate": 0.08,
+        "successMessages": ["Your simulator scores blew the chief pilot away. Welcome aboard!"],
+        "failureMessages": ["They want more flight hours logged. Rack them up and reapply."]
+    },
+    "work": {
+        "cooldownSeconds": 180,
+        "payRange": {
+            "min": 360,
+            "max": 620
+        },
+        "bonusChance": 0.24,
+        "bonusMultiplier": {
+            "min": 1.35,
+            "max": 2
+        },
+        "failureChance": 0.28,
+        "failurePenaltyRange": {
+            "min": 40,
+            "max": 70
+        },
+        "successMessages": [
+            "Smooth skies and perfect landings earned a standing ovation.",
+            "You navigated turbulence flawlessly and passengers applauded.",
+            "A VIP passenger praised you to the airline CEO."
+        ],
+        "bonusMessages": [
+            "First class pooled a generous tip after a stellar flight.",
+            "The airline added a safety bonus for your impeccable record."
+        ],
+        "failureMessages": [
+            "A diverted route cost you extra fuel fees.",
+            "Maintenance delays meant compensating passengers."
+        ]
+    }
+}

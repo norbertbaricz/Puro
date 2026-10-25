@@ -1,0 +1,7 @@
+color: '#0099ff'
+messages:
+    no_permission: ❌ You need 'Manage Messages' permission!
+    no_bot_permission: ❌ I need 'Manage Messages' permission!
+    no_messages: ⚠️ No messages found to delete.
+    success: ✅ Deleted {count} message{s}!
+    error: ❌ Error deleting messages!

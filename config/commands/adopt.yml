@@ -1,0 +1,24 @@
+color: '#9b59b6'
+messages:
+    title: Adoption Request
+    prompt: '{adopter} wants to adopt {target}! 💖'
+    self_adopt: You cannot adopt yourself. Nice try! 😅
+    bot_adopt: You cannot adopt a bot. 🤖
+    accept_label: Accept
+    decline_label: Decline
+    accepted: 📜 Adoption papers signed! {target} has been adopted by {adopter}! 🎉
+    declined: ❌ {target} politely declined the adoption from {adopter}.
+    timeout: ⏳ No response in time. Adoption request expired.
+    not_you: Only the requested member can respond to this.
+    prompt_variants:
+        - '{adopter} would love to adopt {target}! 🧸'
+        - '{adopter} is offering a cozy home to {target}! 🏡'
+        - Paperwork ready — {adopter} wants to adopt {target}! 📝
+    accepted_variants:
+        - 🎉 Adoption complete! {adopter} and {target} are now family.
+        - 🧾 Signed and sealed — {target} is adopted by {adopter}!
+        - 💞 A new bond is formed! {adopter} adopted {target}.
+    declined_variants:
+        - 🙇 The request was declined this time.
+        - ❌ Adoption cancelled by {target}.
+        - 🚫 Not today — request declined.

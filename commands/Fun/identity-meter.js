@@ -1,18 +1,27 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Fun',
     data: new SlashCommandBuilder()
         .setName('gender')
         .setDescription('Randomly shows what gender/sexuality a member is and the percentage (for fun)!')
-        .addUserOption(option =>
-            option.setName('member')
+        .addUserOption((option) =>
+            option
+                .setName('member')
                 .setDescription('The member to check (optional, defaults to you)')
-                .setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('If enabled, only you will see the result')
-                .setRequired(false)
+                .setRequired(false),
+        )
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('If enabled, only you will see the result').setRequired(false),
         ),
     async execute(interaction) {
         const config = interaction.client.config;
@@ -40,26 +49,39 @@ module.exports = {
         const render = async (rerolls = 0) => {
             const identity = pick();
             const percentage = randomPercent();
-            const displayTarget = targetMember && typeof targetMember.toString === 'function'
-                ? targetMember.toString()
-                : `<@${targetUser.id}>`;
+            const displayTarget =
+                targetMember && typeof targetMember.toString === 'function'
+                    ? targetMember.toString()
+                    : `<@${targetUser.id}>`;
             const embed = new EmbedBuilder()
                 .setTitle(genderConfig.title)
                 .setDescription(
                     genderConfig.description
                         .replace('{member}', displayTarget)
                         .replace('{percentage}', percentage)
-                        .replace('{identity}', identity.label)
+                        .replace('{identity}', identity.label),
                 )
                 .setColor(identity.color)
                 .addFields({ name: 'Meter', value: bar(percentage), inline: false })
                 .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 4096 }))
-                .setFooter({ text: `Requested by ${interaction.user.tag}${rerolls ? ` • Rerolls: ${rerolls}` : ''}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+                .setFooter({
+                    text: `Requested by ${interaction.user.tag}${rerolls ? ` • Rerolls: ${rerolls}` : ''}`,
+                    iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
+                })
                 .setTimestamp();
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('gender_reroll').setLabel('Reroll').setStyle(ButtonStyle.Secondary).setEmoji('🎲').setDisabled(rerolls >= 3),
-                new ButtonBuilder().setCustomId('gender_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+                new ButtonBuilder()
+                    .setCustomId('gender_reroll')
+                    .setLabel('Reroll')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('🎲')
+                    .setDisabled(rerolls >= 3),
+                new ButtonBuilder()
+                    .setCustomId('gender_close')
+                    .setLabel('Close')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🗑️'),
             );
 
             await interaction.editReply({ embeds: [embed], components: [row] });
@@ -67,14 +89,19 @@ module.exports = {
             const msg = await interaction.fetchReply();
             const collector = msg.createMessageComponentCollector({ time: 30000 });
 
-            collector.on('collect', async i => {
+            onCollect(collector, async (i) => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
+                    await i.reply({
+                        content: 'Only the command invoker can use these buttons.',
+                        flags: MessageFlags.Ephemeral,
+                    });
                     return;
                 }
                 if (i.customId === 'gender_close') {
                     collector.stop('closed');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await i.update({ components: [disabled] });
                     return;
                 }
@@ -86,20 +113,24 @@ module.exports = {
                         .setTitle('🎲 Recalculating...')
                         .setDescription('Consulting the rainbow spirits...')
                         .setTimestamp();
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ embeds: [rolling], components: [disabled] });
                     setTimeout(() => render(rerolls + 1), 800);
                 }
             });
 
-            collector.on('end', async (_c, reason) => {
+            onEnd(collector, async (_c, reason) => {
                 if (reason === 'time') {
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ components: [disabled] }).catch(() => {});
                 }
             });
         };
 
         setTimeout(() => render(0), 300);
-    }
+    },
 };

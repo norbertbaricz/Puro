@@ -1,0 +1,41 @@
+{
+    "id": "photographer",
+    "emoji": "📸",
+    "name": "Photographer",
+    "description": "Capture moments, edit masterpieces, and impress clients.",
+    "apply": {
+        "baseSuccessRate": 0.48,
+        "successMessages": ["Your portfolio stunned the studio director. Lights, camera, action!"],
+        "failureMessages": ["They want more lighting setups in your book. Shoot a few and reapply."]
+    },
+    "work": {
+        "cooldownSeconds": 100,
+        "payRange": {
+            "min": 125,
+            "max": 260
+        },
+        "bonusChance": 0.27,
+        "bonusMultiplier": {
+            "min": 1.15,
+            "max": 1.7
+        },
+        "failureChance": 0.18,
+        "failurePenaltyRange": {
+            "min": 12,
+            "max": 26
+        },
+        "successMessages": [
+            "Every shot was perfectly framed and the client raved.",
+            "You salvaged a rainy shoot and turned it into art.",
+            "Your edits went viral and bookings exploded."
+        ],
+        "bonusMessages": [
+            "The client bought extended usage rights for extra cash.",
+            "A surprise tip came from delighted newlyweds."
+        ],
+        "failureMessages": [
+            "A corrupted SD card forced you to pay for recovery.",
+            "You rented extra gear after yours failed mid-session."
+        ]
+    }
+}

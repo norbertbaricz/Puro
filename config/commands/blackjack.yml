@@ -1,0 +1,42 @@
+color: '#2f3136'
+color_win: '#2ecc71'
+color_lose: '#ed4245'
+color_push: '#f1c40f'
+hit_soft_17: true
+messages:
+    title: 🃏 Blackjack with Puro
+    table_intro: Puro shuffles the deck. Place your bet and make your move!
+    prompt_action: Hit, stand, or double down?
+    prompt_hit: Puro slides you another card.
+    prompt_hit_variants:
+        - Another card glides across the table.
+        - You tap the felt and take a hit.
+        - A new card appears by your hand.
+    dealer_label: Dealer — Puro
+    dealer_hidden: showing one card
+    player_label: Your Hand
+    dealer_total: Dealer Total
+    player_total: Your Total
+    hidden_total: '??'
+    cards_label: Cards
+    total_label: Total
+    bet_label: Current Bet
+    balance_label: Balance
+    outcome_label: Outcome
+    outcome_blackjack: Blackjack! You earn ${profit} against Puro.
+    outcome_player_win: You outscore Puro and pocket ${profit}!
+    outcome_dealer_bust: Puro busts! You collect ${profit}.
+    outcome_dealer_win: Puro wins and keeps ${loss}.
+    outcome_dealer_blackjack: Puro reveals blackjack and sweeps the table.
+    outcome_player_bust: You bust and lose ${loss}.
+    outcome_push: Push. Your ${bet} wager is returned.
+    timeout_loss: Time ran out. Puro quietly pockets your ${bet} wager.
+    double_unavailable: You cannot double right now.
+    not_your_turn: Only the current player can act on this hand.
+    already_finished: This hand has already finished.
+    buttons:
+        hit: Hit
+        stand: Stand
+        double: Double
+    footer_table: Dealer Puro awaits your move...
+    footer_final: Thanks for playing at the den!

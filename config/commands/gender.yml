@@ -1,0 +1,23 @@
+title: 🌈 Gender & Sexuality Check!
+description: '{member} is **{percentage}% {identity}**!'
+identities:
+    - label: Gay 🏳️‍🌈
+      color: '#ff69b4'
+    - label: Straight 🏳️‍⚧️
+      color: '#3498db'
+    - label: Bisexual 💜💙💖
+      color: '#8e44ad'
+    - label: Pansexual 💛💗💙
+      color: '#f1c40f'
+    - label: Asexual 🖤🤍💜
+      color: '#2c3e50'
+    - label: Lesbian 🧡🤍💗
+      color: '#e67e22'
+    - label: Transgender 💙🤍💗
+      color: '#5dade2'
+    - label: Non-binary 💛🤍💜🖤
+      color: '#f7ca18'
+    - label: Queer 🌈
+      color: '#16a085'
+messages:
+    not_found: Member not found.

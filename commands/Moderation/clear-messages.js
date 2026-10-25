@@ -1,24 +1,42 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    PermissionFlagsBits,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Moderation',
     data: new SlashCommandBuilder()
         .setName('clear')
         .setDescription('Clear messages from channel')
-        .addIntegerOption(option =>
-            option.setName('amount').setDescription('Number (1-100)').setMinValue(1).setMaxValue(100).setRequired(true))
-        .addUserOption(option =>
-            option.setName('user').setDescription('Only delete messages from this user').setRequired(false))
-        .addStringOption(option =>
-            option.setName('contains').setDescription('Only delete messages containing this text').setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('bots_only').setDescription('Only delete messages from bots').setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('attachments_only').setDescription('Only delete messages with attachments').setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('include_pinned').setDescription('Include pinned messages (default: no)').setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('private').setDescription('Reply privately').setRequired(false)),
+        .addIntegerOption((option) =>
+            option.setName('amount').setDescription('Number (1-100)').setMinValue(1).setMaxValue(100).setRequired(true),
+        )
+        .addUserOption((option) =>
+            option.setName('user').setDescription('Only delete messages from this user').setRequired(false),
+        )
+        .addStringOption((option) =>
+            option.setName('contains').setDescription('Only delete messages containing this text').setRequired(false),
+        )
+        .addBooleanOption((option) =>
+            option.setName('bots_only').setDescription('Only delete messages from bots').setRequired(false),
+        )
+        .addBooleanOption((option) =>
+            option
+                .setName('attachments_only')
+                .setDescription('Only delete messages with attachments')
+                .setRequired(false),
+        )
+        .addBooleanOption((option) =>
+            option.setName('include_pinned').setDescription('Include pinned messages (default: no)').setRequired(false),
+        )
+        .addBooleanOption((option) => option.setName('private').setDescription('Reply privately').setRequired(false)),
 
     async execute(interaction) {
         const config = interaction.client.config.commands.clear;
@@ -62,7 +80,7 @@ module.exports = {
             const messages = await interaction.channel.messages.fetch({ limit: 100 });
             const containsLower = contains ? contains.toLowerCase() : null;
 
-            const matched = messages.filter(msg => {
+            const matched = messages.filter((msg) => {
                 const age = Date.now() - msg.createdTimestamp;
                 if (age >= 1209600000) return false; // bulkDelete can't delete >= 14 days
                 if (!includePinned && msg.pinned) return false;
@@ -90,20 +108,35 @@ module.exports = {
                 .setTitle('Confirm Clear')
                 .setDescription(`Found ${matched.size} matching messages. Will delete the latest ${toDeleteCount}.`)
                 .addFields(
-                    { name: 'Filters', value: [
-                        targetUser ? `user:${targetUser.tag}` : null,
-                        contains ? `contains:"${contains}"` : null,
-                        botsOnly ? 'bots_only:true' : null,
-                        attachmentsOnly ? 'attachments_only:true' : null,
-                        includePinned ? 'include_pinned:true' : null
-                    ].filter(Boolean).join(' | ') || 'none', inline: false },
-                    { name: 'Note', value: 'Messages older than 14 days cannot be bulk deleted.', inline: false }
+                    {
+                        name: 'Filters',
+                        value:
+                            [
+                                targetUser ? `user:${targetUser.tag}` : null,
+                                contains ? `contains:"${contains}"` : null,
+                                botsOnly ? 'bots_only:true' : null,
+                                attachmentsOnly ? 'attachments_only:true' : null,
+                                includePinned ? 'include_pinned:true' : null,
+                            ]
+                                .filter(Boolean)
+                                .join(' | ') || 'none',
+                        inline: false,
+                    },
+                    { name: 'Note', value: 'Messages older than 14 days cannot be bulk deleted.', inline: false },
                 )
                 .setTimestamp();
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('clear_confirm').setLabel('Confirm').setStyle(ButtonStyle.Danger).setEmoji('🧹'),
-                new ButtonBuilder().setCustomId('clear_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary).setEmoji('🛑')
+                new ButtonBuilder()
+                    .setCustomId('clear_confirm')
+                    .setLabel('Confirm')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🧹'),
+                new ButtonBuilder()
+                    .setCustomId('clear_cancel')
+                    .setLabel('Cancel')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('🛑'),
             );
 
             await interaction.editReply({ embeds: [preview], components: [row] });
@@ -112,29 +145,39 @@ module.exports = {
             const collector = reply.createMessageComponentCollector({ time: 30000 });
             let proceed = false;
             let replyDeleted = false;
-            collector.on('collect', async i => {
+            onCollect(collector, async (i) => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
+                    await i.reply({
+                        content: 'Only the command invoker can use these buttons.',
+                        flags: MessageFlags.Ephemeral,
+                    });
                     return;
                 }
                 if (i.customId === 'clear_cancel') {
                     collector.stop('cancelled');
-                    const cancelled = new EmbedBuilder().setColor('#ff6666').setTitle('Cancelled').setDescription('No messages were deleted.');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const cancelled = new EmbedBuilder()
+                        .setColor('#ff6666')
+                        .setTitle('Cancelled')
+                        .setDescription('No messages were deleted.');
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await i.update({ embeds: [cancelled], components: [disabled] });
                     return;
                 }
                 if (i.customId === 'clear_confirm') {
                     proceed = true;
                     collector.stop('confirmed');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await i.update({ components: [disabled] });
 
                     try {
                         // Check if the confirmation message would be deleted
                         const replyId = reply.id;
-                        const willDeleteReply = toDelete.some(msg => msg.id === replyId);
-                        
+                        const willDeleteReply = toDelete.some((msg) => msg.id === replyId);
+
                         if (willDeleteReply) {
                             replyDeleted = true;
                         }
@@ -150,7 +193,7 @@ module.exports = {
                                 .setDescription(
                                     config.messages.success
                                         .replace('{count}', deleted.size)
-                                        .replace('{s}', deleted.size === 1 ? '' : 's')
+                                        .replace('{s}', deleted.size === 1 ? '' : 's'),
                                 );
                             await interaction.editReply({ embeds: [done] });
                         }
@@ -167,10 +210,15 @@ module.exports = {
                 }
             });
 
-            collector.on('end', async (_c, reason) => {
+            onEnd(collector, async (_c, reason) => {
                 if (!proceed && reason === 'time' && !replyDeleted) {
-                    const timed = new EmbedBuilder().setColor('#ffcc00').setTitle('Timed out').setDescription('No action taken.');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const timed = new EmbedBuilder()
+                        .setColor('#ffcc00')
+                        .setTitle('Timed out')
+                        .setDescription('No action taken.');
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ embeds: [timed], components: [disabled] }).catch(() => {});
                 }
             });

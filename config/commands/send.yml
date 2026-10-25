@@ -1,0 +1,12 @@
+color: '#0099ff'
+messages:
+    no_permission: ❌ You need the 'Manage Messages' permission to use this command!
+    success: ✅ Message successfully sent to {user}.
+    success_all: Successfully sent a DM to {count} users.
+    error: ❌ Could not process the send command for {user}.
+    error_generic: ❌ An unexpected error occurred.
+    cannot_dm_user: >-
+        ❌ Could not send a DM to {user}. They may have DMs disabled, server privacy settings, or the bot is
+        blocked.
+    dm_fail: ❌ Failed to send the DM to {user} due to an unknown issue.
+    user_not_found: ❌ The specified user could not be found.

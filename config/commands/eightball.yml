@@ -1,0 +1,107 @@
+color: '#2C2F33'
+image_url: >-
+    https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdHl3ZDBzd2J0d21uZTMzeHNnNGZhdDl3ZmRicmxqbDRvcnJwMjF1OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iZZdwNpZwBX4mOAWM6/giphy.gif
+messages:
+    title: 🎱 Magic 8-Ball 🎱
+    question_field: Your Question
+    answer_field: The 8-Ball's Answer
+    error: ❌ An error occurred while shaking the 8-Ball.
+    title_variants:
+        - 🎱 Mystic 8-Ball
+        - 🔮 The All‑Seeing 8‑Ball
+        - 🎱 Fate in a Sphere
+answers:
+    affirmative:
+        - It is certain.
+        - It is decidedly so.
+        - Without a doubt.
+        - Yes – definitely.
+        - You may rely on it.
+        - As I see it, yes.
+        - Most likely.
+        - Outlook good.
+        - Yes.
+        - Signs point to yes.
+        - Absolutely!
+        - No doubt about it.
+        - You can count on it.
+        - The stars say yes.
+        - Chances are high.
+        - Affirmative.
+        - All signs point to yes.
+        - The universe agrees.
+        - You got it!
+        - For sure!
+        - It will happen.
+        - Definitely yes.
+        - You will not be disappointed.
+        - 'The answer is clear: yes.'
+        - The odds are in your favor.
+        - Yes, in due time.
+        - Yes, and soon.
+        - Yes, and it will be amazing.
+        - Yes, trust your instincts.
+        - Yes, you are on the right path.
+        - Yes, the pack is with you!
+    non_committal:
+        - Reply hazy, try again.
+        - Ask again later.
+        - Better not tell you now.
+        - Cannot predict now.
+        - Concentrate and ask again.
+        - Maybe, maybe not.
+        - The answer is unclear.
+        - I can't say right now.
+        - It's complicated.
+        - Ask me again soon.
+        - The spirits are silent.
+        - The fog is thick, try again.
+        - Not sure, try again.
+        - I wish I could tell you.
+        - The answer is hidden.
+        - Uncertain, ask again.
+        - Let me think about it.
+        - The future is murky.
+        - I can't decide now.
+        - It's not for me to say.
+        - The answer is lost in time.
+        - Wait and see.
+        - It's a mystery.
+        - Only time will tell.
+        - The pack is undecided.
+        - The moon is not clear tonight.
+        - The stars are not aligned.
+        - Ask the wind.
+        - The answer is not ready yet.
+        - Try again after a howl.
+    negative:
+        - Don't count on it.
+        - My reply is no.
+        - My sources say no.
+        - Outlook not so good.
+        - Very doubtful.
+        - No way.
+        - Absolutely not.
+        - The stars say no.
+        - Chances are low.
+        - Negative.
+        - I don't think so.
+        - The universe disagrees.
+        - No, not now.
+        - No, and don't ask again.
+        - No, the pack says no.
+        - No, the moon is dark.
+        - No, not in this lifetime.
+        - No, the odds are against you.
+        - No, the answer is no.
+        - No, not a chance.
+        - No, the spirits say no.
+        - No, the wind howls against it.
+        - No, the path is blocked.
+        - No, the answer is lost.
+        - No, the stars are silent.
+        - No, the future is bleak.
+        - No, the pack turns away.
+        - No, the answer is hidden.
+        - No, the night is too dark.
+        - No, the howl is silent.

@@ -1,29 +1,34 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Fun',
     data: new SlashCommandBuilder()
         .setName('rate')
         .setDescription('Rate anything out of 10!')
-        .addStringOption(option =>
-            option.setName('thing')
-                .setDescription('What do you want me to rate?')
-                .setRequired(true))
-        .addStringOption(option =>
+        .addStringOption((option) =>
+            option.setName('thing').setDescription('What do you want me to rate?').setRequired(true),
+        )
+        .addStringOption((option) =>
             option
                 .setName('mode')
                 .setDescription('Score mode')
                 .addChoices(
                     { name: 'Fixed (consistent)', value: 'fixed' },
-                    { name: 'Random (for fun)', value: 'random' }
+                    { name: 'Random (for fun)', value: 'random' },
                 )
-                .setRequired(false)
+                .setRequired(false),
         )
-        .addBooleanOption(option =>
-            option
-                .setName('private')
-                .setDescription('Only you will see the result')
-                .setRequired(false)
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('Only you will see the result').setRequired(false),
         ),
     async execute(interaction) {
         const config = interaction.client.config;
@@ -54,11 +59,15 @@ module.exports = {
             const pct = Math.max(0, Math.min(100, Math.round(score * 10)));
             const hue = Math.round((pct / 100) * 120); // 0 red -> 120 green
             const hslToHex = (h, s, l) => {
-                s /= 100; l /= 100;
-                const k = n => (n + h / 30) % 12;
+                s /= 100;
+                l /= 100;
+                const k = (n) => (n + h / 30) % 12;
                 const a = s * Math.min(l, 1 - l);
-                const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-                const toHex = x => Math.round(255 * x).toString(16).padStart(2, '0');
+                const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+                const toHex = (x) =>
+                    Math.round(255 * x)
+                        .toString(16)
+                        .padStart(2, '0');
                 return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
             };
             return hslToHex(hue, 70, 45);
@@ -78,21 +87,29 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(rateConfig.color || colorFromScore(rating))
                 .setTitle(rateConfig.messages.title)
-                .setDescription(
-                    rateConfig.messages.description
-                        .replace('{thing}', thing)
-                        .replace('{rating}', rating)
-                )
+                .setDescription(rateConfig.messages.description.replace('{thing}', thing).replace('{rating}', rating))
                 .addFields(
                     { name: 'Meter', value: stars(rating), inline: false },
-                    { name: 'Mode', value: `\`${mode}\``, inline: true }
+                    { name: 'Mode', value: `\`${mode}\``, inline: true },
                 )
-                .setFooter({ text: `${interaction.user.tag}${rerolls ? ` • Rerolls: ${rerolls}` : ''}`, iconURL: interaction.user.displayAvatarURL() })
+                .setFooter({
+                    text: `${interaction.user.tag}${rerolls ? ` • Rerolls: ${rerolls}` : ''}`,
+                    iconURL: interaction.user.displayAvatarURL(),
+                })
                 .setTimestamp();
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('rate_reroll').setLabel('Rerate').setStyle(ButtonStyle.Secondary).setEmoji('🔄').setDisabled(mode !== 'random' || rerolls >= 3),
-                new ButtonBuilder().setCustomId('rate_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+                new ButtonBuilder()
+                    .setCustomId('rate_reroll')
+                    .setLabel('Rerate')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('🔄')
+                    .setDisabled(mode !== 'random' || rerolls >= 3),
+                new ButtonBuilder()
+                    .setCustomId('rate_close')
+                    .setLabel('Close')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🗑️'),
             );
 
             await interaction.editReply({ embeds: [embed], components: [row] });
@@ -100,14 +117,19 @@ module.exports = {
             const msg = await interaction.fetchReply();
             const collector = msg.createMessageComponentCollector({ time: 30000 });
 
-            collector.on('collect', async i => {
+            onCollect(collector, async (i) => {
                 if (i.user.id !== interaction.user.id) {
-                    await i.reply({ content: 'Only the command invoker can use these buttons.', flags: MessageFlags.Ephemeral });
+                    await i.reply({
+                        content: 'Only the command invoker can use these buttons.',
+                        flags: MessageFlags.Ephemeral,
+                    });
                     return;
                 }
                 if (i.customId === 'rate_close') {
                     collector.stop('closed');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await i.update({ components: [disabled] });
                     return;
                 }
@@ -119,20 +141,24 @@ module.exports = {
                         .setTitle(rateConfig.messages.title)
                         .setDescription('Rolling new rating...')
                         .setTimestamp();
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ embeds: [waiting], components: [disabled] });
                     setTimeout(() => render(rerolls + 1), 500);
                 }
             });
 
-            collector.on('end', async (_c, reason) => {
+            onEnd(collector, async (_c, reason) => {
                 if (reason === 'time') {
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ components: [disabled] }).catch(() => {});
                 }
             });
         };
 
         await render(0);
-    }
+    },
 };

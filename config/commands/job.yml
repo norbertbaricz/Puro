@@ -1,0 +1,21 @@
+color: '#5865f2'
+color_success: '#2ecc71'
+color_failure: '#ed4245'
+messages:
+    list_title: Job Board
+    list_description: Apply for a job to unlock /work payouts. Each role has different risks and rewards.
+    list_footer: You can only hold one job at a time.
+    job_not_found: That job is no longer available.
+    already_employed: You already work as {job}. Use /job quit first.
+    apply_title: You are hired!
+    apply_success: Welcome aboard as {job}!
+    apply_failure: The hiring manager passed this time. Try again soon.
+    apply_rejected_title: Application result
+    status_title: Employment Status
+    status_no_job: You are currently unemployed. Use /job to browse openings.
+    status_footer: Use /job quit if you want to change careers.
+    quit_title: Resigned from position
+    quit_success: You have left your job as {job}.
+    quit_no_job: You are not currently employed.
+    job_missing_title: Job unavailable
+    job_missing: Your previous job no longer exists. Please apply for a new one.

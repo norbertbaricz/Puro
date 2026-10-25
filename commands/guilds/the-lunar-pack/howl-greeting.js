@@ -1,19 +1,16 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Special',
     data: new SlashCommandBuilder()
         .setName('howl-greeting')
         .setDescription('Send a dramatic howl greeting.')
-        .addUserOption(option =>
-            option.setName('member')
-                .setDescription('Optional member to highlight in the howl')
-                .setRequired(false)
+        .addUserOption((option) =>
+            option.setName('member').setDescription('Optional member to highlight in the howl').setRequired(false),
         )
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Send the howl privately (ephemeral reply)')
-                .setRequired(false)
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('Send the howl privately (ephemeral reply)').setRequired(false),
         ),
 
     async execute(interaction) {

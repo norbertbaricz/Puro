@@ -1,0 +1,41 @@
+{
+    "id": "event_planner",
+    "emoji": "🎉",
+    "name": "Event Planner",
+    "description": "Organize unforgettable gatherings and keep clients delighted.",
+    "apply": {
+        "baseSuccessRate": 0.5,
+        "successMessages": ["Your mood board wowed the agency. You're leading the next event!"],
+        "failureMessages": ["They want a stronger portfolio. Coordinate a community event then reapply."]
+    },
+    "work": {
+        "cooldownSeconds": 110,
+        "payRange": {
+            "min": 140,
+            "max": 280
+        },
+        "bonusChance": 0.28,
+        "bonusMultiplier": {
+            "min": 1.2,
+            "max": 1.6
+        },
+        "failureChance": 0.16,
+        "failurePenaltyRange": {
+            "min": 10,
+            "max": 25
+        },
+        "successMessages": [
+            "Every vendor showed up on time and the client cheered.",
+            "You flipped a rehearsal disaster into a flawless finale.",
+            "The venue manager added you to their preferred planner list."
+        ],
+        "bonusMessages": [
+            "A grateful couple handed you a thick envelope of tips.",
+            "The agency gave you a bonus for upselling premium décor."
+        ],
+        "failureMessages": [
+            "A missing caterer meant compensating guests out of pocket.",
+            "The DJ no-showed, forcing you to refund part of the fee."
+        ]
+    }
+}

@@ -1,0 +1,20 @@
+color_error: '#e74c3c'
+color_hacked: '#8e44ad'
+color_success: '#2ecc71'
+messages:
+    self_payment_title: '❌ Transaction Error: Self-Payment'
+    self_payment_desc: You cannot send money to yourself. Please choose another member.
+    invalid_amount_title: '❌ Transaction Error: Invalid Amount'
+    invalid_amount_desc: The amount must be a positive number greater than 0.
+    insufficient_funds_title: '🏦 Transaction Error: Insufficient Funds'
+    insufficient_funds_desc: You currently have **💵 ${balance}**, which is not enough to send **💵 ${amount}**.
+    hacked_title: 💀 Transaction Hacked! 💀
+    hacked_desc: Oh no! Your transaction was intercepted by a rogue hacker!
+    hacked_field_sender: Sender
+    hacked_field_amount_lost: Amount Lost
+    hacked_field_recipient: Recipient
+    hacked_field_new_balance: Your New Balance
+    success_title: ✅ Transaction Successful! ✅
+    success_desc: You have successfully transferred **💵 ${amount}** to {receiver}!
+    success_field_sender: Sender
+    success_field_recipient: Recipient

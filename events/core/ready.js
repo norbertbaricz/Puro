@@ -1,151 +1,61 @@
-const { ActivityType } = require('discord.js');
+const { ActivityType, Events } = require('discord.js');
+const { createLogger } = require('../../src/core/logging/logger');
+
+// Discord presence changes should remain comfortably below Gateway rate limits.
+const MIN_PRESENCE_INTERVAL_MS = 15_000;
+const DEFAULT_PRESENCE_INTERVAL_MS = 30_000;
+const log = createLogger('READY');
 
 module.exports = {
-    name: 'clientReady',
+    name: Events.ClientReady,
     once: true,
     async execute(client) {
-        const readyConfig = client.config?.events?.ready || {};
-        const messages = readyConfig.messages || {};
-        const quiet = client.config?.logging?.quiet_startup ?? true;
-        if (!quiet && messages.login_success) {
-            console.log(messages.login_success.replace('{tag}', client.user.tag));
-        }
-
-        const computeStats = () => {
-            let members = 0, channels = 0;
-            client.guilds.cache.each(guild => {
-                members += guild.memberCount;
-                channels += guild.channels.cache.size;
-            });
-            return { members, channels };
-        };
-
-        // Log stats once on ready
-        const { members: totalMembers, channels: totalChannels } = computeStats();
-        if (!quiet) {
-            if (messages.stats?.servers) console.log(messages.stats.servers.replace('{count}', client.guilds.cache.size));
-            if (messages.stats?.members) console.log(messages.stats.members.replace('{count}', totalMembers));
-            if (messages.stats?.channels) console.log(messages.stats.channels.replace('{count}', totalChannels));
-        }
-
-        const statusConfig = client.config?.status || {};
-        if (!statusConfig.texts || statusConfig.texts.length === 0) {
-            if (messages.no_status) console.log(messages.no_status);
-            await client.user.setPresence({
-                activities: [{ name: 'Error' }],
-                status: statusConfig?.status || 'dnd'
-            });
-            return;
-        }
-
-        const activityTypes = {
-            'Playing': ActivityType.Playing,
-            'Streaming': ActivityType.Streaming,
-            'Listening': ActivityType.Listening,
-            'Watching': ActivityType.Watching,
-            'Custom': ActivityType.Custom,
-            'Competing': ActivityType.Competing
-        };
-
-        let idx = 0;
-        const formatUptime = () => {
-            const s = Math.floor(process.uptime());
-            const d = Math.floor(s / 86400);
-            const h = Math.floor((s % 86400) / 3600);
-            const m = Math.floor((s % 3600) / 60);
-            return `${d}d ${h}h ${m}m`;
-        };
-
-        const setRandomActivity = async () => {
-            const { members } = computeStats();
-            const servers = client.guilds.cache.size;
-            const premiumGuildCount = (() => {
-                const directory = client.guildDirectory || {};
-                if (directory.premiumGuilds instanceof Map) return directory.premiumGuilds.size;
-                if (Array.isArray(directory.premiumGuilds)) return directory.premiumGuilds.length;
-                return Number(directory.premiumGuilds) || 0;
-            })();
-            const uptime = formatUptime();
-            const textRaw = statusConfig.texts[idx % statusConfig.texts.length];
-            idx++;
-            const text = textRaw
-                .replace('{servers}', String(servers))
-                .replace('{members}', String(members))
-                .replace('{membersGreeted}', String(members))
-                .replace('{uptime}', uptime)
-                .replace('{premiumGuilds}', String(premiumGuildCount))
-                .slice(0, 128);
-            let activity;
-
-            if (statusConfig.type === 'Custom') {
-                activity = {
-                    name: text,
-                    type: ActivityType.Custom,
-                };
-            } else if (statusConfig.type === 'Streaming') {
-                activity = {
-                    name: text,
-                    type: ActivityType.Streaming,
-                    url: statusConfig.url || "https://www.twitch.tv/insym", // Adaugă un URL implicit pentru streaming
-                };
-            } else {
-                activity = {
-                    name: text,
-                    type: activityTypes[statusConfig.type] || ActivityType.Playing,
-                };
-            }
-
+        const config = client.config.status || {};
+        const texts = Array.isArray(config.texts)
+            ? config.texts.filter((text) => typeof text === 'string' && text.trim())
+            : [];
+        let index = 0;
+        const update = () => {
             try {
-                await client.user.setPresence({ activities: [activity], status: statusConfig.status || 'online' });
+                const members = [...client.guilds.cache.values()].reduce((sum, guild) => sum + guild.memberCount, 0);
+                const minutes = Math.floor(process.uptime() / 60);
+                const values = {
+                    servers: client.guilds.cache.size,
+                    members,
+                    membersGreeted: members,
+                    uptime: `${Math.floor(minutes / 1440)}d ${Math.floor(minutes / 60) % 24}h ${minutes % 60}m`,
+                };
+                const template = texts.length ? texts[index++ % texts.length] : 'Use /help';
+                const name = template.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match).slice(0, 128);
+                const type = ActivityType[config.type] ?? ActivityType.Playing;
+                const activity = { name, type };
+                if (type === ActivityType.Custom) {
+                    activity.name = 'Custom Status';
+                    activity.state = name;
+                }
+                if (type === ActivityType.Streaming && config.url) activity.url = config.url;
+                client.user.setPresence({ activities: [activity], status: config.status || 'online' });
             } catch (error) {
-                if (messages.status_error) console.error(messages.status_error, error);
-                else console.error('Status set error', error);
+                log.error('Could not update presence', { error });
             }
         };
-
-        setRandomActivity();
-        const intervalMs = Math.max(5000, Number(statusConfig.interval_ms) || 10000);
-        setInterval(setRandomActivity, intervalMs);
-
-        // Print futuristic banner once, after presence is set and ping stabilizes
-        setTimeout(() => {
-            try {
-                const globalCommandsCount = client.commands?.size || 0;
-                const scopedCommandsCount = Array.from(client.guildCommands instanceof Map ? client.guildCommands.values() : [])
-                    .reduce((sum, col) => sum + (col?.size || 0), 0);
-                const commandsLoaded = globalCommandsCount + scopedCommandsCount;
-                const eventsLoaded = (client.eventLoadDetails || []).filter(x => x.status === 'success' && !x.type).length;
-                const servers = client.guilds.cache.size;
-                const { members } = computeStats();
-                const ping = Math.max(0, client.ws.ping);
-                let bootSeconds = null;
-                try {
-                    if (client.bootStartedAt) {
-                        const now = process.hrtime.bigint();
-                        const ms = Number(now - client.bootStartedAt) / 1e6;
-                        bootSeconds = (ms / 1000).toFixed(2);
-                    }
-                } catch { /* hrtime may not be available */ }
-
-                const lines = [
-                    '\n══════════════════════════════════════════════════════════════════════════',
-                    '🚀 Puro is online and ready!',
-                    `🧠 Commands: ${commandsLoaded} loaded  •  🧩 Events: ${eventsLoaded} active`,
-                    `🌐 Servers: ${servers}  •  👥 Members: ${members}  •  📡 Ping: ${ping}ms` + (bootSeconds ? `  •  ⏱️  Boot: ${bootSeconds}s` : ''),
-                    '══════════════════════════════════════════════════════════════════════════\n',
-                ];
-                console.log(lines.join('\n'));
-            } catch { /* non-critical display error */ }
-        }, 800);
-
-        // Start health monitoring when bot is fully ready
-        try {
-            if (client.healthMonitor && typeof client.healthMonitor.startMonitoring === 'function') {
-                const intervalMs = Number(client.config?.health?.interval_ms) || 300000;
-                client.healthMonitor.startMonitoring(intervalMs);
-            }
-        } catch (err) {
-            console.error('Health monitor start failed:', err);
-        }
+        update();
+        const timer = setInterval(
+            update,
+            Math.max(MIN_PRESENCE_INTERVAL_MS, Number(config.interval_ms) || DEFAULT_PRESENCE_INTERVAL_MS),
+        );
+        timer.unref();
+        client.healthMonitor?.stopMonitoring();
+        client.healthMonitor?.startMonitoring(client.config.health.interval_ms);
+        const seconds = client.bootStartedAt
+            ? (Number(process.hrtime.bigint() - client.bootStartedAt) / 1e9).toFixed(2)
+            : '?';
+        log.info(
+            `${client.user.tag} online | ${client.plugins.records.size} modules | ${client.guilds.cache.size} servers | boot ${seconds}s`,
+        );
+        return () => {
+            clearInterval(timer);
+            client.healthMonitor?.stopMonitoring();
+        };
     },
 };

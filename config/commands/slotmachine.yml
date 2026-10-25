@@ -1,0 +1,41 @@
+color_win: '#2ecc71'
+color_lose: '#ed4245'
+color_info: '#5865f2'
+messages:
+    title: 🎰 Slot Machine
+    field_bet: Bet
+    field_multiplier: Multiplier
+    field_win: Winnings
+    field_loss: Loss
+    field_new_balance: New Balance
+    field_combo: Combo
+    footer_win: Luck is on your side!
+    footer_lose: You lost the bet. Try again!
+    footer_partial: A small win keeps the streak alive.
+    footer_jackpot: Legendary spin!
+    buttons:
+        play_again: Play Again
+        half: Half
+        all_in: All‑in
+        close: Close
+    errors:
+        invalid_bet: ❌ Bet amount must be a positive number.
+        insufficient_funds: ❌ Insufficient funds. You only have ${balance}.
+        insufficient_funds_bet: '❌ Insufficient funds to bet ${bet}. Balance: ${balance}.'
+    not_you: Only you can use these buttons.
+    jackpot: 🎉 JACKPOT! Triple match pays out huge!
+    jackpot_variants:
+        - 🎊 JACKPOT! Triple match explodes with cash!
+        - 🔥 Mega win! Triple symbols light up the reels!
+    partial_win: Two-of-a-kind still pays nicely.
+    partial_variants:
+        - 🍒 A modest win keeps you in the game.
+        - Lucky alignment! Enjoy the mini payout.
+    win_message: You hit a winning combo!
+    win_variants:
+        - ⭐ Stellar spin!
+        - 💰 Coins clatter across the floor!
+    lose_message: Better luck on the next spin.
+    lose_variants:
+        - 🙈 The reels were not in your favour this time.
+        - 🌀 The slot gods demand another offering.

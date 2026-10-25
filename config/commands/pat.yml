@@ -1,0 +1,14 @@
+color: '#add8e6'
+gifs:
+    - https://media.tenor.com/btPy5klSh0IAAAAC/bumfuzzled-bee-fox.gif
+    - https://media.tenor.com/-jJlxJOR2yIAAAAC/moose-protogen.gif
+    - https://media.tenor.com/_NRJIzd6gN0AAAAC/headpats.gif
+    - https://media.tenor.com/_bR7adLs-KUAAAAC/moose-protogen.gif
+    - https://media.tenor.com/5PioGrUQwccAAAAC/furries-furry.gif
+    - https://media.tenor.com/IjM-iW1BkPYAAAAC/cutie-furry-meme.gif
+messages:
+    self_pat: You can't pat yourself! 🫶
+    success_title: 🫶 Pat Time!
+    success_desc: "**{sender}** gently pats **{receiver}**! That's adorable!"
+    note_label: Note
+    dm: '{sender} gave you a pat from {guild} in {channelMention}!'

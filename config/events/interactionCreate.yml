@@ -1,0 +1,8 @@
+messages:
+    command_not_found: ⚠️ Command {command} not found.
+    execution_error: ❌ Error executing command!
+    handler_error: ❌ Error processing interaction!
+    command_not_found_variants:
+        - 🤔 I couldn't find /{command}.
+        - ⚠️ /{command} isn't available.
+        - '🚫 Unknown command: /{command}.'

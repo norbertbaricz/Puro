@@ -1,0 +1,11 @@
+color: '#0099ff'
+messages:
+    calculating_title: 🔍 Calculating Activity...
+    calculating_desc: Please wait. I am analyzing activity from the last **{days} days**. This might take a moment.
+    error: ❌ Error fetching leaderboard!
+    no_activity: I couldn't find any recent activity in the last {days} days to create a leaderboard.
+    title: 🏆 Top {count} {type} Members
+    description: Based on message activity in the last **{days} days** on **{servername}**.
+    leaderboard_field: Leaderboard
+    leaderboard_empty: No activity found.
+    footer: Requested by {user}

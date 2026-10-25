@@ -1,24 +1,28 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../lib/economy');
-const { getJobById, formatPayRange } = require('../../lib/jobs');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
+const { withEconomy, ensureUserRecord, snapshotEntry } = require('../../src/services/economy/store');
+const { getJobById, formatPayRange } = require('../../src/services/economy/jobs');
 
 module.exports = {
+    guildOnly: true,
     category: 'Economy',
     data: new SlashCommandBuilder()
         .setName('wallet')
         .setDescription('Check your wallet balance, job, and earnings history.')
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Reply only to you')
-                .setRequired(false)
-        ),
+        .addBooleanOption((option) => option.setName('private').setDescription('Reply only to you').setRequired(false)),
     async execute(interaction) {
         const isPrivate = interaction.options.getBoolean('private') || false;
         const targetUser = interaction.user;
         const conf = interaction.client.config.commands.wallet || {};
-        const canUseEphemeral = typeof interaction.inGuild === 'function'
-            ? interaction.inGuild()
-            : Boolean(interaction.guildId);
+        const canUseEphemeral =
+            typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId);
         const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
 
         await interaction.deferReply({ flags: shouldBeEphemeral ? MessageFlags.Ephemeral : undefined });
@@ -55,7 +59,7 @@ module.exports = {
         const render = async () => {
             const { entry } = await fetchEntry();
             const balance = entry.balance || 0;
-            const color = conf.color || 0x2ECC71;
+            const color = conf.color || 0x2ecc71;
             const title = conf.messages?.title || '💰 Wallet Balance Inquiry';
             const descSelf = conf.messages?.description_self || 'Here is your current wallet balance:';
             const fieldUser = conf.messages?.field_user || 'User';
@@ -68,7 +72,7 @@ module.exports = {
                 .setDescription(descSelf.replace('{user}', `${targetUser}`))
                 .addFields(
                     { name: fieldUser, value: `${targetUser}`, inline: true },
-                    { name: fieldBalance, value: `\`$${balance.toLocaleString()}\``, inline: true }
+                    { name: fieldBalance, value: `\`$${balance.toLocaleString()}\``, inline: true },
                 )
                 .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
                 .setFooter({ text: 'Puro Bank | Official Statement' })
@@ -94,9 +98,21 @@ module.exports = {
             }
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('wallet_refresh').setLabel('Refresh').setStyle(ButtonStyle.Secondary).setEmoji('🔁'),
-                new ButtonBuilder().setCustomId('wallet_tips').setLabel('How to earn?').setStyle(ButtonStyle.Primary).setEmoji('💡'),
-                new ButtonBuilder().setCustomId('wallet_close').setLabel('Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+                new ButtonBuilder()
+                    .setCustomId('wallet_refresh')
+                    .setLabel('Refresh')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('🔁'),
+                new ButtonBuilder()
+                    .setCustomId('wallet_tips')
+                    .setLabel('How to earn?')
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('💡'),
+                new ButtonBuilder()
+                    .setCustomId('wallet_close')
+                    .setLabel('Close')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🗑️'),
             );
 
             await interaction.editReply({ embeds: [embed], components: [row] });
@@ -107,7 +123,7 @@ module.exports = {
             }
             const collector = msg.createMessageComponentCollector({ time: 30000 });
             activeCollector = collector;
-            collector.on('collect', async i => {
+            onCollect(collector, async (i) => {
                 if (i.user.id !== interaction.user.id) {
                     await i.reply({ content: 'Only you can control your view.', flags: MessageFlags.Ephemeral });
                     return;
@@ -115,7 +131,9 @@ module.exports = {
                 if (i.customId === 'wallet_close') {
                     await safeDeferUpdate(i);
                     stopCollector('closed');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ components: [disabled] });
                     return;
                 }
@@ -126,22 +144,28 @@ module.exports = {
                     return;
                 }
                 if (i.customId === 'wallet_tips') {
-                    await i.reply({ content: 'Open /job to pick a role, earn with /work, try your luck at /blackjack or /slotmachine, share cash with /pay, and track riches via /leaderboard.', flags: MessageFlags.Ephemeral });
+                    await i.reply({
+                        content:
+                            'Open /job to pick a role, earn with /work, try your luck at /blackjack or /slotmachine, share cash with /pay, and track riches via /leaderboard.',
+                        flags: MessageFlags.Ephemeral,
+                    });
                     return;
                 }
             });
 
-            collector.on('end', async (c, reason) => {
+            onEnd(collector, async (c, reason) => {
                 if (activeCollector === collector) {
                     activeCollector = null;
                 }
                 if (reason === 'time') {
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await interaction.editReply({ components: [disabled] }).catch(() => {});
                 }
             });
         };
 
         await render();
-    }
+    },
 };

@@ -1,0 +1,7 @@
+color: '#ff69b4'
+messages:
+    self_ship: You can't ship yourself with yourself! 💔
+    title: 🚢 Shipping Result!
+    description: |-
+        {emoji} **{user1}** + **{user2}** = **{shipName}**
+        Compatibility: **{percentage}%**

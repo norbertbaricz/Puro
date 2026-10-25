@@ -1,0 +1,18 @@
+color: '#FF69B4'
+messages:
+    self_love: 💝 No self-love checks!
+    error: ❌ Error calculating love!
+    tips:
+        - Communication is key! 🗣️
+        - Show appreciation daily! 🌟
+        - Respect differences! 🤝
+        - Make time for each other! ⏰
+        - Keep romance alive! 🌹
+    results:
+        '0': Time to look elsewhere! 💔
+        '10': Maybe just friends? 💔
+        '30': Some attraction! 💗
+        '50': There's a spark! 💓
+        '70': Great potential! 💖
+        '90': Amazing chemistry! 💝
+        '100': Perfect match! 💘 True love!

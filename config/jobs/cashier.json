@@ -1,0 +1,44 @@
+{
+    "id": "cashier",
+    "emoji": "🛒",
+    "name": "Cashier",
+    "description": "Handle checkouts and keep customers smiling.",
+    "apply": {
+        "baseSuccessRate": 0.95,
+        "successMessages": ["Management loved your friendly energy. Welcome behind the counter!"],
+        "failureMessages": ["They need someone a bit quicker on the register. Practice and retry soon!"]
+    },
+    "work": {
+        "cooldownSeconds": 55,
+        "payRange": {
+            "min": 30,
+            "max": 70
+        },
+        "bonusChance": 0.18,
+        "bonusMultiplier": {
+            "min": 1.05,
+            "max": 1.2
+        },
+        "failureChance": 0.05,
+        "failurePenaltyRange": {
+            "min": 2,
+            "max": 6
+        },
+        "successMessages": [
+            "Every barcode scanned flawlessly and customers left grinning.",
+            "You handled a rush-hour surge without breaking a sweat.",
+            "Exact change wizard! The line never stopped moving.",
+            "Your friendly banter earned a stack of compliments cards."
+        ],
+        "bonusMessages": [
+            "A regular tipped extra for your quick service.",
+            "The shift lead slipped you a bonus for covering breaks.",
+            "Management praised your spotless lane and handed over a gift card."
+        ],
+        "failureMessages": [
+            "A carton of eggs slipped; cleanup time ate your evening.",
+            "A price-check fiasco slowed everything down.",
+            "A miscounted till meant you stayed late balancing the drawer."
+        ]
+    }
+}

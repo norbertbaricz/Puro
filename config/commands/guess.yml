@@ -1,0 +1,19 @@
+color: '#0099ff'
+messages:
+    title: 🎲 Guess the Number! 🎲
+    description: |-
+        Hello, {user}! I have chosen a number between **{min}** and **{max}**.
+        You have **{chances}** attempts to guess it.
+    prompt: Type your guess in the chat!
+    prompt_value: Good luck!
+    footer: Game started by {userTag}
+    win_title: 🎉 Congratulations! You won! 🎉
+    win_description: That's correct! The secret number was **{secretNumber}**.
+    lose_title: 😭 You lost! 😭
+    lose_description: Unfortunately, you've run out of attempts. The secret number was **{secretNumber}**.
+    hint_higher: The secret number is **higher**! You have **{chances}** attempts left.
+    hint_lower: The secret number is **lower**! You have **{chances}** attempts left.
+    invalid_guess: '"{guess}" is not a valid number. Please try again!'
+    invalid_range: The minimum value must be less than the maximum value!
+    invalid_chances: The number of chances must be greater than zero!
+    timeout: The game has ended because the time expired!

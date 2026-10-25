@@ -1,0 +1,18 @@
+color: '#3498db'
+messages:
+    title: 👤 {tag}
+    description: '**User Information**'
+    not_found: Member not found.
+    fields:
+        user_id: 🆔 User ID
+        bot: 🤖 Bot
+        nickname: 🎭 Nickname
+        account_created: 📆 Account Created
+        joined_server: 📅 Joined Server
+        roles: 🎨 Roles
+        security: 🔒 Security
+        invited_by: Invited by
+    'yes': 'Yes'
+    'no': 'No'
+    none: None
+    footer: Requested by {user}

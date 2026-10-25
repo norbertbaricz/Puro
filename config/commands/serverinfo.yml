@@ -1,0 +1,16 @@
+color: '#5865F2'
+messages:
+    title: 🌐 {servername}
+    description: '**Server Information**'
+    fields:
+        server_id: 🆔 Server ID
+        owner: 👑 Owner
+        created: 📆 Created
+        members: 👥 Members
+        text_channels: 💬 Text Channels
+        voice_channels: 🔊 Voice Channels
+        roles: 🎭 Roles
+        boost_level: 🚀 Boost Level
+        boosts: ✨ Boosts
+        invites: Open Invites
+    footer: Requested by {user}

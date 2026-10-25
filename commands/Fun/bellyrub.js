@@ -1,6 +1,15 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, AttachmentBuilder } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+    AttachmentBuilder,
+} = require('discord.js');
 const axios = require('axios');
-const { pickRandom, formatTemplate } = require('../../lib/utils');
+const { pickRandom, formatTemplate } = require('../../src/shared/utils');
 
 const MAX_GIF_BYTES = 8 * 1024 * 1024;
 
@@ -13,7 +22,8 @@ function isImageBuffer(buffer) {
     // PNG
     if (header.startsWith('89504e470d0a1a0a')) return true;
     // WEBP (RIFF....WEBP)
-    if (buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP') return true;
+    if (buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP')
+        return true;
     // JPEG
     if (buffer.subarray(0, 2).toString('hex') === 'ffd8') return true;
     return false;
@@ -26,11 +36,12 @@ async function fetchGifAttachment(url) {
             timeout: 8000,
             maxContentLength: MAX_GIF_BYTES,
             maxBodyLength: MAX_GIF_BYTES,
-            validateStatus: status => status >= 200 && status < 300,
+            validateStatus: (status) => status >= 200 && status < 300,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36',
-                'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
-            }
+                'User-Agent':
+                    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36',
+                Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+            },
         });
 
         const buffer = Buffer.from(response.data);
@@ -52,7 +63,7 @@ async function buildEmbedWithGif({
     footerText,
     footerIcon,
     note,
-    noteLabel
+    noteLabel,
 }) {
     const embed = new EmbedBuilder()
         .setColor(color)
@@ -84,25 +95,19 @@ async function buildEmbedWithGif({
 }
 
 module.exports = {
+    guildOnly: true,
     category: 'Fun',
     data: new SlashCommandBuilder()
         .setName('bellyrub')
         .setDescription('Offer a cozy belly rub to another member.')
-        .addUserOption(option =>
-            option.setName('member')
-                .setDescription('The member you want to belly rub')
-                .setRequired(true)
+        .addUserOption((option) =>
+            option.setName('member').setDescription('The member you want to belly rub').setRequired(true),
         )
-        .addStringOption(option =>
-            option.setName('note')
-                .setDescription('Add a small note (optional)')
-                .setMaxLength(200)
-                .setRequired(false)
+        .addStringOption((option) =>
+            option.setName('note').setDescription('Add a small note (optional)').setMaxLength(200).setRequired(false),
         )
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Only you will see the response')
-                .setRequired(false)
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('Only you will see the response').setRequired(false),
         ),
 
     async execute(interaction) {
@@ -116,14 +121,17 @@ module.exports = {
         const bellyCfg = (cfg.commands && cfg.commands.bellyrub) || {};
         const messages = bellyCfg.messages || {};
 
-        const gifPool = Array.isArray(bellyCfg.gifs) && bellyCfg.gifs.length ? bellyCfg.gifs : [
-            'https://media1.tenor.com/m/pb7eyPp7eb0AAAAC/mofumofu-nyaro-kemono.gif',
-            'https://media1.tenor.com/m/4BItFn9rfZoAAAAC/belly-rub-sergal.gif',
-            'https://media1.tenor.com/m/fdD8vLpUaYYAAAAC/furry-meme.gif',
-            'https://media1.tenor.com/m/n0EA_aBbOOIAAAAC/hyaku-cute.gif',
-            'https://media1.tenor.com/m/0I_X54t4myEAAAAC/belly-rub.gif',
-            'https://media1.tenor.com/m/3-jhhOv5P8EAAAAd/arcanine-pokemon.gif'
-        ];
+        const gifPool =
+            Array.isArray(bellyCfg.gifs) && bellyCfg.gifs.length
+                ? bellyCfg.gifs
+                : [
+                      'https://media1.tenor.com/m/pb7eyPp7eb0AAAAC/mofumofu-nyaro-kemono.gif',
+                      'https://media1.tenor.com/m/4BItFn9rfZoAAAAC/belly-rub-sergal.gif',
+                      'https://media1.tenor.com/m/fdD8vLpUaYYAAAAC/furry-meme.gif',
+                      'https://media1.tenor.com/m/n0EA_aBbOOIAAAAC/hyaku-cute.gif',
+                      'https://media1.tenor.com/m/0I_X54t4myEAAAAC/belly-rub.gif',
+                      'https://media1.tenor.com/m/3-jhhOv5P8EAAAAd/arcanine-pokemon.gif',
+                  ];
 
         const color = bellyCfg.color || colors.default || '#ff9ff3';
         const selfMessage = messages.self_bellyrub || "You can't belly rub yourself! 🐾";
@@ -147,7 +155,7 @@ module.exports = {
         const descriptionTemplate = messages.success_desc || '{sender} gives {receiver} a gentle belly rub!';
         const description = formatTemplate(descriptionTemplate, {
             sender: `**${sender.username}**`,
-            receiver: `**${target.username}**`
+            receiver: `**${target.username}**`,
         });
 
         const { embed, files } = await buildEmbedWithGif({
@@ -159,12 +167,20 @@ module.exports = {
             footerText: `Requested by ${sender.tag}`,
             footerIcon: sender.displayAvatarURL({ dynamic: true }),
             note,
-            noteLabel: messages.note_label || 'Note'
+            noteLabel: messages.note_label || 'Note',
         });
 
         const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('bellyrub_return').setLabel(messages.return_button || 'Belly rub back').setStyle(ButtonStyle.Secondary).setEmoji('🫶'),
-            new ButtonBuilder().setCustomId('bellyrub_close').setLabel(messages.close_button || 'Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+            new ButtonBuilder()
+                .setCustomId('bellyrub_return')
+                .setLabel(messages.return_button || 'Belly rub back')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('🫶'),
+            new ButtonBuilder()
+                .setCustomId('bellyrub_close')
+                .setLabel(messages.close_button || 'Close')
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('🗑️'),
         );
 
         await interaction.editReply({ embeds: [embed], files, components: [row] });
@@ -182,11 +198,12 @@ module.exports = {
         if (!target.bot) {
             const guildName = interaction.guild?.name || 'Direct Message';
             const channel = interaction.channel;
-            const channelLabel = interaction.guild && channel && typeof channel.name === 'string'
-                ? `#${channel.name}`
-                : interaction.guild
-                    ? 'this channel'
-                    : 'this conversation';
+            const channelLabel =
+                interaction.guild && channel && typeof channel.name === 'string'
+                    ? `#${channel.name}`
+                    : interaction.guild
+                      ? 'this channel'
+                      : 'this conversation';
             const channelMention = interaction.guild ? `<#${interaction.channelId}>` : channelLabel;
 
             const dmTemplate = messages.dm || '{sender} gave you a belly rub from {guild} in {channelMention}!';
@@ -195,7 +212,7 @@ module.exports = {
                 receiver: target.tag,
                 guild: guildName,
                 channel: channelLabel,
-                channelMention
+                channelMention,
             });
 
             const contextFooter = [sender.tag];
@@ -214,15 +231,21 @@ module.exports = {
                 footerText: contextFooter.join(' • '),
                 footerIcon: sender.displayAvatarURL({ dynamic: true }),
                 note,
-                noteLabel: messages.note_label || 'Note'
+                noteLabel: messages.note_label || 'Note',
             });
 
             try {
-                await target.send({ content: dmContent, embeds: [dmEmbed], files: dmFiles });
+                await target.send(
+                    interaction.client.ui.message({ content: dmContent, embeds: [dmEmbed], files: dmFiles }),
+                );
             } catch (error) {
                 if (!bellyCfg.silent_dm_failures) {
                     const logger = interaction.client.logger?.warn ? interaction.client.logger : console;
-                    (logger.warn || console.warn).call(logger, 'Unable to DM bellyrub target:', error?.message || error);
+                    (logger.warn || console.warn).call(
+                        logger,
+                        'Unable to DM bellyrub target:',
+                        error?.message || error,
+                    );
                 }
                 await notifyDmFailure();
             }
@@ -231,30 +254,39 @@ module.exports = {
         const message = await interaction.fetchReply();
         const collector = message.createMessageComponentCollector({ time: 30000 });
 
-        collector.on('collect', async i => {
+        onCollect(collector, async (i) => {
             try {
                 if (i.customId === 'bellyrub_close') {
                     if (i.user.id !== sender.id && i.user.id !== target.id) {
-                        await i.reply({ content: messages.close_denied || 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
+                        await i.reply({
+                            content: messages.close_denied || 'Only the sender or receiver can close this.',
+                            flags: MessageFlags.Ephemeral,
+                        });
                         return;
                     }
                     collector.stop('closed');
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await i.update({ components: [disabled] });
                     return;
                 }
 
                 if (i.customId === 'bellyrub_return') {
                     if (i.user.id !== target.id) {
-                        await i.reply({ content: messages.return_denied || 'Only the mentioned member can return the belly rub.', flags: MessageFlags.Ephemeral });
+                        await i.reply({
+                            content: messages.return_denied || 'Only the mentioned member can return the belly rub.',
+                            flags: MessageFlags.Ephemeral,
+                        });
                         return;
                     }
                     collector.stop('returned');
                     const newGif = pickRandom(gifPool) || selectedGif;
-                    const returnTemplate = messages.return_desc || '**{receiver}** returns a cozy belly rub to **{sender}**!';
+                    const returnTemplate =
+                        messages.return_desc || '**{receiver}** returns a cozy belly rub to **{sender}**!';
                     const returnDescription = formatTemplate(returnTemplate, {
                         sender: `**${sender.username}**`,
-                        receiver: `**${target.username}**`
+                        receiver: `**${target.username}**`,
                     });
 
                     const { embed: returnedEmbed, files: returnedFiles } = await buildEmbedWithGif({
@@ -263,10 +295,12 @@ module.exports = {
                         color,
                         gifUrl: newGif,
                         footerText: `Started by ${sender.tag}`,
-                        footerIcon: sender.displayAvatarURL({ dynamic: true })
+                        footerIcon: sender.displayAvatarURL({ dynamic: true }),
                     });
 
-                    const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                    const disabled = new ActionRowBuilder().addComponents(
+                        row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                    );
                     await i.update({ embeds: [returnedEmbed], files: returnedFiles, components: [disabled] });
                 }
             } catch (error) {
@@ -278,11 +312,13 @@ module.exports = {
             }
         });
 
-        collector.on('end', async (_c, reason) => {
+        onEnd(collector, async (_c, reason) => {
             if (reason === 'time') {
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 await interaction.editReply({ components: [disabled] }).catch(() => {});
             }
         });
-    }
+    },
 };

@@ -1,0 +1,27 @@
+color: '#ff6699'
+gifs:
+    - https://media.tenor.com/Cm_yDYrpx-AAAAAC/furry-furry-love.gif
+    - https://media.tenor.com/s4sQI66ZptUAAAAC/furry-couple.gif
+    - https://media.tenor.com/UO-pdPnf7ggAAAAC/furry-kiss.gif
+    - https://media.tenor.com/S_iFfCRoRNYAAAAC/furry-furry-kiss.gif
+    - https://media.tenor.com/hZSOdF6eJ9kAAAAC/protogen-protogen-kiss.gif
+    - https://media.tenor.com/ss6CRfqp1UUAAAAC/furry-love.gif
+messages:
+    self_kiss: You cannot kiss yourself! 😳
+    success_title: 💋 Kiss!
+    return_title: 💞 Kiss Returned!
+    return_button: Kiss back
+    close_button: Close
+    return_denied: Only the mentioned member can return the kiss.
+    close_denied: Only the sender or receiver can close this.
+    note_label: Note
+    dm: '{sender} sent you a kiss from {guild} in {channelMention}!'
+    templates:
+        - '**{sender}** kisses **{receiver}**! 💋'
+        - '**{sender}** plants a sweet kiss on **{receiver}**.'
+        - Smack! **{receiver}** just got a kiss from **{sender}**.
+        - '**{sender}** leans in and kisses **{receiver}** romantically.'
+    return_templates:
+        - '**{receiver}** kisses **{sender}** back! 💞'
+        - '**{receiver}** responds with an even sweeter kiss!'
+        - '**{receiver}** blushes and kisses **{sender}** in return.'

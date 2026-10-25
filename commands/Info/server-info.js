@@ -1,21 +1,30 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ChannelType,
+    MessageFlags,
+    GatewayIntentBits,
+} = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Info',
     data: new SlashCommandBuilder()
         .setName('serverinfo')
         .setDescription('Shows detailed information about this server.')
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Reply privately (only you can see)')
-                .setRequired(false)
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('Reply privately (only you can see)').setRequired(false),
         ),
     async execute(interaction) {
         const config = interaction.client.config;
         const serverinfoConfig = config.commands.serverinfo;
 
         if (!interaction.guild) {
-            return interaction.reply({ content: "❌ This command can only be used in a server.", flags: 64 });
+            return interaction.reply({ content: '❌ This command can only be used in a server.', flags: 64 });
         }
 
         const { guild } = interaction;
@@ -24,11 +33,11 @@ module.exports = {
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
         const owner = await guild.fetchOwner();
         const channels = guild.channels.cache;
-        const textChannels = channels.filter(c => c.type === ChannelType.GuildText).size;
-        const voiceChannels = channels.filter(c => c.type === ChannelType.GuildVoice).size;
-        const announcementChannels = channels.filter(c => c.type === ChannelType.GuildAnnouncement).size;
-        const categories = channels.filter(c => c.type === ChannelType.GuildCategory).size;
-        const forumChannels = channels.filter(c => c.type === ChannelType.GuildForum).size;
+        const textChannels = channels.filter((c) => c.type === ChannelType.GuildText).size;
+        const voiceChannels = channels.filter((c) => c.type === ChannelType.GuildVoice).size;
+        const announcementChannels = channels.filter((c) => c.type === ChannelType.GuildAnnouncement).size;
+        const categories = channels.filter((c) => c.type === ChannelType.GuildCategory).size;
+        const forumChannels = channels.filter((c) => c.type === ChannelType.GuildForum).size;
         const boostLevel = ['None', 'Tier 1', 'Tier 2', 'Tier 3'][guild.premiumTier] || 'None';
 
         const iconUrl = guild.iconURL({ dynamic: true, size: 1024 });
@@ -39,21 +48,23 @@ module.exports = {
         try {
             const invites = await guild.invites.fetch();
             inviteCount = invites.size.toString();
-        } catch { /* permission denied or invites unavailable */ }
+        } catch {
+            /* permission denied or invites unavailable */
+        }
 
         // Member stats
         const members = await guild.members.fetch();
         const total = members.size;
-        const bots = members.filter(m => m.user.bot).size;
+        const bots = members.filter((m) => m.user.bot).size;
         const humans = total - bots;
-        const online = members.filter(m => m.presence?.status === 'online').size;
-        const idle = members.filter(m => m.presence?.status === 'idle').size;
-        const dnd = members.filter(m => m.presence?.status === 'dnd').size;
+        const online = members.filter((m) => m.presence?.status === 'online').size;
+        const idle = members.filter((m) => m.presence?.status === 'idle').size;
+        const dnd = members.filter((m) => m.presence?.status === 'dnd').size;
 
         // Misc stats
         const emojisCount = guild.emojis?.cache?.size ?? 0;
         const stickersCount = guild.stickers?.cache?.size ?? 0;
-        const verification = guild.verificationLevel || 'Unknown';
+        const verification = guild.verificationLevel ?? 'Unknown';
         const afkChannel = guild.afkChannel ? `${guild.afkChannel} (${guild.afkTimeout / 60}m)` : 'None';
 
         // Boost progress bar (max Tier 3 at 14 boosts)
@@ -73,8 +84,16 @@ module.exports = {
             .addFields(
                 { name: serverinfoConfig.messages.fields.server_id, value: guild.id, inline: true },
                 { name: serverinfoConfig.messages.fields.owner, value: `${owner.user.tag}`, inline: true },
-                { name: serverinfoConfig.messages.fields.created, value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`, inline: true },
-                { name: serverinfoConfig.messages.fields.members, value: `${total} (👤 ${humans} | 🤖 ${bots})`, inline: true },
+                {
+                    name: serverinfoConfig.messages.fields.created,
+                    value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`,
+                    inline: true,
+                },
+                {
+                    name: serverinfoConfig.messages.fields.members,
+                    value: `${total} (👤 ${humans} | 🤖 ${bots})`,
+                    inline: true,
+                },
                 { name: serverinfoConfig.messages.fields.text_channels, value: `${textChannels}`, inline: true },
                 { name: serverinfoConfig.messages.fields.voice_channels, value: `${voiceChannels}`, inline: true },
                 { name: 'Announcements', value: `${announcementChannels}`, inline: true },
@@ -87,41 +106,58 @@ module.exports = {
                 { name: 'Stickers', value: `${stickersCount}`, inline: true },
                 { name: serverinfoConfig.messages.fields.boost_level, value: `${boostLevel}`, inline: true },
                 { name: serverinfoConfig.messages.fields.boosts, value: `${boosts}\n${bar(boosts, 14)}`, inline: true },
-                { name: (serverinfoConfig.messages.fields.invites || 'Open Invites'), value: inviteCount, inline: true },
-                { name: 'Presence', value: `🟢 ${online} • 🌙 ${idle} • ⛔ ${dnd}`, inline: true }
+                { name: serverinfoConfig.messages.fields.invites || 'Open Invites', value: inviteCount, inline: true },
+                {
+                    name: 'Presence',
+                    value: interaction.client.options.intents.has(GatewayIntentBits.GuildPresences)
+                        ? `🟢 ${online} • 🌙 ${idle} • ⛔ ${dnd}`
+                        : 'Presence data is unavailable.',
+                    inline: true,
+                },
             )
-            .setFooter({ text: serverinfoConfig.messages.footer.replace('{user}', interaction.user.tag), iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+            .setFooter({
+                text: serverinfoConfig.messages.footer.replace('{user}', interaction.user.tag),
+                iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
+            })
             .setTimestamp();
 
         const rolesButton = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('srv_roles').setLabel('Show roles').setStyle(ButtonStyle.Secondary).setEmoji('📜')
+            new ButtonBuilder()
+                .setCustomId('srv_roles')
+                .setLabel('Show roles')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('📜'),
         );
 
         await interaction.editReply({ embeds: [embed], components: [rolesButton] });
 
         const msg = await interaction.fetchReply();
         const collector = msg.createMessageComponentCollector({ time: 30000 });
-        collector.on('collect', async i => {
+        onCollect(collector, async (i) => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: 'Only the command invoker can use this button.', flags: MessageFlags.Ephemeral });
+                await i.reply({
+                    content: 'Only the command invoker can use this button.',
+                    flags: MessageFlags.Ephemeral,
+                });
                 return;
             }
             if (i.customId === 'srv_roles') {
-                const roles = guild.roles.cache
-                    .filter(r => r.name !== '@everyone')
-                    .sort((a, b) => b.position - a.position)
-                    .first(25)
-                    .map(r => `${r} (${r.members.size})`)
-                    .join('\n') || 'No roles';
+                const roles =
+                    guild.roles.cache
+                        .filter((r) => r.name !== '@everyone')
+                        .sort((a, b) => b.position - a.position)
+                        .first(25)
+                        .map((r) => `${r} (${r.members.size})`)
+                        .join('\n') || 'No roles';
                 await i.reply({ content: roles, flags: MessageFlags.Ephemeral });
             }
         });
 
-        collector.on('end', async () => {
+        onEnd(collector, async () => {
             const disabled = new ActionRowBuilder().addComponents(
-                ButtonBuilder.from(rolesButton.components[0]).setDisabled(true)
+                ButtonBuilder.from(rolesButton.components[0]).setDisabled(true),
             );
             await interaction.editReply({ components: [disabled] }).catch(() => {});
         });
-    }
+    },
 };

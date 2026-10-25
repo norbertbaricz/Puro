@@ -1,0 +1,28 @@
+enabled: true
+color: '#6ddccf'
+volume: 0.38
+default_sound: purr
+default_duration_minutes: 10
+max_duration_minutes: 60
+sounds:
+    - id: purr
+      name: Gentle Purr
+      description: Soft, cozy rumble inspired by a sleepy cat.
+      file: ./assets/audio/comfort-purr.wav
+      volume: 0.35
+    - id: rain
+      name: Evening Rain
+      description: Calming rainfall ambience with soft patter.
+      file: ./assets/audio/comfort-rain.wav
+      volume: 0.4
+    - id: hearth
+      name: Crackling Hearth
+      description: Warm fireplace crackles and embers.
+      file: ./assets/audio/comfort-fireplace.wav
+      volume: 0.45
+messages:
+    disabled: 🔇 Comfort ambience is disabled on this server.
+    start_title: 🌙 Comfort ambience started
+    stop_title: 🌤️ Ambience stopped
+    start_failed: ❌ Unable to start ambience right now. Please try again shortly.
+    nothing_to_stop: There is no ambience playing at the moment.

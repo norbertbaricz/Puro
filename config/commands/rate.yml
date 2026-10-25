@@ -1,0 +1,4 @@
+color: '#0099ff'
+messages:
+    title: ⭐ Rate Result
+    description: I rate **{thing}** a **{rating}/10**

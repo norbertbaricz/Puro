@@ -1,0 +1,8 @@
+color_success: '#00b300'
+color_error: '#ff0000'
+messages:
+    channel_not_found: Channel not found or not a text channel.
+    title: Reaction Results
+    field_success: Reactions Added
+    field_failed: Failed
+    field_failures: Failures

@@ -1,0 +1,12 @@
+messages:
+    login_success: ✅ Logged in as {tag}
+    stats:
+        servers: 🌐 Serving {count} servers
+        members: 👥 Reaching {count} users
+        channels: 📊 Managing {count} channels
+    status_error: ❌ Error setting status!
+    no_status: ⚠️ No status configured, using default
+    motd:
+        - Be kind. Be creative. Be curious.
+        - Powered by Skypixel — have fun!
+        - 'Tip: Use /help to explore commands.'

@@ -1,0 +1,20 @@
+color_success: '#2ecc71'
+color_neutral: '#f1c40f'
+color_failure: '#ed4245'
+messages:
+    no_job_title: No job found
+    no_job: You do not have a job yet. Open /job to browse roles and start working.
+    job_missing_title: Job unavailable
+    job_missing: Your previous job no longer exists. Please apply again.
+    cooldown_title: Take a breather
+    cooldown: You can work again {time}.
+    success_title: '{emoji} Shift complete!'
+    success_default: Great work! You completed your shift successfully.
+    failure_title: Shift failed
+    failure_default: Something went wrong during your shift.
+    bonus_default: Your effort impressed everyone!
+    field_earnings: Earnings
+    field_balance: Balance
+    field_streak: Shift streak
+    field_bonus: Bonus
+    field_penalty: Penalty

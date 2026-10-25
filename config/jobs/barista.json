@@ -1,0 +1,44 @@
+{
+    "id": "barista",
+    "emoji": "☕",
+    "name": "Barista",
+    "description": "Serve handcrafted drinks and keep the cafe buzzing.",
+    "apply": {
+        "baseSuccessRate": 0.9,
+        "successMessages": ["The manager loved your latte art portfolio. Welcome aboard!"],
+        "failureMessages": ["The hiring manager said they will keep your CV on file. Maybe polish your foam art?"]
+    },
+    "work": {
+        "cooldownSeconds": 70,
+        "payRange": {
+            "min": 45,
+            "max": 95
+        },
+        "bonusChance": 0.24,
+        "bonusMultiplier": {
+            "min": 1.1,
+            "max": 1.35
+        },
+        "failureChance": 0.08,
+        "failurePenaltyRange": {
+            "min": 5,
+            "max": 12
+        },
+        "successMessages": [
+            "Customers could not get enough of your caramel macchiatos.",
+            "A rush hour was no match for your coffee magic.",
+            "Your playlist and pour-overs boosted everyone's mood.",
+            "You nailed the latte art workshop and the crowd applauded."
+        ],
+        "bonusMessages": [
+            "A regular tipped big for remembering their custom order.",
+            "The cafe owner shared the tip jar after a stellar shift.",
+            "An influencer shared your drink; sales spiked and so did tips."
+        ],
+        "failureMessages": [
+            "You spilled a whole tray of drinks and had to comp them.",
+            "The espresso machine broke mid-shift; no tips today.",
+            "An over-roasted batch of beans meant tossing expensive stock."
+        ]
+    }
+}

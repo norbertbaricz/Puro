@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { withEconomy, ensureUserRecord } = require('../../lib/economy');
-const { formatCurrency, randomInt, pickRandom } = require('../../lib/utils');
+const { withEconomy, ensureUserRecord } = require('../../src/services/economy/store');
+const { formatCurrency, randomInt, pickRandom } = require('../../src/shared/utils');
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -9,20 +9,15 @@ function clamp(value, min, max) {
 const cooldowns = new Map();
 
 module.exports = {
+    guildOnly: true,
     category: 'Economy',
     data: new SlashCommandBuilder()
         .setName('pickpocket')
         .setDescription('Try to steal a bit of cash from another member.')
-        .addUserOption(option =>
-            option.setName('target')
-                .setDescription('Who do you want to pickpocket?')
-                .setRequired(true)
+        .addUserOption((option) =>
+            option.setName('target').setDescription('Who do you want to pickpocket?').setRequired(true),
         )
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Reply only to you')
-                .setRequired(false)
-        ),
+        .addBooleanOption((option) => option.setName('private').setDescription('Reply only to you').setRequired(false)),
 
     async execute(interaction) {
         const cfg = interaction.client.config.commands.pickpocket || {};
@@ -36,22 +31,34 @@ module.exports = {
         const now = Date.now();
 
         if (!interaction.inGuild()) {
-            return interaction.reply({ content: msgs.guild_only || '❌ This command can only be used inside a server.', flags: MessageFlags.Ephemeral });
+            return interaction.reply({
+                content: msgs.guild_only || '❌ This command can only be used inside a server.',
+                flags: MessageFlags.Ephemeral,
+            });
         }
 
         const cooldownUntil = cooldowns.get(interaction.user.id) || 0;
         if (cooldownUntil > now) {
             const remaining = Math.ceil((cooldownUntil - now) / 1000);
-            const message = (msgs.cooldown_active || '🚓 The police are watching you. Try again in {time}s.').replace('{time}', `${remaining}`);
+            const message = (msgs.cooldown_active || '🚓 The police are watching you. Try again in {time}s.').replace(
+                '{time}',
+                `${remaining}`,
+            );
             return interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
         }
 
         if (!targetUser || targetUser.id === interaction.user.id) {
-            return interaction.reply({ content: msgs.self_target || '❌ You cannot pickpocket yourself.', flags: MessageFlags.Ephemeral });
+            return interaction.reply({
+                content: msgs.self_target || '❌ You cannot pickpocket yourself.',
+                flags: MessageFlags.Ephemeral,
+            });
         }
 
         if (targetUser.bot) {
-            return interaction.reply({ content: msgs.bot_target || '🤖 Bots have no pockets to pick.', flags: MessageFlags.Ephemeral });
+            return interaction.reply({
+                content: msgs.bot_target || '🤖 Bots have no pockets to pick.',
+                flags: MessageFlags.Ephemeral,
+            });
         }
 
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
@@ -63,12 +70,42 @@ module.exports = {
         const difficultyWeight = Number(cfg.difficulty_weight) || 1.5;
 
         const scenarios = [
-            { key: 'caught', type: 'repay', payVictim: true, multiplier: Number(cfg.fail_return_multiplier) || 1, color: colorFail },
-            { key: 'jail', type: 'jail', payVictim: false, multiplier: Number(cfg.fail_fine_multiplier) || 1.5, color: colorWarn },
-            { key: 'escape_drop', type: 'escape_drop', payVictim: false, dropMultiplier: Number(cfg.escape_drop_multiplier) || 0.4, color: colorWarn },
+            {
+                key: 'caught',
+                type: 'repay',
+                payVictim: true,
+                multiplier: Number(cfg.fail_return_multiplier) || 1,
+                color: colorFail,
+            },
+            {
+                key: 'jail',
+                type: 'jail',
+                payVictim: false,
+                multiplier: Number(cfg.fail_fine_multiplier) || 1.5,
+                color: colorWarn,
+            },
+            {
+                key: 'escape_drop',
+                type: 'escape_drop',
+                payVictim: false,
+                dropMultiplier: Number(cfg.escape_drop_multiplier) || 0.4,
+                color: colorWarn,
+            },
             { key: 'escape_clean', type: 'escape_clean', payVictim: false, multiplier: 0, color: colorWarn },
-            { key: 'fight_win', type: 'fight_win', payVictim: false, bonusMultiplier: Number(cfg.fight_win_multiplier) || 1.8, color: colorSuccess },
-            { key: 'fight_loss', type: 'fight_loss', payVictim: false, multiplier: Number(cfg.fight_loss_multiplier) || 2, color: colorFail }
+            {
+                key: 'fight_win',
+                type: 'fight_win',
+                payVictim: false,
+                bonusMultiplier: Number(cfg.fight_win_multiplier) || 1.8,
+                color: colorSuccess,
+            },
+            {
+                key: 'fight_loss',
+                type: 'fight_loss',
+                payVictim: false,
+                multiplier: Number(cfg.fight_loss_multiplier) || 2,
+                color: colorFail,
+            },
         ];
 
         const result = await withEconomy((db) => {
@@ -78,7 +115,7 @@ module.exports = {
             if ((victim.balance || 0) < minBalance) {
                 return {
                     outcome: 'too-poor',
-                    victimBalance: victim.balance || 0
+                    victimBalance: victim.balance || 0,
                 };
             }
 
@@ -99,7 +136,7 @@ module.exports = {
                     stolen,
                     successProbability,
                     thiefBalance: thief.balance,
-                    victimBalance: victim.balance
+                    victimBalance: victim.balance,
                 };
             }
 
@@ -117,7 +154,7 @@ module.exports = {
                     stolen,
                     successProbability,
                     thiefBalance: thief.balance,
-                    victimBalance: victim.balance
+                    victimBalance: victim.balance,
                 };
             }
 
@@ -151,7 +188,7 @@ module.exports = {
                 drop,
                 successProbability,
                 thiefBalance: thief.balance,
-                victimBalance: victim.balance
+                victimBalance: victim.balance,
             };
         });
 
@@ -159,7 +196,12 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(colorWarn)
                 .setTitle(msgs.too_poor_title || 'No luck!')
-                .setDescription((msgs.too_poor_desc || '{target} has barely any money to steal.').replace('{target}', `${targetUser}`))
+                .setDescription(
+                    (msgs.too_poor_desc || '{target} has barely any money to steal.').replace(
+                        '{target}',
+                        `${targetUser}`,
+                    ),
+                )
                 .setTimestamp();
             await interaction.editReply({ embeds: [embed] });
             return;
@@ -169,12 +211,30 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(colorSuccess)
                 .setTitle(msgs.success_title || 'Successful Pickpocket!')
-                .setDescription((msgs.success_desc || 'You slipped some cash from {target}!').replace('{target}', `${targetUser}`))
+                .setDescription(
+                    (msgs.success_desc || 'You slipped some cash from {target}!').replace('{target}', `${targetUser}`),
+                )
                 .addFields(
-                    { name: msgs.amount_label || 'Stolen', value: formatCurrency(result.stolen, { sign: 'always' }), inline: true },
-                    { name: msgs.success_chance_label || 'Chance', value: `${Math.round(result.successProbability * 100)}%`, inline: true },
-                    { name: msgs.thief_balance_label || 'Your Balance', value: formatCurrency(result.thiefBalance), inline: true },
-                    { name: msgs.victim_balance_label || "Victim's Balance", value: formatCurrency(result.victimBalance), inline: true }
+                    {
+                        name: msgs.amount_label || 'Stolen',
+                        value: formatCurrency(result.stolen, { sign: 'always' }),
+                        inline: true,
+                    },
+                    {
+                        name: msgs.success_chance_label || 'Chance',
+                        value: `${Math.round(result.successProbability * 100)}%`,
+                        inline: true,
+                    },
+                    {
+                        name: msgs.thief_balance_label || 'Your Balance',
+                        value: formatCurrency(result.thiefBalance),
+                        inline: true,
+                    },
+                    {
+                        name: msgs.victim_balance_label || "Victim's Balance",
+                        value: formatCurrency(result.victimBalance),
+                        inline: true,
+                    },
                 )
                 .setTimestamp();
 
@@ -185,13 +245,34 @@ module.exports = {
         if (result.outcome === 'fight_win') {
             const embed = new EmbedBuilder()
                 .setColor(result.scenario.color)
-                .setTitle((msgs.fail_fight_win_title || msgs.success_title) || 'Brawl Victory!')
-                .setDescription((msgs.fail_fight_win_desc || 'You fought {target} and grabbed a bigger haul!').replace('{target}', `${targetUser}`))
+                .setTitle(msgs.fail_fight_win_title || msgs.success_title || 'Brawl Victory!')
+                .setDescription(
+                    (msgs.fail_fight_win_desc || 'You fought {target} and grabbed a bigger haul!').replace(
+                        '{target}',
+                        `${targetUser}`,
+                    ),
+                )
                 .addFields(
-                    { name: msgs.amount_label || 'Stolen', value: formatCurrency(result.stolen, { sign: 'always' }), inline: true },
-                    { name: msgs.success_chance_label || 'Chance', value: `${Math.round(result.successProbability * 100)}%`, inline: true },
-                    { name: msgs.thief_balance_label || 'Your Balance', value: formatCurrency(result.thiefBalance), inline: true },
-                    { name: msgs.victim_balance_label || "Victim's Balance", value: formatCurrency(result.victimBalance), inline: true }
+                    {
+                        name: msgs.amount_label || 'Stolen',
+                        value: formatCurrency(result.stolen, { sign: 'always' }),
+                        inline: true,
+                    },
+                    {
+                        name: msgs.success_chance_label || 'Chance',
+                        value: `${Math.round(result.successProbability * 100)}%`,
+                        inline: true,
+                    },
+                    {
+                        name: msgs.thief_balance_label || 'Your Balance',
+                        value: formatCurrency(result.thiefBalance),
+                        inline: true,
+                    },
+                    {
+                        name: msgs.victim_balance_label || "Victim's Balance",
+                        value: formatCurrency(result.victimBalance),
+                        inline: true,
+                    },
                 )
                 .setTimestamp();
 
@@ -206,30 +287,60 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(result.scenario?.color || colorFail)
-            .setTitle((msgs[`fail_${result.scenario?.key}_title`] || msgs.fail_title) || 'Caught in the act!')
-            .setDescription((msgs[`fail_${result.scenario?.key}_desc`] || msgs.fail_desc || '{target} noticed and things went south.').replace('{target}', `${targetUser}`))
+            .setTitle(msgs[`fail_${result.scenario?.key}_title`] || msgs.fail_title || 'Caught in the act!')
+            .setDescription(
+                (
+                    msgs[`fail_${result.scenario?.key}_desc`] ||
+                    msgs.fail_desc ||
+                    '{target} noticed and things went south.'
+                ).replace('{target}', `${targetUser}`),
+            )
             .addFields(
-                { name: msgs.amount_label || 'Attempted', value: formatCurrency(result.amount, { sign: 'always' }), inline: true },
-                { name: msgs.success_chance_label || 'Chance', value: `${Math.round(result.successProbability * 100)}%`, inline: true },
-                { name: msgs.thief_balance_label || 'Your Balance', value: formatCurrency(result.thiefBalance), inline: true }
+                {
+                    name: msgs.amount_label || 'Attempted',
+                    value: formatCurrency(result.amount, { sign: 'always' }),
+                    inline: true,
+                },
+                {
+                    name: msgs.success_chance_label || 'Chance',
+                    value: `${Math.round(result.successProbability * 100)}%`,
+                    inline: true,
+                },
+                {
+                    name: msgs.thief_balance_label || 'Your Balance',
+                    value: formatCurrency(result.thiefBalance),
+                    inline: true,
+                },
             )
             .setTimestamp();
 
         if (result.penalty > 0) {
             const penaltyFieldName = result.scenario?.payVictim
-                ? (msgs.penalty_paid_label || 'Paid to victim')
-                : (msgs.penalty_fine_label || 'Fine Paid');
-            embed.addFields({ name: penaltyFieldName, value: formatCurrency(result.penalty, { sign: '-' }), inline: true });
+                ? msgs.penalty_paid_label || 'Paid to victim'
+                : msgs.penalty_fine_label || 'Fine Paid';
+            embed.addFields({
+                name: penaltyFieldName,
+                value: formatCurrency(result.penalty, { sign: '-' }),
+                inline: true,
+            });
         }
 
         if (result.drop > 0) {
-            embed.addFields({ name: msgs.drop_label || 'Lost while fleeing', value: formatCurrency(result.drop, { sign: '-' }), inline: true });
+            embed.addFields({
+                name: msgs.drop_label || 'Lost while fleeing',
+                value: formatCurrency(result.drop, { sign: '-' }),
+                inline: true,
+            });
         }
 
         if (result.scenario?.payVictim) {
-            embed.addFields({ name: msgs.victim_balance_label || "Victim's Balance", value: formatCurrency(result.victimBalance), inline: true });
+            embed.addFields({
+                name: msgs.victim_balance_label || "Victim's Balance",
+                value: formatCurrency(result.victimBalance),
+                inline: true,
+            });
         }
 
         await interaction.editReply({ embeds: [embed] });
-    }
+    },
 };

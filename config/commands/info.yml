@@ -1,0 +1,32 @@
+color: '#5865F2'
+messages:
+    error: ❌ An error occurred while executing this command!
+content:
+    creator:
+        title: 👤 Creator Information
+        creator_name_label: Creator Name
+        creator_name_value: MaxUltimat3
+        creation_date_label: Bot Creation Date
+        creation_date_value: '1715299200'
+    status:
+        title: 📊 Status & Statistics
+        servers_label: 🌐 Servers
+        members_label: 👥 Total Members
+        commands_label: 📝 Registered Commands
+        latency_label: 📶 API Latency
+    system:
+        title: 💻 System Information
+        os_label: 🖥️ Operating System
+        cpu_label: ⚙️ CPU Model
+        mem_usage_label: 📊 Memory Usage
+        total_mem_label: 💾 Total System Memory
+        node_label: 📦 Node.js Version
+        djs_label: 🔧 Discord.js Version
+        cpu_temp_label: CPU Temperature
+        battery_label: Battery
+    uptime:
+        title: ⏱️ Bot Uptime
+        description: |-
+            **The bot has been online for:**
+            {uptimeString}
+        time_format: '`{days}` days, `{hours}` hours, `{minutes}` minutes, and `{seconds}` seconds'

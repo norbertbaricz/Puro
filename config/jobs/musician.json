@@ -1,0 +1,41 @@
+{
+    "id": "musician",
+    "emoji": "🎸",
+    "name": "Touring Musician",
+    "description": "Perform on stage and hype the crowd, rain or shine.",
+    "apply": {
+        "baseSuccessRate": 0.28,
+        "successMessages": ["Your audition solo electrified the producer. You're on the tour!"],
+        "failureMessages": ["They want tighter timing. Keep rehearsing and try again."]
+    },
+    "work": {
+        "cooldownSeconds": 120,
+        "payRange": {
+            "min": 110,
+            "max": 280
+        },
+        "bonusChance": 0.3,
+        "bonusMultiplier": {
+            "min": 1.2,
+            "max": 1.9
+        },
+        "failureChance": 0.22,
+        "failurePenaltyRange": {
+            "min": 12,
+            "max": 28
+        },
+        "successMessages": [
+            "The crowd sang every lyric with you—instant encores!",
+            "Merch sales spiked after your standout performance.",
+            "Your solo trended on social media overnight."
+        ],
+        "bonusMessages": [
+            "The promoter paid extra after you saved the show.",
+            "A surprise sponsor tipped the band for a stellar gig."
+        ],
+        "failureMessages": [
+            "A broken string mid-song meant refunding some fans.",
+            "Technical issues forced you to pay for replacement gear."
+        ]
+    }
+}

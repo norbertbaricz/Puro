@@ -1,0 +1,41 @@
+{
+    "id": "streamer",
+    "emoji": "📺",
+    "name": "Content Streamer",
+    "description": "Go live, entertain the pack, and grow your digital audience.",
+    "apply": {
+        "baseSuccessRate": 0.12,
+        "successMessages": ["Your pilot stream went viral. Sponsorships are lined up!"],
+        "failureMessages": ["They want more consistent content. Stream a bit more and retry."]
+    },
+    "work": {
+        "cooldownSeconds": 90,
+        "payRange": {
+            "min": 40,
+            "max": 320
+        },
+        "bonusChance": 0.35,
+        "bonusMultiplier": {
+            "min": 1.2,
+            "max": 2.2
+        },
+        "failureChance": 0.2,
+        "failurePenaltyRange": {
+            "min": 10,
+            "max": 30
+        },
+        "successMessages": [
+            "Chat exploded with subs and donations all night long.",
+            "A collab raid doubled your follower count.",
+            "You debuted a segment that fans can't stop sharing."
+        ],
+        "bonusMessages": [
+            "A sponsor dropped a hefty bonus mid-stream.",
+            "A community whale gifted memberships for everyone."
+        ],
+        "failureMessages": [
+            "ISP issues cut the stream short and drained refunds.",
+            "A DMCA strike forced you to pay for new assets."
+        ]
+    }
+}

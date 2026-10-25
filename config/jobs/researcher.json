@@ -1,0 +1,41 @@
+{
+    "id": "researcher",
+    "emoji": "🔬",
+    "name": "Research Analyst",
+    "description": "Dive into data, run experiments, and publish compelling results.",
+    "apply": {
+        "baseSuccessRate": 0.4,
+        "successMessages": ["Your case study blew the review panel away. Welcome to the lab!"],
+        "failureMessages": ["They want more peer-reviewed work. Gather more data and return."]
+    },
+    "work": {
+        "cooldownSeconds": 130,
+        "payRange": {
+            "min": 190,
+            "max": 340
+        },
+        "bonusChance": 0.24,
+        "bonusMultiplier": {
+            "min": 1.25,
+            "max": 1.7
+        },
+        "failureChance": 0.2,
+        "failurePenaltyRange": {
+            "min": 15,
+            "max": 32
+        },
+        "successMessages": [
+            "Your findings unlocked a new initiative and secured funding.",
+            "The team praised your airtight methodology and insights.",
+            "Your report made the front page of the internal newsletter."
+        ],
+        "bonusMessages": [
+            "A grant bonus landed in your account after a breakthrough.",
+            "The client paid extra for your rapid turnaround."
+        ],
+        "failureMessages": [
+            "A contaminated sample forced you to rerun everything.",
+            "Your dataset corrupted, costing you precious time and resources."
+        ]
+    }
+}

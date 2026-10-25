@@ -2,25 +2,25 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  js.configs.recommended,
-  {
-    ignores: ['node_modules', 'dist', 'release', 'logs', '*.log', 'database.json'],
-  },
-  {
-    files: ['**/*.js'],
-    languageOptions: {
-      ecmaVersion: 2021,
-      sourceType: 'script',
-      globals: {
-        ...globals.node,
-      },
+    js.configs.recommended,
+    {
+        ignores: ['node_modules', 'dist', 'release', 'logs', '*.log', 'database.json'],
     },
-    linterOptions: {
-      reportUnusedDisableDirectives: 'error',
+    {
+        files: ['**/*.js'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'script',
+            globals: {
+                ...globals.node,
+            },
+        },
+        linterOptions: {
+            reportUnusedDisableDirectives: 'error',
+        },
+        rules: {
+            'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+            'no-console': 'off',
+        },
     },
-    rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
-      'no-console': 'off',
-    },
-  },
 ];

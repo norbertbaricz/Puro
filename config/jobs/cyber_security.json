@@ -1,0 +1,41 @@
+{
+    "id": "cyber_security",
+    "emoji": "🖥️",
+    "name": "Cyber Security Specialist",
+    "description": "Harden systems, stop breaches, and hunt down intruders.",
+    "apply": {
+        "baseSuccessRate": 0.16,
+        "successMessages": ["Your penetration test report impressed the CISO. Suit up!"],
+        "failureMessages": ["They need more red-team experience. Train up and reapply."]
+    },
+    "work": {
+        "cooldownSeconds": 140,
+        "payRange": {
+            "min": 210,
+            "max": 380
+        },
+        "bonusChance": 0.25,
+        "bonusMultiplier": {
+            "min": 1.2,
+            "max": 1.8
+        },
+        "failureChance": 0.22,
+        "failurePenaltyRange": {
+            "min": 18,
+            "max": 38
+        },
+        "successMessages": [
+            "You patched a zero-day before attackers could blink.",
+            "Your incident response contained a breach in minutes.",
+            "Executives applauded your detailed threat report."
+        ],
+        "bonusMessages": [
+            "The client paid extra for a 24-hour monitoring sprint.",
+            "Bug bounty winnings hit your account after a huge disclosure."
+        ],
+        "failureMessages": [
+            "A missed alert meant paying for identity protection services.",
+            "You reimbursed overtime after misconfiguring a firewall."
+        ]
+    }
+}

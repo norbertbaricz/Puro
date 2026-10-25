@@ -1,0 +1,30 @@
+color: '#ffb347'
+messages:
+    self_marry: You can't marry yourself! 💍
+    title: 💍 Marriage Proposal
+    responses:
+        - 💍 **{proposer}** got down on one knee and proposed to **{target}**! Will you say yes?
+        - 👰 **{proposer}** wants to marry **{target}**! What a lovely couple!
+        - 💒 **{proposer}** and **{target}** are getting married! Congratulations!
+        - 💖 **{proposer}** popped the question to **{target}**! Will love win?
+        - 💍 **{proposer}** just asked **{target}** to be together forever!
+        - 🎉 **{proposer}** and **{target}** are now engaged! Cheers!
+        - 🌹 **{proposer}** gave a beautiful ring to **{target}**!
+        - 💞 **{proposer}** and **{target}** are ready for a lifetime of happiness!
+        - 🥂 **{proposer}** and **{target}** are celebrating their engagement!
+        - 💌 **{proposer}** sent a heartfelt proposal to **{target}**!
+        - '💑 **{proposer}** and **{target}**: A new love story begins!'
+        - 💝 **{proposer}** couldn't resist and proposed to **{target}**!
+        - 🎊 **{proposer}** and **{target}** are the talk of the town with their engagement!
+        - 💗 **{proposer}** and **{target}** are destined for each other!
+        - 💫 **{proposer}** made a wish and proposed to **{target}**!
+        - 💍 **{proposer}** surprised **{target}** with a sparkling ring!
+        - 🎶 **{proposer}** played a romantic song and asked **{target}** to marry!
+        - 🌟 **{proposer}** and **{target}** are a match made in heaven!
+        - 💐 **{proposer}** brought flowers and proposed to **{target}**!
+        - '💖 **{proposer}** and **{target}**: True love always finds a way!'
+        - 💍 **{proposer}** and **{target}** are ready to write their love story together!
+        - 🥰 **{proposer}** looked into **{target}**'s eyes and asked for forever!
+        - 💎 **{proposer}** gave **{target}** a diamond ring and a promise!
+        - '🎇 **{proposer}** and **{target}**: Let the wedding bells ring!'
+        - '💍 **{proposer}** and **{target}**: Happily ever after starts now!'

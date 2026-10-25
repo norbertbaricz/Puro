@@ -1,0 +1,21 @@
+color: '#0099ff'
+messages:
+    no_permission: ❌ You need 'Manage Messages' permission!
+    invalid_channel: ❌ Please specify a text or announcement channel!
+    no_bot_permission: ❌ I lack permission to send messages in {channel}!
+    too_long: ❌ Message too long! Max {maxLength} characters.
+    success: ✅ Message sent to {channel}!
+    error: ❌ Failed to send message!
+    cooldown: ⏳ Please wait {remaining} seconds.
+    invalid_channel_variants:
+        - ❌ That channel won't work for announcements.
+        - ⚠️ Pick a text or announcement channel.
+        - 🚫 Invalid target channel for this action.
+    success_variants:
+        - ✅ Announced successfully in {channel}!
+        - 📣 Posted in {channel}!
+        - 🟢 Announcement delivered to {channel}.
+    error_variants:
+        - ❌ I couldn't send that message.
+        - 🛑 Something blocked the announcement.
+        - ⚠️ Send failed; check my permissions.

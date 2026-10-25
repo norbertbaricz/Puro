@@ -1,0 +1,11 @@
+events:
+    messageCreate:
+        allowed_guilds:
+            - '1010638602004340787'
+            - Spencer's Cave
+            - spencers-cave
+        greetings:
+            patterns: []
+            responses: []
+        messages:
+            error: ❌ Error sending greeting!

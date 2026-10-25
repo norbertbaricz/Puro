@@ -1,0 +1,7 @@
+color: '#FF69B4'
+messages:
+    cooldown: ⏳ Wait {remaining} seconds.
+    nsfw_required: ❌ Explicit content requires an NSFW channel!
+    no_results: No results found.
+    no_valid_images: No suitable images found.
+    error: ❌ Error fetching image!

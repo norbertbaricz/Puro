@@ -1,19 +1,28 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
 
 module.exports = {
+    guildOnly: true,
     category: 'Fun',
     data: new SlashCommandBuilder()
         .setName('divorce')
         .setDescription('Role-play a divorce with another member!')
-        .addUserOption(option =>
-            option.setName('member')
-                .setDescription('The member you want to divorce')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('reason')
+        .addUserOption((option) =>
+            option.setName('member').setDescription('The member you want to divorce').setRequired(true),
+        )
+        .addStringOption((option) =>
+            option
+                .setName('reason')
                 .setDescription('Optional reason for the divorce')
                 .setMaxLength(200)
-                .setRequired(false)
+                .setRequired(false),
         ),
     async execute(interaction) {
         const initiator = interaction.user;
@@ -43,8 +52,16 @@ module.exports = {
             .setTimestamp();
 
         const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('divorce_confirm').setLabel('Confirm Divorce').setStyle(ButtonStyle.Danger).setEmoji('💔'),
-            new ButtonBuilder().setCustomId('divorce_cancel').setLabel('Stay Together').setStyle(ButtonStyle.Success).setEmoji('💞')
+            new ButtonBuilder()
+                .setCustomId('divorce_confirm')
+                .setLabel('Confirm Divorce')
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('💔'),
+            new ButtonBuilder()
+                .setCustomId('divorce_cancel')
+                .setLabel('Stay Together')
+                .setStyle(ButtonStyle.Success)
+                .setEmoji('💞'),
         );
 
         await interaction.reply({ embeds: [baseEmbed], components: [row] });
@@ -52,9 +69,12 @@ module.exports = {
 
         const collector = message.createMessageComponentCollector({ time: 30_000 });
 
-        collector.on('collect', async i => {
+        onCollect(collector, async (i) => {
             if (i.user.id !== target.id) {
-                await i.reply({ content: 'Only the mentioned member can respond to this.', flags: MessageFlags.Ephemeral });
+                await i.reply({
+                    content: 'Only the mentioned member can respond to this.',
+                    flags: MessageFlags.Ephemeral,
+                });
                 return;
             }
 
@@ -62,9 +82,13 @@ module.exports = {
                 collector.stop('confirmed');
                 const confirmed = EmbedBuilder.from(baseEmbed)
                     .setColor('#808080')
-                    .setDescription(`💔 ${target} agreed to the divorce from ${initiator}.${reason ? `\n\nReason: ${reason}` : ''}`)
+                    .setDescription(
+                        `💔 ${target} agreed to the divorce from ${initiator}.${reason ? `\n\nReason: ${reason}` : ''}`,
+                    )
                     .setThumbnail(null);
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 await i.update({ embeds: [confirmed], components: [disabled] });
                 return;
             }
@@ -75,20 +99,24 @@ module.exports = {
                     .setColor('#00ff7f')
                     .setDescription(`💞 ${target} chose to stay with ${initiator}. Love prevails!`)
                     .setThumbnail(null);
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 await i.update({ embeds: [cancelled], components: [disabled] });
                 return;
             }
         });
 
-        collector.on('end', async (_c, reasonEnd) => {
+        onEnd(collector, async (_c, reasonEnd) => {
             if (reasonEnd === 'time') {
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 const timeoutEmbed = EmbedBuilder.from(baseEmbed)
                     .setColor('#ffd700')
                     .setDescription(`⏳ ${target} did not respond in time. The divorce is pending.`);
                 await interaction.editReply({ embeds: [timeoutEmbed], components: [disabled] }).catch(() => {});
             }
         });
-    }
+    },
 };

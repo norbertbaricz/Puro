@@ -1,0 +1,44 @@
+{
+    "id": "librarian",
+    "emoji": "📚",
+    "name": "Librarian",
+    "description": "Catalog books, help patrons, and keep things whisper-quiet.",
+    "apply": {
+        "baseSuccessRate": 0.88,
+        "successMessages": ["Your organizational skills impressed the head librarian. Welcome!"],
+        "failureMessages": ["They asked for more cataloging experience. Volunteer and try again soon."]
+    },
+    "work": {
+        "cooldownSeconds": 65,
+        "payRange": {
+            "min": 55,
+            "max": 115
+        },
+        "bonusChance": 0.22,
+        "bonusMultiplier": {
+            "min": 1.08,
+            "max": 1.3
+        },
+        "failureChance": 0.06,
+        "failurePenaltyRange": {
+            "min": 4,
+            "max": 10
+        },
+        "successMessages": [
+            "You guided dozens of readers to their perfect book.",
+            "A massive re-shelving project finished ahead of schedule.",
+            "Story hour was a hit thanks to your dramatic reading.",
+            "You restored a rare tome and earned librarian legend status."
+        ],
+        "bonusMessages": [
+            "A patron donated after you helped them research a project.",
+            "The director awarded you for digitizing a rare collection.",
+            "A university paid for access to your meticulously organized archive."
+        ],
+        "failureMessages": [
+            "A misfiled stack meant overtime re-shelving.",
+            "You spilled tea on returned books and paid servicing fees.",
+            "The microfilm reader jammed and you replaced parts out of pocket."
+        ]
+    }
+}

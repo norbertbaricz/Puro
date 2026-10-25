@@ -1,0 +1,7 @@
+color: '#ff1493'
+messages:
+    api_error: The joke API returned an error. Please try again later.
+    decode_error: Could not decode the joke format. Please try again!
+    fetch_error: Oops! There was a problem fetching the joke from the API. Please try again later.
+    unexpected_error: An unexpected error occurred while fetching the joke. Please contact an administrator.
+    title: 😂 Here's a Joke for You! 😂

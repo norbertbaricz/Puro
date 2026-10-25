@@ -1,0 +1,7 @@
+color: '#00ff00'
+messages:
+    no_permission: ⛔ You need the 'Manage Nicknames' permission to use this command.
+    success: 'Nicknames for **{changed}** members changed to: `{newNick}`.'
+    reset_success: Reset nickname for **{changed}** members.
+    failed: ❌ Failed for {failed} members.
+    skipped: ⚠️ Skipped {skipped} members (owner or higher/equal role).

@@ -1,0 +1,185 @@
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
+
+module.exports = {
+    guildOnly: true,
+    category: 'Fun',
+    data: new SlashCommandBuilder()
+        .setName('8ball')
+        .setDescription('Ask the Magic 8-Ball a question and receive a mysterious answer.')
+        .addStringOption((option) =>
+            option.setName('question').setDescription('The yes/no question you want to ask.').setRequired(true),
+        )
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('If enabled, only you will see the answer.').setRequired(false),
+        ),
+
+    async execute(interaction) {
+        const config = interaction.client.config.commands.eightball;
+
+        let shouldBeEphemeral = false;
+        try {
+            const question = (interaction.options.getString('question') || '').trim();
+            const isPrivate = interaction.options.getBoolean('private') || false;
+            const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            if (!config || !config.answers) {
+                throw new Error('Magic 8-Ball configuration is missing.');
+            }
+
+            // Map category colors using the global configuration palette.
+            const palette = interaction.client.config.colors || {};
+            const categoryColor = {
+                affirmative: palette.success || '#00ff00',
+                non_committal: palette.info || '#0099ff',
+                negative: palette.error || '#ff0000',
+            };
+
+            // Prepare helpers to select a response and its category.
+            const categories = ['affirmative', 'non_committal', 'negative'];
+            const pickAnswer = () => {
+                const category = categories[Math.floor(Math.random() * categories.length)];
+                const pool = config.answers[category] || [];
+                const answer = pool[Math.floor(Math.random() * pool.length)] || '...';
+                return { category, answer };
+            };
+
+            const categoryEmoji = {
+                affirmative: '✅',
+                non_committal: '🤔',
+                negative: '❌',
+            };
+
+            // Show the shaking animation before revealing the result.
+            const canUseEphemeral =
+                typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId);
+            shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
+            const deferOptions = shouldBeEphemeral ? { flags: MessageFlags.Ephemeral } : {};
+            await interaction.deferReply(deferOptions);
+
+            const loadingEmbed = new EmbedBuilder()
+                .setColor(config.color)
+                .setTitle(config.messages.title)
+                .setDescription(`Shaking the 8-Ball... \n> ${question}`)
+                .setImage(config.image_url)
+                .setFooter({
+                    text: `Asked by ${interaction.user.tag}`,
+                    iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
+                })
+                .setTimestamp();
+
+            await interaction.editReply({ embeds: [loadingEmbed], components: [] });
+
+            // Reveal the answer after a short animation.
+            const reveal = async (rerollCount = 0) => {
+                const { category, answer } = pickAnswer();
+                const finalEmbed = new EmbedBuilder()
+                    .setColor(categoryColor[category] || config.color)
+                    .setTitle(config.messages.title)
+                    .setThumbnail(config.image_url)
+                    .setDescription(
+                        `**❓ ${config.messages.question_field}:**\n> ${question}\n\n` +
+                            `**🎱 ${config.messages.answer_field}:**\n${categoryEmoji[category]} ${answer}`,
+                    )
+                    .setFooter({
+                        text: `Asked by ${interaction.user.tag}${rerollCount ? ` • Rerolls: ${rerollCount}` : ''}`,
+                        iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
+                    })
+                    .setTimestamp();
+
+                // Buttons: ask again up to three times or close; restricted to the invoker.
+                const canReroll = rerollCount < 3;
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('8ball_again')
+                        .setLabel('Ask again')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setEmoji('🔄')
+                        .setDisabled(!canReroll),
+                    new ButtonBuilder()
+                        .setCustomId('8ball_close')
+                        .setLabel('Close')
+                        .setStyle(ButtonStyle.Danger)
+                        .setEmoji('🗑️'),
+                );
+
+                await interaction.editReply({ embeds: [finalEmbed], components: [row] });
+
+                // Only the invoker can use this button collector.
+                const replyMessage = await interaction.fetchReply();
+                const collector = replyMessage.createMessageComponentCollector({ time: 30_000 });
+
+                onCollect(collector, async (i) => {
+                    if (i.user.id !== interaction.user.id) {
+                        await i.reply({
+                            content: 'Only the original asker can use these buttons.',
+                            flags: MessageFlags.Ephemeral,
+                        });
+                        return;
+                    }
+                    if (i.customId === '8ball_close') {
+                        collector.stop('closed');
+                        const disabledRow = new ActionRowBuilder().addComponents(
+                            row.components.map((btn) => ButtonBuilder.from(btn).setDisabled(true)),
+                        );
+                        await i.update({ components: [disabledRow] });
+                        return;
+                    }
+                    if (i.customId === '8ball_again') {
+                        collector.stop('reroll');
+                        await i.deferUpdate();
+                        // Replay the short shaking animation when asking again.
+                        const rolling = EmbedBuilder.from(finalEmbed)
+                            .setColor(config.color)
+                            .setDescription(`Shaking again... \n> ${question}`)
+                            .setImage(config.image_url)
+                            .setThumbnail(null);
+                        const disabledRow = new ActionRowBuilder().addComponents(
+                            row.components.map((btn) => ButtonBuilder.from(btn).setDisabled(true)),
+                        );
+                        await interaction.editReply({ embeds: [rolling], components: [disabledRow] });
+                        await wait(1000);
+                        await reveal(rerollCount + 1);
+                    }
+                });
+
+                onEnd(collector, async (_collected, reason) => {
+                    if (reason === 'time') {
+                        const disabledRow = new ActionRowBuilder().addComponents(
+                            row.components.map((btn) => ButtonBuilder.from(btn).setDisabled(true)),
+                        );
+                        await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+                    }
+                });
+            };
+
+            await wait(1000);
+            await reveal(0);
+        } catch (error) {
+            console.error('8ball command error:', error);
+            const fallback = config?.messages?.error || '❌ Something went wrong while consulting the 8-Ball.';
+            try {
+                if (interaction.deferred || interaction.replied) {
+                    const followUpOptions = shouldBeEphemeral
+                        ? { content: fallback, flags: MessageFlags.Ephemeral }
+                        : { content: fallback };
+                    await interaction.followUp(followUpOptions);
+                } else {
+                    const replyOptions = shouldBeEphemeral
+                        ? { content: fallback, flags: MessageFlags.Ephemeral }
+                        : { content: fallback };
+                    await interaction.reply(replyOptions);
+                }
+            } catch (replyError) {
+                console.error('Failed to notify user about 8ball error:', replyError);
+            }
+        }
+    },
+};

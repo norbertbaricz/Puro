@@ -1,0 +1,41 @@
+{
+    "id": "chef",
+    "emoji": "🍳",
+    "name": "Sous Chef",
+    "description": "Prep dishes, run the line, and plate everything to perfection.",
+    "apply": {
+        "baseSuccessRate": 0.6,
+        "successMessages": ["Your knife skills dazzled the head chef. Apron up!"],
+        "failureMessages": ["They need more restaurant experience. Stage for a night and reapply."]
+    },
+    "work": {
+        "cooldownSeconds": 85,
+        "payRange": {
+            "min": 85,
+            "max": 175
+        },
+        "bonusChance": 0.26,
+        "bonusMultiplier": {
+            "min": 1.15,
+            "max": 1.45
+        },
+        "failureChance": 0.12,
+        "failurePenaltyRange": {
+            "min": 8,
+            "max": 18
+        },
+        "successMessages": [
+            "You kept the tickets flowing and every dish came out hot.",
+            "Tonight's specials sold out thanks to your plating finesse.",
+            "Zero remakes and rave reviews—service was silky smooth."
+        ],
+        "bonusMessages": [
+            "The chef shared tips from the VIP table.",
+            "A food critic praised your dish, and management added a bonus."
+        ],
+        "failureMessages": [
+            "A sauce split mid-service and slowed the whole line.",
+            "Burnt garnish meant remaking plates at your expense."
+        ]
+    }
+}

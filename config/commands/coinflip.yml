@@ -1,0 +1,19 @@
+color: '#FFD700'
+messages:
+    error: ❌ Error flipping coin!
+emojis:
+    heads: 🌕
+    tails: 🌑
+prompts:
+    suspense:
+        - The coin rises...
+        - Spinning the coin...
+        - Airborne! Let's see...
+    results_prefix:
+        - Results are in!
+        - 'Outcome:'
+        - "Here's what we got:"
+    error_variants:
+        - ❌ The coin fell off the table!
+        - ⚠️ I fumbled the flip; try again.
+        - 🛑 Flip error; please retry.

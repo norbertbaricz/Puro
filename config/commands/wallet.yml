@@ -1,0 +1,8 @@
+color: '#3498db'
+messages:
+    title: 💰 Wallet Snapshot
+    description_self: 'Here is your current wallet balance:'
+    field_user: User
+    field_balance: Balance
+    field_job: Current Job
+    jobless: No active job. Use /job to browse roles and start working.

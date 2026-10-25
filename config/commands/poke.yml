@@ -1,0 +1,27 @@
+color: '#ffcc66'
+gifs:
+    - https://media.tenor.com/8xDEVy0S3nAAAAAC/flaik-fox.gif
+    - https://media.tenor.com/zAwceKZ5To8AAAAC/boy-kisser-boop.gif
+    - https://media.tenor.com/luKSDbafAKIAAAAC/ollie-boop-paws-boop.gif
+    - https://media.tenor.com/eOoQ_YB2IF8AAAAC/protogen-boop.gif
+    - https://media.tenor.com/n997o-na714AAAAC/protogen-moose.gif
+    - https://media.tenor.com/oRoczsrjl9EAAAAC/wolf-boop.gif
+messages:
+    self_poke: You cannot poke yourself! 😅
+    success_title: 👈 Poke!
+    return_title: 👈 Poke Returned!
+    return_button: Poke back
+    close_button: Close
+    return_denied: Only the mentioned member can return the poke.
+    close_denied: Only the sender or receiver can close this.
+    note_label: Note
+    dm: '{sender} poked you from {guild} in {channelMention}!'
+    templates:
+        - '**{sender}** gives **{receiver}** a little poke! 👈'
+        - Poke poke! **{sender}** taps **{receiver}** on the shoulder.
+        - '**{sender}** pokes **{receiver}** to get their attention!'
+        - "**{receiver}**, you've been poked by **{sender}**!"
+    return_templates:
+        - '**{receiver}** pokes back at **{sender}**! 👈'
+        - '**{receiver}** laughs and returns the poke to **{sender}**.'
+        - Counter poke! **{receiver}** taps **{sender}** right back.

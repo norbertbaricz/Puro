@@ -1,18 +1,16 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { withEconomy, ensureUserRecord } = require('../../lib/economy');
-const { getJobById } = require('../../lib/jobs');
-const { parseColor, pickRandom, randomInt, randomFloat, formatTemplate } = require('../../lib/utils');
+const { withEconomy, ensureUserRecord } = require('../../src/services/economy/store');
+const { getJobById } = require('../../src/services/economy/jobs');
+const { parseColor, pickRandom, randomInt, randomFloat, formatTemplate } = require('../../src/shared/utils');
 
 module.exports = {
+    guildOnly: true,
     category: 'Economy',
     data: new SlashCommandBuilder()
         .setName('work')
         .setDescription('Complete a shift at your current job to earn money.')
-        .setDMPermission(false)
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('Reply only to you (ephemeral)')
-                .setRequired(false)
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('Reply only to you (ephemeral)').setRequired(false),
         ),
 
     async execute(interaction) {
@@ -29,12 +27,11 @@ module.exports = {
         const colors = {
             success: parseColor(config.color_success || '#2ECC71', '#2ECC71'),
             neutral: parseColor(config.color_neutral || '#F1C40F', '#F1C40F'),
-            failure: parseColor(config.color_failure || '#ED4245', '#ED4245')
+            failure: parseColor(config.color_failure || '#ED4245', '#ED4245'),
         };
 
-        const canUseEphemeral = typeof interaction.inGuild === 'function'
-            ? interaction.inGuild()
-            : Boolean(interaction.guildId);
+        const canUseEphemeral =
+            typeof interaction.inGuild === 'function' ? interaction.inGuild() : Boolean(interaction.guildId);
         const shouldBeEphemeral = Boolean(isPrivate && canUseEphemeral);
         const ackMessage = messages.processing || '⌛ Starting your shift...';
 
@@ -46,7 +43,9 @@ module.exports = {
             });
         } catch (error) {
             if (error?.code === 10062) {
-                console.warn('[work] Interaction token expired before initial reply.', { interactionId: interaction.id });
+                console.warn('[work] Interaction token expired before initial reply.', {
+                    interactionId: interaction.id,
+                });
                 return;
             }
             throw error;
@@ -75,7 +74,7 @@ module.exports = {
                 return {
                     outcome: 'cooldown',
                     readyAt: now + remaining,
-                    job
+                    job,
                 };
             }
 
@@ -100,7 +99,7 @@ module.exports = {
                     outcome: 'failure',
                     job,
                     penalty,
-                    balance: entry.balance
+                    balance: entry.balance,
                 };
             }
 
@@ -132,7 +131,7 @@ module.exports = {
                 basePay,
                 bonusApplied,
                 balance: entry.balance,
-                streak: entry.job.streak
+                streak: entry.job.streak,
             };
         });
 
@@ -140,7 +139,9 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(colors.neutral)
                 .setTitle(messages.no_job_title || 'No job found')
-                .setDescription(messages.no_job || 'You do not have a job yet. Use /job to browse roles and get hired.');
+                .setDescription(
+                    messages.no_job || 'You do not have a job yet. Use /job to browse roles and get hired.',
+                );
             await updateReply({ embeds: [embed] });
             return;
         }
@@ -149,7 +150,9 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(colors.failure)
                 .setTitle(messages.job_missing_title || 'Job unavailable')
-                .setDescription(messages.job_missing || 'Your previous job no longer exists. Please apply for a new one.');
+                .setDescription(
+                    messages.job_missing || 'Your previous job no longer exists. Please apply for a new one.',
+                );
             await updateReply({ embeds: [embed] });
             return;
         }
@@ -158,9 +161,11 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(colors.neutral)
                 .setTitle(messages.cooldown_title || 'Take a breather')
-                .setDescription(formatTemplate(messages.cooldown || 'You need to rest for {time} before working again.', {
-                    time: `<t:${Math.floor(workResult.readyAt / 1000)}:R>`
-                }));
+                .setDescription(
+                    formatTemplate(messages.cooldown || 'You need to rest for {time} before working again.', {
+                        time: `<t:${Math.floor(workResult.readyAt / 1000)}:R>`,
+                    }),
+                );
             await updateReply({ embeds: [embed] });
             return;
         }
@@ -174,14 +179,14 @@ module.exports = {
                 .addFields({
                     name: messages.field_balance || 'Balance',
                     value: `💰 $${workResult.balance.toLocaleString()}`,
-                    inline: true
+                    inline: true,
                 });
 
             if (workResult.penalty > 0) {
                 embed.addFields({
                     name: messages.field_penalty || 'Penalty',
                     value: `-$${workResult.penalty.toLocaleString()}`,
-                    inline: true
+                    inline: true,
                 });
             }
 
@@ -194,15 +199,25 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(colors.success)
-            .setTitle(formatTemplate(messages.success_title || '{job} shift complete!', {
-                job: workResult.job.name,
-                emoji: workResult.job.emoji
-            }))
+            .setTitle(
+                formatTemplate(messages.success_title || '{job} shift complete!', {
+                    job: workResult.job.name,
+                    emoji: workResult.job.emoji,
+                }),
+            )
             .setDescription(successMessage || 'Great work! You completed your shift successfully.')
             .addFields(
-                { name: messages.field_earnings || 'Earnings', value: `+$${workResult.totalPay.toLocaleString()}`, inline: true },
-                { name: messages.field_balance || 'Balance', value: `💰 $${workResult.balance.toLocaleString()}`, inline: true },
-                { name: messages.field_streak || 'Shift streak', value: `${workResult.streak}`, inline: true }
+                {
+                    name: messages.field_earnings || 'Earnings',
+                    value: `+$${workResult.totalPay.toLocaleString()}`,
+                    inline: true,
+                },
+                {
+                    name: messages.field_balance || 'Balance',
+                    value: `💰 $${workResult.balance.toLocaleString()}`,
+                    inline: true,
+                },
+                { name: messages.field_streak || 'Shift streak', value: `${workResult.streak}`, inline: true },
             )
             .setTimestamp();
 
@@ -211,10 +226,10 @@ module.exports = {
             embed.addFields({
                 name: messages.field_bonus || 'Bonus',
                 value: `${bonusMessage || messages.bonus_default || 'You received a bonus!'} (+$${bonusDelta.toLocaleString()})`,
-                inline: false
+                inline: false,
             });
         }
 
         await updateReply({ embeds: [embed] });
-    }
+    },
 };

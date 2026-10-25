@@ -1,0 +1,35 @@
+color: '#808080'
+messages:
+    self_divorce: You can't divorce yourself! 💔
+    title: 💔 Divorce
+    responses:
+        - 💔 **{initiator}** has filed for divorce from **{target}**. It's over!
+        - 😢 **{initiator}** and **{target}** are no longer together.
+        - 📄 **{initiator}** handed divorce papers to **{target}**.
+        - 💔 After a long talk, **{initiator}** and **{target}** decided to part ways.
+        - 😭 **{initiator}** left **{target}**. Sometimes love just isn't enough.
+        - 🧾 **{initiator}** and **{target}** signed the divorce papers.
+        - 💔 **{initiator}** broke the bond with **{target}**. Single life, here we come!
+        - 😔 **{initiator}** and **{target}** are officially divorced.
+        - 📉 The relationship between **{initiator}** and **{target}** has ended.
+        - 💔 **{initiator}** couldn't take it anymore and divorced **{target}**.
+        - 🕊️ **{initiator}** and **{target}** have gone their separate ways.
+        - 😢 **{initiator}** whispered goodbye to **{target}**.
+        - 📬 **{initiator}** sent **{target}** a breakup letter.
+        - '💔 **{initiator}** and **{target}**: It was good while it lasted.'
+        - 🗑️ **{initiator}** threw away the wedding ring from **{target}**.
+        - 😶‍🌫️ **{initiator}** and **{target}** are now strangers again.
+        - '💔 **{initiator}** and **{target}**: The end of an era.'
+        - 📦 **{initiator}** packed up and left **{target}**.
+        - 🧹 **{initiator}** swept away the memories with **{target}**.
+        - "💔 **{initiator}** and **{target}**: No more 'us', just 'me'."
+        - 🕳️ **{initiator}** fell out of love with **{target}**.
+        - 📉 The love between **{initiator}** and **{target}** hit rock bottom.
+        - '💔 **{initiator}** and **{target}**: Love lost, lessons learned.'
+        - 🧊 **{initiator}** gave **{target}** the cold shoulder... forever.
+        - 🚪 **{initiator}** walked out on **{target}**.
+        - '💔 **{initiator}** and **{target}**: The story ends here.'
+        - 🪦 The marriage of **{initiator}** and **{target}** is now history.
+        - '🧾 **{initiator}** and **{target}**: Signed, sealed, divorced.'
+        - '💔 **{initiator}** and **{target}**: No more happy endings.'
+        - 🧳 **{initiator}** packed their bags and left **{target}** behind.

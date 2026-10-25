@@ -1,4 +1,4 @@
-const createGreetingEvent = require('../../../lib/guildGreetingEventFactory');
+const createGreetingEvent = require('../../../src/features/greetings/createGreetingEvent');
 
 module.exports = createGreetingEvent({
     configPath: ['events', 'guilds', 'the-lunar-pack', 'messageCreate'],

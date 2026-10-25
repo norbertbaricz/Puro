@@ -1,5 +1,13 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const { pickRandom, formatTemplate } = require('../../lib/utils');
+const { onCollect, onEnd } = require('../../src/shared/collectors');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags,
+} = require('discord.js');
+const { pickRandom, formatTemplate } = require('../../src/shared/utils');
 
 const DEFAULT_GIFS = [
     'https://media.tenor.com/8xDEVy0S3nAAAAAC/flaik-fox.gif',
@@ -7,40 +15,36 @@ const DEFAULT_GIFS = [
     'https://media.tenor.com/luKSDbafAKIAAAAC/ollie-boop-paws-boop.gif',
     'https://media.tenor.com/eOoQ_YB2IF8AAAAC/protogen-boop.gif',
     'https://media.tenor.com/n997o-na714AAAAC/protogen-moose.gif',
-    'https://media.tenor.com/oRoczsrjl9EAAAAC/wolf-boop.gif'
+    'https://media.tenor.com/oRoczsrjl9EAAAAC/wolf-boop.gif',
 ];
 
 const DEFAULT_TEMPLATES = [
     '**{sender}** gives **{receiver}** a little poke! 👈',
     'Poke poke! **{sender}** taps **{receiver}** on the shoulder.',
     '**{sender}** pokes **{receiver}** to get their attention!',
-    '**{receiver}**, you\'ve been poked by **{sender}**!'
+    "**{receiver}**, you've been poked by **{sender}**!",
 ];
 
 const DEFAULT_RETURN_TEMPLATES = [
     '**{receiver}** pokes back at **{sender}**! 👈',
     '**{receiver}** laughs and returns the poke to **{sender}**.',
-    'Counter poke! **{receiver}** taps **{sender}** right back.'
+    'Counter poke! **{receiver}** taps **{sender}** right back.',
 ];
 
 module.exports = {
+    guildOnly: true,
     category: 'Fun',
     data: new SlashCommandBuilder()
         .setName('poke')
         .setDescription('Send a playful poke to another member!')
-        .addUserOption(option =>
-            option.setName('member')
-                .setDescription('Who do you want to poke?')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('note')
-                .setDescription('Add a short note (optional)')
-                .setMaxLength(100)
-                .setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('private')
-                .setDescription('If enabled, only you will see the message')
-                .setRequired(false)
+        .addUserOption((option) =>
+            option.setName('member').setDescription('Who do you want to poke?').setRequired(true),
+        )
+        .addStringOption((option) =>
+            option.setName('note').setDescription('Add a short note (optional)').setMaxLength(100).setRequired(false),
+        )
+        .addBooleanOption((option) =>
+            option.setName('private').setDescription('If enabled, only you will see the message').setRequired(false),
         ),
 
     async execute(interaction) {
@@ -52,12 +56,21 @@ module.exports = {
         const pokeMessages = pokeConfig.messages || {};
 
         if (sender.id === receiver.id) {
-            return interaction.reply({ content: pokeMessages.self_poke || 'You cannot poke yourself! 😅', flags: MessageFlags.Ephemeral });
+            return interaction.reply({
+                content: pokeMessages.self_poke || 'You cannot poke yourself! 😅',
+                flags: MessageFlags.Ephemeral,
+            });
         }
 
         const gifs = Array.isArray(pokeConfig.gifs) && pokeConfig.gifs.length ? pokeConfig.gifs : DEFAULT_GIFS;
-        const templates = Array.isArray(pokeMessages.templates) && pokeMessages.templates.length ? pokeMessages.templates : DEFAULT_TEMPLATES;
-        const returnTemplates = Array.isArray(pokeMessages.return_templates) && pokeMessages.return_templates.length ? pokeMessages.return_templates : DEFAULT_RETURN_TEMPLATES;
+        const templates =
+            Array.isArray(pokeMessages.templates) && pokeMessages.templates.length
+                ? pokeMessages.templates
+                : DEFAULT_TEMPLATES;
+        const returnTemplates =
+            Array.isArray(pokeMessages.return_templates) && pokeMessages.return_templates.length
+                ? pokeMessages.return_templates
+                : DEFAULT_RETURN_TEMPLATES;
 
         const randomGif = pickRandom(gifs);
         const template = pickRandom(templates);
@@ -79,20 +92,33 @@ module.exports = {
         }
 
         const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('poke_return').setLabel(pokeMessages.return_button || 'Poke back').setStyle(ButtonStyle.Secondary).setEmoji('👈'),
-            new ButtonBuilder().setCustomId('poke_close').setLabel(pokeMessages.close_button || 'Close').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+            new ButtonBuilder()
+                .setCustomId('poke_return')
+                .setLabel(pokeMessages.return_button || 'Poke back')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('👈'),
+            new ButtonBuilder()
+                .setCustomId('poke_close')
+                .setLabel(pokeMessages.close_button || 'Close')
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('🗑️'),
         );
 
-        await interaction.reply({ embeds: [embed], components: [row], ...(isPrivate ? { flags: MessageFlags.Ephemeral } : {}) });
+        await interaction.reply({
+            embeds: [embed],
+            components: [row],
+            ...(isPrivate ? { flags: MessageFlags.Ephemeral } : {}),
+        });
 
         if (!receiver.bot) {
             const guildName = interaction.guild?.name || 'Direct Message';
             const channel = interaction.channel;
-            const channelLabel = interaction.guild && channel && typeof channel.name === 'string'
-                ? `#${channel.name}`
-                : interaction.guild
-                    ? 'this channel'
-                    : 'this conversation';
+            const channelLabel =
+                interaction.guild && channel && typeof channel.name === 'string'
+                    ? `#${channel.name}`
+                    : interaction.guild
+                      ? 'this channel'
+                      : 'this conversation';
             const channelMention = interaction.guild ? `<#${interaction.channelId}>` : channelLabel;
 
             const dmTemplate = pokeMessages.dm || '{sender} poked you in {guild} at {channelMention}!';
@@ -101,7 +127,7 @@ module.exports = {
                 receiver: receiver.tag,
                 guild: guildName,
                 channel: channelLabel,
-                channelMention
+                channelMention,
             });
 
             const contextFooter = [sender.tag];
@@ -111,11 +137,13 @@ module.exports = {
                 contextFooter.push('Direct Message');
             }
 
-            const dmEmbed = EmbedBuilder.from(embed)
-                .setFooter({ text: contextFooter.join(' • '), iconURL: sender.displayAvatarURL() });
+            const dmEmbed = EmbedBuilder.from(embed).setFooter({
+                text: contextFooter.join(' • '),
+                iconURL: sender.displayAvatarURL(),
+            });
 
             try {
-                await receiver.send({ content: dmContent, embeds: [dmEmbed] });
+                await receiver.send(interaction.client.ui.message({ content: dmContent, embeds: [dmEmbed] }));
             } catch (error) {
                 if (!pokeConfig.silent_dm_failures) {
                     console.warn('Unable to DM poke target:', error?.message || error);
@@ -126,21 +154,29 @@ module.exports = {
         const message = await interaction.fetchReply();
         const collector = message.createMessageComponentCollector({ time: 30000 });
 
-        collector.on('collect', async (i) => {
+        onCollect(collector, async (i) => {
             if (i.customId === 'poke_close') {
                 if (i.user.id !== sender.id && i.user.id !== receiver.id) {
-                    await i.reply({ content: pokeMessages.close_denied || 'Only the sender or receiver can close this.', flags: MessageFlags.Ephemeral });
+                    await i.reply({
+                        content: pokeMessages.close_denied || 'Only the sender or receiver can close this.',
+                        flags: MessageFlags.Ephemeral,
+                    });
                     return;
                 }
                 collector.stop('closed');
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 await i.update({ components: [disabled] });
                 return;
             }
 
             if (i.customId === 'poke_return') {
                 if (i.user.id !== receiver.id) {
-                    await i.reply({ content: pokeMessages.return_denied || 'Only the mentioned member can return the poke.', flags: MessageFlags.Ephemeral });
+                    await i.reply({
+                        content: pokeMessages.return_denied || 'Only the mentioned member can return the poke.',
+                        flags: MessageFlags.Ephemeral,
+                    });
                     return;
                 }
                 collector.stop('returned');
@@ -156,16 +192,20 @@ module.exports = {
                     .setFooter({ text: `Started by ${sender.username}`, iconURL: sender.displayAvatarURL() })
                     .setTimestamp();
 
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 await i.update({ embeds: [returned], components: [disabled] });
             }
         });
 
-        collector.on('end', async (_c, reason) => {
+        onEnd(collector, async (_c, reason) => {
             if (reason === 'time') {
-                const disabled = new ActionRowBuilder().addComponents(row.components.map(c => ButtonBuilder.from(c).setDisabled(true)));
+                const disabled = new ActionRowBuilder().addComponents(
+                    row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
+                );
                 await interaction.editReply({ components: [disabled] }).catch(() => {});
             }
         });
-    }
+    },
 };

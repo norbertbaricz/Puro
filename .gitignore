@@ -1,5 +1,12 @@
 node_modules/
-database.json
-logs.json
 .env
-.venv
+.env.*
+!.env.example
+database.json
+**/*.bak.*.json
+logs.json
+logs/
+.runtime/
+*.tmp
+coverage/
+.venv/

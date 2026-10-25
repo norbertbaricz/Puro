@@ -1,0 +1,18 @@
+color: '#8B4513'
+max_errors: 6
+messages:
+    title: 🪢 Hangman Game
+    footer: Game started by {userTag} | Type a letter to guess!
+    description: Guess the word below. You have **{lives}** lives left.
+    word_display: 'Word:'
+    guessed_letters: 'Guessed Letters:'
+    no_letters_guessed: None yet
+    win_title: 🎉 Congratulations, You Won! 🎉
+    win_description: 'You guessed the word correctly: **{word}**'
+    lose_title: 😭 Game Over! 😭
+    lose_description: 'You ran out of lives! The word was: **{word}**'
+    letter_already_guessed: You already guessed the letter `{letter}`. Try another one!
+    not_a_letter: '`{input}` is not a valid letter. Please try again.'
+    game_already_running: ❌ A Hangman game is already running in this channel. Please wait for it to finish.
+    game_timeout: ⏰ The game has been cancelled due to inactivity.
+    wrong_word_guess: ❌ That is not the correct word! One life has been lost.

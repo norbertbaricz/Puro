@@ -1,52 +1,59 @@
 {
-  "name": "puro",
-  "version": "1.2.18",
-  "description": "Puro is a versatile and dynamic Discord bot designed to enhance your server experience. With a wide range of commands and seamless integration, Puro helps automate tasks and bring more fun and efficiency to your Discord community.",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon --watch . --ignore database.json --ignore data/guild-event-state.json --ignore '*.log' --trace-warnings app.js",
-    "dev:debug": "nodemon --inspect --watch . --ignore database.json --ignore data/guild-event-state.json --ignore '*.log' --trace-warnings app.js",
-    "lint": "eslint . --ext .js --fix",
-    "lint:check": "eslint . --ext .js"
-  },
-  "dependencies": {
-    "@discordjs/voice": "^0.19.0",
-    "@snazzah/davey": "^0.1.9",
-    "@vladfrangu/async_event_emitter": "^2.4.7",
-    "axios": "^1.13.5",
-    "discord.js": "^14.25.1",
-    "dotenv": "^17.3.1",
-    "js-yaml": "^4.1.1"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.0.2",
-    "globals": "^17.3.0",
-    "jest": "^30.2.0",
-    "nodemon": "^3.1.14"
-  },
-  "keywords": [
-    "discord",
-    "bot",
-    "automation",
-    "community",
-    "fun",
-    "discord.js",
-    "slash-commands"
-  ],
-  "author": "MaxUltimat3",
-  "company": "Skypixel",
-  "license": "ISC",
-  "engines": {
-    "node": ">=18.17.0",
-    "npm": ">=9.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/norbertbaricz/Puro"
-  },
-  "bugs": {
-    "url": "https://github.com/norbertbaricz/Puro/issues"
-  }
+    "name": "puro",
+    "version": "3.1.0",
+    "description": "Puro: hot-loaded Discord plugins with consistent rich messages and a clear, tested core.",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js",
+        "dev": "node --trace-warnings app.js",
+        "dev:debug": "node --inspect --trace-warnings app.js",
+        "check": "node tools/scripts/check.js",
+        "test": "node --test --test-concurrency=1 tools/tests/*.test.js",
+        "lint": "eslint . --fix",
+        "lint:check": "eslint . --max-warnings=0",
+        "prestart": "node tools/scripts/runtime.js",
+        "deps:check": "node tools/scripts/versions.js",
+        "verify": "npm run check && npm test && npm run lint:check && npm run format:check",
+        "format": "prettier --config tools/prettier.config.cjs --ignore-path tools/.prettierignore --write .",
+        "format:check": "prettier --config tools/prettier.config.cjs --ignore-path tools/.prettierignore --check ."
+    },
+    "dependencies": {
+        "@discordjs/voice": "0.19.2",
+        "@snazzah/davey": "0.1.12",
+        "axios": "1.20.0",
+        "chokidar": "6.0.0",
+        "discord.js": "14.27.0",
+        "dotenv": "18.0.9",
+        "js-yaml": "5.5.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "10.0.1",
+        "eslint": "10.13.0",
+        "globals": "17.13.0",
+        "prettier": "3.9.10"
+    },
+    "keywords": [
+        "discord",
+        "bot",
+        "automation",
+        "community",
+        "fun",
+        "discord.js",
+        "slash-commands"
+    ],
+    "author": "MaxUltimat3",
+    "company": "Skypixel",
+    "license": "ISC",
+    "engines": {
+        "node": ">=26.12.1",
+        "npm": ">=12.2.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/norbertbaricz/Puro"
+    },
+    "bugs": {
+        "url": "https://github.com/norbertbaricz/Puro/issues"
+    },
+    "packageManager": "npm@12.2.1"
 }

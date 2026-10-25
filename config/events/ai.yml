@@ -1,0 +1,5 @@
+messages:
+    unsure: I... I'm not sure what to say, hooman. Can you ask again?
+    error_generic: Oh no, my brain-fluff isn't working! I had a problem thinking of a response.
+    error_connection: ' Is the Ollama server running, hooman?'
+    error_api: ' The thinking-machine gave me an error.'

@@ -1,0 +1,15 @@
+{
+    "files.exclude": {
+        "node_modules": true,
+        ".runtime": true,
+        "logs": true
+    },
+    "search.exclude": {
+        "node_modules": true,
+        ".runtime": true,
+        "logs": true,
+        "**/package-lock.json": true
+    },
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+}
