@@ -314,7 +314,7 @@ module.exports = {
                                 return;
                             }
 
-                            await safeDeferUpdate(i);
+                            if (!(await safeDeferUpdate(i))) return;
 
                             const winner = game.checkWinner();
 
@@ -367,7 +367,7 @@ module.exports = {
                                         if (btn.customId === 'ttt_rematch' && rematches < 1) {
                                             rematches += 1;
                                             players = { X: players.O, O: players.X };
-                                            await safeDeferUpdate(btn);
+                                            if (!(await safeDeferUpdate(btn))) return;
                                             await startMatch();
                                             endCollector.stop('rematch');
                                         }

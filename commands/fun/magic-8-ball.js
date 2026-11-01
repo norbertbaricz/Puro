@@ -8,6 +8,8 @@ const {
     MessageFlags,
 } = require('discord.js');
 
+const INPUT_LIMIT = 2000;
+
 module.exports = {
     guildOnly: true,
     category: 'Fun',
@@ -15,7 +17,11 @@ module.exports = {
         .setName('8ball')
         .setDescription('Ask the Magic 8-Ball a question and receive a mysterious answer.')
         .addStringOption((option) =>
-            option.setName('question').setDescription('The yes/no question you want to ask.').setRequired(true),
+            option
+                .setName('question')
+                .setDescription('The yes/no question you want to ask.')
+                .setMaxLength(INPUT_LIMIT)
+                .setRequired(true),
         )
         .addBooleanOption((option) =>
             option.setName('private').setDescription('If enabled, only you will see the answer.').setRequired(false),

@@ -1,4 +1,5 @@
-const { onCollect, onEnd } = require('../../src/shared/collectors');
+const { safeDeferUpdate } = require('../../src/core/interactions/safety');
+const { onCollect, onEnd, linkCollectors } = require('../../src/shared/collectors');
 const {
     SlashCommandBuilder,
     EmbedBuilder,
@@ -120,16 +121,6 @@ module.exports = {
         const filter = (m) => m.author.id === player.id;
         const collector = channel.createMessageCollector({ filter, time: 120000 });
 
-        const safeDeferUpdate = async (componentInteraction) => {
-            try {
-                await componentInteraction.deferUpdate();
-            } catch (err) {
-                if (err?.code !== 10062) {
-                    throw err;
-                }
-            }
-        };
-
         const updateGame = async (feedback = null) => {
             gameEmbed = buildEmbed(feedback);
             await interaction.editReply({ embeds: [gameEmbed], components: [row()] });
@@ -137,6 +128,7 @@ module.exports = {
 
         // Button collector
         const btnCollector = (await interaction.fetchReply()).createMessageComponentCollector({ time: 120000 });
+        linkCollectors(collector, btnCollector);
         onCollect(btnCollector, async (i) => {
             if (i.user.id !== player.id) {
                 await i.reply({ content: 'Only the game owner can use these buttons.', flags: MessageFlags.Ephemeral });
@@ -153,8 +145,8 @@ module.exports = {
                 return;
             }
             if (i.customId === 'guess_hint') {
+                if (!(await safeDeferUpdate(i))) return;
                 if (hintsUsed >= maxHints || chances <= 1) {
-                    await safeDeferUpdate(i);
                     return;
                 }
                 hintsUsed += 1;
@@ -168,7 +160,6 @@ module.exports = {
                     rangeMax = mid;
                     feedback = `Try lower than ${mid + 1}.`;
                 }
-                await safeDeferUpdate(i);
                 await updateGame(feedback);
                 if (chances <= 0) {
                     collector.stop('depleted');
@@ -178,10 +169,11 @@ module.exports = {
         });
 
         onCollect(collector, async (m) => {
-            const guess = parseInt(m.content);
+            const input = m.content.trim();
+            const guess = /^[-+]?\d+$/.test(input) ? Number(input) : NaN;
             await m.delete().catch(() => {});
 
-            if (isNaN(guess)) {
+            if (!Number.isSafeInteger(guess) || guess < min || guess > max) {
                 const msg = await interaction.followUp({
                     content: guessConfig.messages.invalid_guess.replace('{guess}', m.content),
                     flags: MessageFlags.Ephemeral,
@@ -220,7 +212,12 @@ module.exports = {
             }
         });
 
+        let timeoutHandled = false;
         const endGameTimeout = async () => {
+            if (timeoutHandled) return;
+            timeoutHandled = true;
+            collector.stop('time');
+            btnCollector.stop('time');
             const timeoutEmbed = new EmbedBuilder()
                 .setColor('#FFA500')
                 .setTitle(guessConfig.messages.timeout)

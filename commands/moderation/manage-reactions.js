@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
+const INPUT_LIMITS = Object.freeze({ message_ids: 1024, emojis: 512 });
+
 module.exports = {
     guildOnly: true,
     category: 'Moderation',
@@ -10,10 +12,15 @@ module.exports = {
             option
                 .setName('message_ids')
                 .setDescription('Message ID(s), separated by spaces or commas')
+                .setMaxLength(INPUT_LIMITS.message_ids)
                 .setRequired(true),
         )
         .addStringOption((option) =>
-            option.setName('emojis').setDescription('Emoji(s), separated by spaces or commas').setRequired(true),
+            option
+                .setName('emojis')
+                .setDescription('Emoji(s), separated by spaces or commas')
+                .setMaxLength(INPUT_LIMITS.emojis)
+                .setRequired(true),
         )
         .addChannelOption((option) =>
             option

@@ -10,6 +10,8 @@ const {
     MessageFlags,
 } = require('discord.js');
 
+const INPUT_LIMITS = Object.freeze({ prize: 1000 });
+
 module.exports = {
     guildOnly: true,
     category: 'Management',
@@ -17,7 +19,11 @@ module.exports = {
         .setName('giveaway')
         .setDescription('Starts a giveaway and picks a winner from the most active members!')
         .addStringOption((option) =>
-            option.setName('prize').setDescription('What awesome prize are you giving away?').setRequired(true),
+            option
+                .setName('prize')
+                .setDescription('What awesome prize are you giving away?')
+                .setMaxLength(INPUT_LIMITS.prize)
+                .setRequired(true),
         )
         .addIntegerOption((option) =>
             option

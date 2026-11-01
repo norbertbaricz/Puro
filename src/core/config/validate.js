@@ -1,4 +1,4 @@
-const { GatewayIntentBits } = require('discord.js');
+const { GatewayIntentBits, ActivityType } = require('discord.js');
 const { SNOWFLAKE } = require('./defaults');
 const { buildGuildDirectory } = require('./guilds');
 function validateConfig(config) {
@@ -96,6 +96,18 @@ function validateConfig(config) {
                 throw new Error(`voiceConnect.${key} must be an integer from ${min} to ${max}.`);
         }
     }
+    const presence = config.status;
+    if (!presence || typeof presence !== 'object') throw new Error('status must be an object.');
+    if (typeof presence.branding !== 'string' || presence.branding.length > 128)
+        throw new Error('status.branding must contain at most 128 characters.');
+    if (!Array.isArray(presence.texts) || presence.texts.some((text) => typeof text !== 'string'))
+        throw new Error('status.texts must be an array of strings.');
+    if (typeof ActivityType[presence.type] !== 'number')
+        throw new Error('status.type must name a valid Discord activity type.');
+    if (!['online', 'idle', 'dnd', 'invisible'].includes(presence.status))
+        throw new Error('status.status must be online, idle, dnd, or invisible.');
+    if (!Number.isInteger(presence.interval_ms) || presence.interval_ms < 15000)
+        throw new Error('status.interval_ms must be an integer >= 15000.');
     buildGuildDirectory(config);
     return config;
 }

@@ -1,21 +1,24 @@
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
+const fs = require('node:fs');
 const path = require('node:path');
 const { ROOT } = require('../../src/paths');
-const { dependencies, devDependencies } = require('../../package.json');
+const { latestStable, STABLE_VERSION } = require('../../src/shared/versions');
+const { dependencies, devDependencies, overrides } = require('../../package.json');
 
-// Read-only registry check. Updates are deliberate so new releases can be tested.
+// Read-only checks; updates remain deliberate so they can be tested before release.
 const TIMEOUT_MS = 20_000;
+const BATCH_SIZE = 4;
 const exec = promisify(execFile);
 
-async function latest(name) {
+async function query(name, field) {
     const { stdout } = await exec(
         process.execPath,
         [
             process.env.npm_execpath,
             'view',
             name,
-            'dist-tags.latest',
+            field,
             '--json',
             '--registry=https://registry.npmjs.org',
             '--fetch-retries=0',
@@ -23,28 +26,32 @@ async function latest(name) {
         ],
         { timeout: TIMEOUT_MS, cwd: ROOT },
     );
-    const value = JSON.parse(stdout);
-    const version = Array.isArray(value) ? value.at(-1) : value;
-    if (typeof version !== 'string') throw new Error(`Invalid registry response for ${name}.`);
-    return version;
+    return JSON.parse(stdout);
+}
+
+async function latest(name) {
+    if (name === 'node') return latestStable(await query(name, 'versions'));
+    const result = await query(name, 'dist-tags.latest');
+    const tagged = Array.isArray(result) ? result.at(-1) : result;
+    return typeof tagged === 'string' && STABLE_VERSION.test(tagged)
+        ? tagged
+        : latestStable(await query(name, 'versions'));
 }
 
 async function main() {
     if (!process.env.npm_execpath) throw new Error('Use npm run deps:check.');
-    const packages = Object.keys({ ...dependencies, ...devDependencies });
-    const installed = (name) =>
-        JSON.parse(require('node:fs').readFileSync(path.join(ROOT, 'node_modules', name, 'package.json'), 'utf8'))
-            .version;
-    const rows = packages.map((name) => ({ name, installed: installed(name) }));
+    const rows = Object.keys({ ...dependencies, ...devDependencies, ...overrides }).map((name) => ({
+        name,
+        installed: JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules', name, 'package.json'), 'utf8')).version,
+    }));
     rows.push(
         { name: 'node', installed: process.versions.node },
         { name: 'npm', installed: /npm\/([^ ]+)/.exec(process.env.npm_config_user_agent || '')?.[1] || 'unknown' },
     );
     let failed = false;
-    // Small batches avoid a burst of npm subprocesses.
-    for (let offset = 0; offset < rows.length; offset += 4) {
+    for (let offset = 0; offset < rows.length; offset += BATCH_SIZE) {
         await Promise.all(
-            rows.slice(offset, offset + 4).map(async (row) => {
+            rows.slice(offset, offset + BATCH_SIZE).map(async (row) => {
                 try {
                     row.latest = await latest(row.name);
                     row.status = row.latest === row.installed ? 'current' : 'update available';
@@ -57,7 +64,9 @@ async function main() {
         );
     }
     console.table(rows);
-    console.log('Discord REST: API v10. Node Current releases are checked; preview and nightly builds are excluded.');
+    console.log(
+        'Discord REST: API v10. Only stable releases are checked; alpha, beta, preview, and nightly builds are excluded.',
+    );
     if (failed)
         console.log('Review available releases, update the lockfile, then run npm run verify. No files were changed.');
     process.exitCode = failed ? 1 : 0;

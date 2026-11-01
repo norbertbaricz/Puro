@@ -130,7 +130,7 @@ module.exports = {
                 },
             )
             .setImage(recipe.image)
-            .setFooter({ text: 'Bon appétit! 🎉' })
+            .setFooter({ text: 'Enjoy your meal! 🎉' })
             .setTimestamp();
 
         await interaction.reply({

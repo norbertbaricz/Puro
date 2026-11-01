@@ -10,6 +10,8 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 
+const INPUT_LIMITS = Object.freeze({ search: 1000 });
+
 module.exports = {
     guildOnly: true,
     category: 'Media',
@@ -17,7 +19,11 @@ module.exports = {
         .setName('e621')
         .setDescription('Search e621 images')
         .addStringOption((option) =>
-            option.setName('search').setDescription('Search terms (space/comma separated)').setRequired(false),
+            option
+                .setName('search')
+                .setDescription('Search terms (space/comma separated)')
+                .setMaxLength(INPUT_LIMITS.search)
+                .setRequired(false),
         )
         .addStringOption((option) =>
             option

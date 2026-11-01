@@ -1,3 +1,4 @@
+const { safeDeferUpdate } = require('../../src/core/interactions/safety');
 const { onCollect, onEnd } = require('../../src/shared/collectors');
 const {
     SlashCommandBuilder,
@@ -36,16 +37,6 @@ module.exports = {
                     // Collector might already be stopped, ignore.
                 }
                 activeCollector = null;
-            }
-        };
-
-        const safeDeferUpdate = async (componentInteraction) => {
-            try {
-                await componentInteraction.deferUpdate();
-            } catch (err) {
-                if (err?.code !== 10062) {
-                    throw err;
-                }
             }
         };
 
@@ -129,7 +120,7 @@ module.exports = {
                     return;
                 }
                 if (i.customId === 'wallet_close') {
-                    await safeDeferUpdate(i);
+                    if (!(await safeDeferUpdate(i))) return;
                     stopCollector('closed');
                     const disabled = new ActionRowBuilder().addComponents(
                         row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
@@ -138,7 +129,7 @@ module.exports = {
                     return;
                 }
                 if (i.customId === 'wallet_refresh') {
-                    await safeDeferUpdate(i);
+                    if (!(await safeDeferUpdate(i))) return;
                     stopCollector('refresh');
                     await render();
                     return;

@@ -19,9 +19,9 @@ async function loadFile(manager, file, { sync = true } = {}) {
             return true;
         }
         // Validation finishes before the live module or its listeners are touched.
-        if (previous) await manager.detach(previous);
         const stat = fs.statSync(file);
         candidate.fileStamp = `${stat.mtimeMs}:${stat.size}`;
+        if (previous) await manager.detach(previous);
         manager.records.set(file, candidate);
         manager.rebuildIndexes();
         if (candidate.kind === 'events') await manager.attach(candidate);

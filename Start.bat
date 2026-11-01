@@ -12,13 +12,13 @@ title Puro Discord Bot
 
 where node >nul 2>nul
 if errorlevel 1 (
-    echo Node.js was not found. Install Node.js 26.12.1 or newer.
+    echo Node.js was not found. Install Node.js 26.13.0 or newer.
     pause
     exit /b 1
 )
 node tools\scripts\runtime.js
 if errorlevel 1 (
-    echo Puro requires Node.js 26.12.1 or newer.
+    echo Puro requires Node.js 26.13.0 or newer.
     pause
     exit /b 1
 )

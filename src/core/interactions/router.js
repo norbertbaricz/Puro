@@ -1,5 +1,5 @@
 const { createLogger } = require('../logging/logger');
-const { isUnknownInteractionError } = require('./safety');
+const { isUnknownInteractionError, isUnavailableResponseError } = require('./safety');
 const { runHandler } = require('./execute');
 const { privateReply } = require('./respond');
 const log = createLogger('INTERACTIONS');
@@ -70,7 +70,7 @@ async function dispatchInteraction(interaction) {
                 'error',
             );
         } catch (replyError) {
-            if (!isUnknownInteractionError(replyError))
+            if (!isUnavailableResponseError(replyError))
                 log.error('Could not send the interaction error', { error: replyError });
         }
     }

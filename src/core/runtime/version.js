@@ -1,7 +1,9 @@
 const { engines } = require('../../../package.json');
+const { STABLE_VERSION } = require('../../shared/versions');
 
 // Simple numeric minima: this script can explain the requirement on old Node.
 function atLeast(actual, minimum) {
+    if (!STABLE_VERSION.test(actual)) return false;
     const left = actual.split('.').map(Number);
     const right = minimum.replace(/^>=/, '').split('.').map(Number);
     for (let index = 0; index < 3; index++) {

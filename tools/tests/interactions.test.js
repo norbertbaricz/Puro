@@ -157,3 +157,18 @@ test('drop-in modal handlers route without editing the core event', async (t) =>
 });
 
 module.exports = { interaction };
+
+test('a missing target message still receives an error response instead of being mistaken for an expired reply', async (t) => {
+    const f = await fixture(t);
+    await f.manager.loadFile(
+        f.write(
+            'commands/missing-target.js',
+            "module.exports={data:{name:'hello',description:'Test'},async execute(){throw Object.assign(new Error('Unknown target message'),{code:10008});}};",
+        ),
+    );
+    const i = interaction(f.client);
+    await dispatchInteraction(i);
+    assert.equal(i.replies.length, 1);
+    assert.equal(i.replies[0].flags, MessageFlags.Ephemeral);
+    assert.match(i.replies[0].embeds[0].toJSON().description, /Something went wrong|error/i);
+});

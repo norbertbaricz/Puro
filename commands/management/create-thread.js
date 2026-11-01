@@ -62,19 +62,33 @@ module.exports = {
             });
         }
 
-        // Permission checks for the bot
+        if (!title)
+            return interaction.reply(
+                interaction.client.ui.warning('Please provide a thread title.', { flags: MessageFlags.Ephemeral }),
+            );
+        if (privateThread && targetChannel.type !== ChannelType.GuildText) {
+            return interaction.reply(
+                interaction.client.ui.warning('Private threads require a regular text channel.', {
+                    flags: MessageFlags.Ephemeral,
+                }),
+            );
+        }
         const bot = interaction.guild?.members?.me;
         const perms = bot && targetChannel.permissionsFor(bot);
-        const canManageThreads = perms?.has(PermissionsBitField.Flags.ManageThreads);
-        const canCreatePublic = perms?.has(PermissionsBitField.Flags.CreatePublicThreads);
-        const canCreatePrivate = perms?.has(PermissionsBitField.Flags.CreatePrivateThreads);
-        const canSend = perms?.has(PermissionsBitField.Flags.SendMessages);
-
-        if (!perms || (!canManageThreads && !canCreatePublic && !canCreatePrivate)) {
-            return interaction.reply({
-                content: msg.no_permission || "❌ I don't have permission to create threads in that channel.",
-                flags: MessageFlags.Ephemeral,
-            });
+        const flags = PermissionsBitField.Flags;
+        const required = [flags.ViewChannel];
+        if (privateThread) required.push(flags.CreatePrivateThreads);
+        else {
+            required.push(flags.SendMessages, flags.EmbedLinks);
+            if (targetChannel.type !== ChannelType.GuildForum) required.push(flags.CreatePublicThreads);
+        }
+        if (!perms?.has(required)) {
+            return interaction.reply(
+                interaction.client.ui.warning(
+                    msg.no_permission || 'I do not have the permissions required to create this thread.',
+                    { flags: MessageFlags.Ephemeral },
+                ),
+            );
         }
 
         await interaction.deferReply({ flags: isPrivate ? MessageFlags.Ephemeral : undefined });
@@ -94,7 +108,7 @@ module.exports = {
                 });
             } else {
                 // Text/Announcement channels
-                if (privateThread && canCreatePrivate) {
+                if (privateThread) {
                     // Try direct private thread creation (no starter message)
                     thread = await targetChannel.threads.create({
                         name: title,
@@ -104,12 +118,6 @@ module.exports = {
                         reason: `Requested by ${interaction.user.tag}`,
                     });
                 } else {
-                    if (!canSend) {
-                        return interaction.editReply({
-                            content:
-                                msg.no_permission || "❌ I don't have permission to create threads in that channel.",
-                        });
-                    }
                     // Seed a starter message then start a (public) thread from it for broader compatibility
                     const seed = await targetChannel.send(
                         interaction.client.ui.info(

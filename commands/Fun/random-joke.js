@@ -1,3 +1,4 @@
+const { setTimeout: delay } = require('node:timers/promises');
 const { onCollect, onEnd } = require('../../src/shared/collectors');
 const {
     SlashCommandBuilder,
@@ -8,6 +9,9 @@ const {
     MessageFlags,
 } = require('discord.js');
 const axios = require('axios');
+
+const ANIMATION_DELAY_MS = 600;
+const MAX_REROLLS = 3;
 
 module.exports = {
     guildOnly: true,
@@ -126,7 +130,7 @@ module.exports = {
                             .setLabel('Another')
                             .setStyle(ButtonStyle.Secondary)
                             .setEmoji('🔄')
-                            .setDisabled(rerolls >= 3),
+                            .setDisabled(rerolls >= MAX_REROLLS),
                         new ButtonBuilder()
                             .setCustomId('joke_close')
                             .setLabel('Close')
@@ -146,7 +150,7 @@ module.exports = {
                             .setLabel('Another')
                             .setStyle(ButtonStyle.Secondary)
                             .setEmoji('🔄')
-                            .setDisabled(rerolls >= 3),
+                            .setDisabled(rerolls >= MAX_REROLLS),
                         new ButtonBuilder()
                             .setCustomId('joke_close')
                             .setLabel('Close')
@@ -198,7 +202,7 @@ module.exports = {
                         return;
                     }
 
-                    if (i.customId === 'joke_again') {
+                    if (i.customId === 'joke_again' && rerolls < MAX_REROLLS) {
                         collector.stop('reroll');
                         await i.deferUpdate();
                         const waiting = new EmbedBuilder()
@@ -210,7 +214,8 @@ module.exports = {
                             row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
                         );
                         await interaction.editReply({ embeds: [waiting], components: [disabled] });
-                        setTimeout(() => render(rerolls + 1), 600);
+                        await delay(ANIMATION_DELAY_MS);
+                        await render(rerolls + 1);
                     }
                 });
 

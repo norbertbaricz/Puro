@@ -1,6 +1,6 @@
 {
     "name": "puro",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "description": "Puro: hot-loaded Discord plugins with consistent rich messages and a clear, tested core.",
     "main": "app.js",
     "scripts": {
@@ -20,15 +20,15 @@
     "dependencies": {
         "@discordjs/voice": "0.19.2",
         "@snazzah/davey": "0.1.12",
-        "axios": "1.20.0",
+        "axios": "1.21.0",
         "chokidar": "6.0.0",
-        "discord.js": "14.27.0",
+        "discord.js": "14.28.0",
         "dotenv": "18.0.9",
         "js-yaml": "5.5.0"
     },
     "devDependencies": {
         "@eslint/js": "10.0.1",
-        "eslint": "10.13.0",
+        "eslint": "10.14.0",
         "globals": "17.13.0",
         "prettier": "3.9.10"
     },
@@ -45,7 +45,7 @@
     "company": "Skypixel",
     "license": "ISC",
     "engines": {
-        "node": ">=26.12.1",
+        "node": ">=26.13.0",
         "npm": ">=12.2.1"
     },
     "repository": {
@@ -55,5 +55,9 @@
     "bugs": {
         "url": "https://github.com/norbertbaricz/Puro/issues"
     },
-    "packageManager": "npm@12.2.1"
+    "packageManager": "npm@12.2.1",
+    "overrides": {
+        "minimatch": "11.0.3",
+        "follow-redirects": "1.16.2"
+    }
 }

@@ -9,6 +9,8 @@ const {
     MessageFlags,
 } = require('discord.js');
 
+const INPUT_LIMITS = Object.freeze({ contains: 2000 });
+
 module.exports = {
     guildOnly: true,
     category: 'Moderation',
@@ -22,7 +24,11 @@ module.exports = {
             option.setName('user').setDescription('Only delete messages from this user').setRequired(false),
         )
         .addStringOption((option) =>
-            option.setName('contains').setDescription('Only delete messages containing this text').setRequired(false),
+            option
+                .setName('contains')
+                .setDescription('Only delete messages containing this text')
+                .setMaxLength(INPUT_LIMITS.contains)
+                .setRequired(false),
         )
         .addBooleanOption((option) =>
             option.setName('bots_only').setDescription('Only delete messages from bots').setRequired(false),

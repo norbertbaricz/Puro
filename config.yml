@@ -25,9 +25,9 @@ colors:
     error: '#ff0000'
     info: '#0099ff'
 status:
+    branding: 'Made by Skypixel Framework'
     texts:
         - 🚀 Running the new update!
-        - 💡 Created by Skypixel
         - ✨ Discover the new update!
         - ⚙️ Managing {servers} servers
         - 👥 Assisting {members} members

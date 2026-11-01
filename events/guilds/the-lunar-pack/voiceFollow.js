@@ -1,3 +1,4 @@
+const { createLogger } = require('../../../src/core/logging/logger');
 const { Events, Routes } = require('discord.js');
 const { joinVoiceChannel, getVoiceConnection, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
 
@@ -5,6 +6,7 @@ const DEFAULT_GUILD_ID = '1217588804328620163';
 const DEFAULT_MEMBER_ID = '486412940199591967';
 const DEFAULT_SOUNDBOARD_ID = '1239667321467965654';
 
+const log = createLogger('VOICE-FOLLOW');
 const connections = new Set();
 const revisions = new Map();
 
@@ -33,7 +35,7 @@ module.exports = {
         const connection = getVoiceConnection(guild.id);
 
         if (!newChannelId) {
-            if (connection) {
+            if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
                 connection.destroy();
             }
             return;
@@ -45,7 +47,7 @@ module.exports = {
         if (connection?.joinConfig?.channelId === targetChannel.id) return;
 
         try {
-            if (connection) {
+            if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
                 connection.destroy();
             }
 
@@ -56,6 +58,10 @@ module.exports = {
                 selfDeaf: false,
             });
 
+            nextConnection.on('error', (error) => {
+                log.error('Voice connection failed', { guildId: guild.id, error });
+                newState.client.healthMonitor?.recordError(error);
+            });
             connections.add(nextConnection);
             nextConnection.once(VoiceConnectionStatus.Destroyed, () => connections.delete(nextConnection));
 

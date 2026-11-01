@@ -1,3 +1,15 @@
+# 3.2.0 — 2026-11-01
+
+- Updated to discord.js 14.28.0, Node.js 26.13.0 LTS, Axios 1.21.0, and ESLint 10.14.0; retained current stable npm 12.2.1.
+- Added `Made by Skypixel Framework` as the first Custom status and a retained entry in the status rotation, including configurations from older releases.
+- Fixed deferred component error responses so they use private follow-ups without replacing public games; preserved Components V2 when completing deferred updates.
+- Awaited identity/rating/joke animations so rendering and network failures stay inside the command or collector error boundary.
+- Linked message and button collector queues for shared game state; rejected malformed number guesses, protected expired hints, and prevented duplicate timeout handling.
+- Acknowledged job resignations before storage work and used edits after deferral. Added Discord input bounds and exact permissions for requested thread types.
+- Preserved the old event listener when replacement file metadata cannot be read; isolated per-guild ready failures and left failed guilds eligible for retry.
+- Handled voice connection error events locally; treated deleted or expired response objects as lifecycle outcomes while retaining real permission diagnostics.
+- Corrected stable-version selection when a registry latest tag points to an alpha; pinned patched redirect and lint-matching dependencies.
+
 # 3.1.0 — 2026-10-25
 
 - Added one configurable embed style for ordinary interaction replies, errors, channel posts, DMs, greetings, and forum/thread starter messages; native Components V2 views and polls keep their presentation.

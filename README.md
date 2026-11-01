@@ -1,10 +1,10 @@
-# Puro 3.1
+# Puro 3.2
 
 A modular Discord bot by **MaxUltimat3 / Skypixel**. Commands, events, and components load automatically when their files are saved. Existing economy features, games, and server automations are preserved.
 
 ## Start
 
-1. Install **Node.js 26.12.1 or newer** from the [Current release line](https://nodejs.org/en/download/current).
+1. Install **Node.js 26.13.0 or newer** from the [latest stable release](https://nodejs.org/en/download).
 2. Update npm with `npm install -g npm@12.2.1`, then run `npm ci` in the project folder.
 3. Copy `.env.example` to `.env` and fill in `TOKEN` and `clientId` from the [Discord Developer Portal](https://discord.com/developers/applications).
 4. Enable **Server Members Intent** and **Message Content Intent** in the Portal, matching `runtime.intents` in `config.yml`.
@@ -27,6 +27,10 @@ A modular Discord bot by **MaxUltimat3 / Skypixel**. Commands, events, and compo
 | Understand the core                         | [Project map](docs/PROJECT_MAP.md) and `src/` |
 
 `tools/` groups examples, tests, and development utilities. Documentation and verification reports live under `docs/`. In VS Code, generated dependency and log folders are hidden from the explorer; source folders remain visible.
+
+## Custom status
+
+The default Custom status starts with **Made by Skypixel Framework** and includes it in the rotating status list. Configure the text under `status.branding` in `config.yml`. The default also applies when copying a configuration from an older release.
 
 ## Bot messages
 

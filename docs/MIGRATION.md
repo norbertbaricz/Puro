@@ -1,10 +1,10 @@
-# Upgrade to Puro 3.1
+# Upgrade to Puro 3.2
 
 1. Stop your running bot and keep its current folder as a backup.
-2. Extract Puro 3.1 into a **new folder**. Do not merge it over the previous source tree: retired handlers could otherwise remain active.
+2. Extract Puro 3.2 into a **new folder**. Do not merge it over the previous source tree: retired handlers could otherwise remain active.
 3. Copy your current `.env`, configured economy database (normally `database.json`), and current `data/` folder into the new project. These live files take priority over sample data in the archive.
 4. If present, copy `.runtime/command-scopes.json` too, so obsolete command scopes can be removed correctly.
-5. Install Node.js 26.12.1+ and npm 12.2.1+, then run `npm ci` in the new folder. Do not copy the old `node_modules` directory.
+5. Install Node.js 26.13.0+ and npm 12.2.1+, then run `npm ci` in the new folder. Do not copy the old `node_modules` directory.
 6. Configure your owner ID and server mappings. The supplied source keeps the previous The Lunar Pack mapping.
 7. Run `npm run verify`, and then `npm start`.
 8. On Discord, start a **new `/help` session**. Old session IDs expire and do not carry over to a restarted process.
@@ -38,3 +38,9 @@ Command categories now use lowercase folder names. `templates/`, `tests/`, and `
 Preserve your current `config.yml` if it contains local customization. New UI defaults merge automatically when keys are absent; add `ui.footer`, `ui.timestamps`, and `ui.auto_embeds` when you want to override them. Do not copy an old package.json or package-lock.json over the new files.
 
 Ordinary interaction text now becomes an embed automatically. Update custom event/channel/DM posts to `client.ui` to use the same style. Add Embed Links permission in those destinations. `/announce` and `/send` now default to embed mode; the explicit plain option remains available. Start new game/help sessions after restarting.
+
+## Changes from 3.1
+
+Install Node.js 26.13.0+ and use the supplied lockfile with `npm ci`. Command and event folders, command names, and persistent record formats remain unchanged. `status.branding` is inherited even when an old configuration is copied; its default is `Made by Skypixel Framework`.
+
+Restart to apply the corrected acknowledgement tracking, collector queues, and helper modules. Begin fresh game/help sessions after restarting. New command input limits synchronize automatically with Discord; cached command forms may take a short time to refresh.

@@ -1,4 +1,4 @@
-const { onCollect, onEnd } = require('../../src/shared/collectors');
+const { onCollect, onEnd, linkCollectors } = require('../../src/shared/collectors');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // Store active games in a map keyed by channel ID.
@@ -244,6 +244,7 @@ module.exports = {
 
         // Collect game button interactions.
         game.buttonCollector = game.gameMessage.createMessageComponentCollector({ time: 300000 });
+        linkCollectors(game.collector, game.buttonCollector);
 
         onCollect(game.buttonCollector, async (i) => {
             if (i.user.id !== game.player.id) {

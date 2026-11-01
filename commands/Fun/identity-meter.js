@@ -1,3 +1,4 @@
+const { setTimeout: delay } = require('node:timers/promises');
 const { onCollect, onEnd } = require('../../src/shared/collectors');
 const {
     SlashCommandBuilder,
@@ -7,6 +8,9 @@ const {
     ButtonStyle,
     MessageFlags,
 } = require('discord.js');
+
+const ANIMATION_DELAY_MS = 800;
+const MAX_REROLLS = 3;
 
 module.exports = {
     guildOnly: true,
@@ -76,7 +80,7 @@ module.exports = {
                     .setLabel('Reroll')
                     .setStyle(ButtonStyle.Secondary)
                     .setEmoji('🎲')
-                    .setDisabled(rerolls >= 3),
+                    .setDisabled(rerolls >= MAX_REROLLS),
                 new ButtonBuilder()
                     .setCustomId('gender_close')
                     .setLabel('Close')
@@ -105,7 +109,7 @@ module.exports = {
                     await i.update({ components: [disabled] });
                     return;
                 }
-                if (i.customId === 'gender_reroll') {
+                if (i.customId === 'gender_reroll' && rerolls < MAX_REROLLS) {
                     collector.stop('reroll');
                     await i.deferUpdate();
                     const rolling = new EmbedBuilder()
@@ -117,7 +121,8 @@ module.exports = {
                         row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
                     );
                     await interaction.editReply({ embeds: [rolling], components: [disabled] });
-                    setTimeout(() => render(rerolls + 1), 800);
+                    await delay(ANIMATION_DELAY_MS);
+                    await render(rerolls + 1);
                 }
             });
 
@@ -131,6 +136,7 @@ module.exports = {
             });
         };
 
-        setTimeout(() => render(0), 300);
+        await delay(300);
+        await render(0);
     },
 };

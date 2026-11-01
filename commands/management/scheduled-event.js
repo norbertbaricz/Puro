@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { createCalendarEvent } = require('../../src/features/calendar/create');
 
+const INPUT_LIMITS = Object.freeze({ starts: 40, ends: 40 });
+
 module.exports = {
     category: 'Management',
     guildOnly: true,
@@ -20,10 +22,15 @@ module.exports = {
             option
                 .setName('starts')
                 .setDescription('ISO date with timezone, for example 2026-10-26T19:00+02:00')
+                .setMaxLength(INPUT_LIMITS.starts)
                 .setRequired(true),
         )
         .addStringOption((option) =>
-            option.setName('ends').setDescription('ISO end date, with timezone.').setRequired(true),
+            option
+                .setName('ends')
+                .setDescription('ISO end date, with timezone.')
+                .setMaxLength(INPUT_LIMITS.ends)
+                .setRequired(true),
         )
         .addStringOption((option) =>
             option

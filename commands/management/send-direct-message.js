@@ -9,6 +9,17 @@ const {
     MessageFlags,
 } = require('discord.js');
 
+const INPUT_LIMITS = Object.freeze({
+    message: 2000,
+    title: 256,
+    color: 7,
+    image: 2048,
+    thumbnail: 2048,
+    footer: 2048,
+    button_label: 80,
+    button_url: 512,
+});
+
 module.exports = {
     guildOnly: true,
     category: 'Management',
@@ -16,7 +27,11 @@ module.exports = {
         .setName('send')
         .setDescription('Send a DM to a user, a role, or everyone in the server')
         .addStringOption((option) =>
-            option.setName('message').setDescription('Message content (supports {user} placeholder)').setRequired(true),
+            option
+                .setName('message')
+                .setDescription('Message content (supports {user} placeholder)')
+                .setMaxLength(INPUT_LIMITS.message)
+                .setRequired(true),
         )
         .addUserOption((option) => option.setName('user').setDescription('Send only to this user').setRequired(false))
         .addRoleOption((option) =>
@@ -29,20 +44,50 @@ module.exports = {
                 .addChoices({ name: 'Plain', value: 'plain' }, { name: 'Embed', value: 'embed' })
                 .setRequired(false),
         )
-        .addStringOption((option) => option.setName('title').setDescription('Embed title').setRequired(false))
         .addStringOption((option) =>
-            option.setName('color').setDescription('Embed color hex, e.g. #5865F2').setRequired(false),
-        )
-        .addStringOption((option) => option.setName('image').setDescription('Embed image URL').setRequired(false))
-        .addStringOption((option) =>
-            option.setName('thumbnail').setDescription('Embed thumbnail URL').setRequired(false),
-        )
-        .addStringOption((option) => option.setName('footer').setDescription('Embed footer text').setRequired(false))
-        .addStringOption((option) =>
-            option.setName('button_label').setDescription('Optional button label').setRequired(false),
+            option.setName('title').setDescription('Embed title').setMaxLength(INPUT_LIMITS.title).setRequired(false),
         )
         .addStringOption((option) =>
-            option.setName('button_url').setDescription('Optional button URL').setRequired(false),
+            option
+                .setName('color')
+                .setDescription('Embed color hex, e.g. #5865F2')
+                .setMaxLength(INPUT_LIMITS.color)
+                .setRequired(false),
+        )
+        .addStringOption((option) =>
+            option
+                .setName('image')
+                .setDescription('Embed image URL')
+                .setMaxLength(INPUT_LIMITS.image)
+                .setRequired(false),
+        )
+        .addStringOption((option) =>
+            option
+                .setName('thumbnail')
+                .setDescription('Embed thumbnail URL')
+                .setMaxLength(INPUT_LIMITS.thumbnail)
+                .setRequired(false),
+        )
+        .addStringOption((option) =>
+            option
+                .setName('footer')
+                .setDescription('Embed footer text')
+                .setMaxLength(INPUT_LIMITS.footer)
+                .setRequired(false),
+        )
+        .addStringOption((option) =>
+            option
+                .setName('button_label')
+                .setDescription('Optional button label')
+                .setMaxLength(INPUT_LIMITS.button_label)
+                .setRequired(false),
+        )
+        .addStringOption((option) =>
+            option
+                .setName('button_url')
+                .setDescription('Optional button URL')
+                .setMaxLength(INPUT_LIMITS.button_url)
+                .setRequired(false),
         )
         .addBooleanOption((option) =>
             option.setName('private').setDescription('Preview and results privately').setRequired(false),

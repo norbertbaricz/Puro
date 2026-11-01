@@ -16,6 +16,8 @@ const memeCache = {
     CACHE_DURATION: 5 * 60 * 1000,
 };
 
+const INPUT_LIMITS = Object.freeze({ subreddit: 21 });
+
 module.exports = {
     guildOnly: true,
     category: 'Media',
@@ -23,7 +25,11 @@ module.exports = {
         .setName('meme')
         .setDescription('Get a random meme')
         .addStringOption((option) =>
-            option.setName('subreddit').setDescription('Specific subreddit').setRequired(false),
+            option
+                .setName('subreddit')
+                .setDescription('Specific subreddit')
+                .setMaxLength(INPUT_LIMITS.subreddit)
+                .setRequired(false),
         )
         .addBooleanOption((option) => option.setName('private').setDescription('Reply only to you').setRequired(false)),
 

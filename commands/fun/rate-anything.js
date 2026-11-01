@@ -1,3 +1,4 @@
+const { setTimeout: delay } = require('node:timers/promises');
 const { onCollect, onEnd } = require('../../src/shared/collectors');
 const {
     SlashCommandBuilder,
@@ -8,6 +9,11 @@ const {
     MessageFlags,
 } = require('discord.js');
 
+const ANIMATION_DELAY_MS = 500;
+const MAX_REROLLS = 3;
+
+const INPUT_LIMIT = 1000;
+
 module.exports = {
     guildOnly: true,
     category: 'Fun',
@@ -15,7 +21,11 @@ module.exports = {
         .setName('rate')
         .setDescription('Rate anything out of 10!')
         .addStringOption((option) =>
-            option.setName('thing').setDescription('What do you want me to rate?').setRequired(true),
+            option
+                .setName('thing')
+                .setDescription('What do you want me to rate?')
+                .setMaxLength(INPUT_LIMIT)
+                .setRequired(true),
         )
         .addStringOption((option) =>
             option
@@ -104,7 +114,7 @@ module.exports = {
                     .setLabel('Rerate')
                     .setStyle(ButtonStyle.Secondary)
                     .setEmoji('🔄')
-                    .setDisabled(mode !== 'random' || rerolls >= 3),
+                    .setDisabled(mode !== 'random' || rerolls >= MAX_REROLLS),
                 new ButtonBuilder()
                     .setCustomId('rate_close')
                     .setLabel('Close')
@@ -133,7 +143,7 @@ module.exports = {
                     await i.update({ components: [disabled] });
                     return;
                 }
-                if (i.customId === 'rate_reroll' && mode === 'random') {
+                if (i.customId === 'rate_reroll' && mode === 'random' && rerolls < MAX_REROLLS) {
                     collector.stop('reroll');
                     await i.deferUpdate();
                     const waiting = new EmbedBuilder()
@@ -145,7 +155,8 @@ module.exports = {
                         row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
                     );
                     await interaction.editReply({ embeds: [waiting], components: [disabled] });
-                    setTimeout(() => render(rerolls + 1), 500);
+                    await delay(ANIMATION_DELAY_MS);
+                    await render(rerolls + 1);
                 }
             });
 

@@ -1,35 +1,25 @@
-# Puro 3.1 source review and corrections
+# Puro 3.2 command and event review
 
-Reviewed on **2026-10-25**. The review covered plugin entry points, outgoing messages, component callbacks, configuration, registration/runtime boundaries, selected feature services, persistence behavior, dependency versions, and project layout. Automated preflight checks every JavaScript/CommonJS/ESM source file and loads every active plugin without Discord login.
+Reviewed on **2026-11-01**. All plugin definitions are loaded by the offline preflight. The runtime and affected command/event paths have regression tests using temporary data and local transport doubles.
 
-## Findings addressed
+| Finding                                                                                | Correction                                                                                           |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Initial identity rendering and rating/joke rerolls used detached asynchronous timers   | Awaited delays and renders so failures reach the router or collector error boundary                  |
+| Deferred component errors could edit a public game instead of sending a private notice | Track acknowledgement mode and use ephemeral follow-ups after `deferUpdate()`                        |
+| Completing a deferred V2 update could introduce legacy embeds                          | Preserve the original message format and render notices as native cards                              |
+| Message and button collectors could mutate the same game concurrently                  | Shared collector queues for number guessing and hangman                                              |
+| Invalid guesses such as `4abc` were accepted as integers                               | Require a complete safe integer within the configured range; invalid guesses do not consume attempts |
+| Expired hint actions could still change state                                          | Acknowledge first and stop when the interaction token has expired                                    |
+| Separate number-game timers could finalize the same timeout twice                      | Shared finalization guard and peer collector shutdown                                                |
+| Job resignation waited for persistence before acknowledging                            | Defer the update before storage work and finish through an edit                                      |
+| User text could exceed Discord message or resource limits                              | Added command option limits, including 32-character nicknames and embed metadata bounds              |
+| A requested private thread could silently become public without the needed permission  | Check exact permissions and supported channel types for the requested thread type                    |
+| Replacement file metadata could fail after the old event was detached                  | Read replacement metadata before changing the live listener                                          |
+| A ready failure in one guild prevented later guilds from initializing                  | Isolate guild initialization errors; mark only successful guilds initialized                         |
+| Voice connection error events lacked a local listener                                  | Log and record the connection error locally instead of allowing an unhandled error event             |
+| Registry latest pointed to an alpha Node release                                       | Select released semantic versions and reject prerelease runtimes                                     |
+| Custom status lacked the requested branding                                            | Send `Made by Skypixel Framework` first and retain it in rotation, including older configurations    |
 
-| Finding                                                                                               | Change and verification                                                                                                                         |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ordinary text responses, errors, greetings and DMs used inconsistent presentation                     | Added configurable `client.ui` embeds and automatic styling of ordinary interaction responses; SDK serialization and payload-preservation tests |
-| `/announce` and `/send` defaulted to plain output                                                     | Default is embed mode; explicit plain mode retained; announcement notifications keep only explicitly requested mention tokens in content        |
-| The UI guard checked combined embed size but omitted individual field/description limits              | Added per-embed title/description, footer/author, field count and field text checks                                                             |
-| Async collector callbacks bypassed the command router's error boundary                                | Shared ordered collector callbacks, local diagnostics, and private error notices                                                                |
-| Rapid actions could overlap while changing game state or balances                                     | Per-collector queue; closed confirmations do not execute queued actions; regression tests                                                       |
-| Blackjack could charge an expired double action or retain a wager after initial table delivery failed | Acknowledge before charging; skip expired actions; refund unplayable initial tables; settle a hand once                                         |
-| Large job catalogs exceeded Discord's 25-select-option limit                                          | Paginated job view with unique navigation IDs; 51-job regression                                                                                |
-| Giveaway cards failed on invalid publication dates                                                    | Valid timestamp fallback and bounded source text; rendering regression                                                                          |
-| User information fetched the same user twice and inferred an inviter from unrelated invite counters   | Reuse the fetched user; display that invite attribution was not recorded                                                                        |
-| Server presence displayed zeroes when the presence intent was absent                                  | Explicit unavailable state; verification level zero is retained correctly                                                                       |
-| Optional hardware commands could run repeatedly without a timeout                                     | Separate cached probes with bounded duration and no shell pipeline                                                                              |
-| Joke API requests lacked a timeout                                                                    | Added a 10-second request timeout                                                                                                               |
-| Large plugin files mixed declaration, rendering and feature behavior                                  | Split blackjack, job view and giveaway services into named responsibilities                                                                     |
-| Development folders/reports and naming styles were scattered                                          | Consolidated `tools/`, moved reports to `docs/`, lowercase command folders, shared formatting, English project map                              |
-| Runtime selection allowed older releases despite the current-version goal                             | Pinned Node 26.12.1 / npm 12.2.1, exact direct dependencies, shared runtime checks, read-only latest-version check                              |
+The review also updated the SDK and supported runtime, applied patched transitive dependencies, and retained the previous command names, plugin folders, economy record format, and server configuration. Existing drop-in files still load through the same contracts. Everything in the project remains in English.
 
-## Preserved behavior and data
-
-The command names, export contract, economy record format, bet payout rules, server mappings, original messages/settings, job definitions and job order are preserved. The 66 split configuration/job files were compared semantically with the previous source checkpoint. Persistent guild state was not changed.
-
-Existing help duplicate-ID and temporary-voice regression coverage remains in place. Hot reload keeps the last valid implementation after an invalid save. New shared UI settings merge into old configurations when absent.
-
-## Evidence and practical limits
-
-See [VERIFICATION.md](VERIFICATION.md) for test counts, exact versions, and check results. The tests exercise real SDK payload serialization with local transport doubles; they do not prove live permissions, service availability, or the final appearance in every Discord client. After migration, start fresh sessions and check `/help`, an announcement, an event greeting, a DM, and a temporary voice room on your server.
-
-This update does not change running bot files on your computer. Install the archive into a fresh folder, copy your current live configuration/data as described in [MIGRATION.md](MIGRATION.md), and run the verification before starting.
+See [VERIFICATION.md](VERIFICATION.md) for test counts and exact versions. Offline tests cannot identify every server-specific failure without its actual log. For a remaining issue, capture the complete error stack, command or event name, and the actions that triggered it. The owner-only `/diagnostics` command and `logs/puro.log` provide framework diagnostics.

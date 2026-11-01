@@ -1,49 +1,55 @@
-# Puro 3.1 verification
+# Puro 3.2 verification
 
-Verified locally on **2026-10-25** using **Node.js 26.12.1** and **npm 12.2.1**.
+Verified on **2026-11-01** with **Node.js 26.13.0 LTS**, **npm 12.2.1**, and **discord.js 14.28.0**.
 
-| Check                  | Result                                                                                                    |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| `npm test`             | 93 passed, zero failures                                                                                  |
-| `npm run check`        | 158 scripts checked; 61 active modules; zero module errors                                                |
-| `npm run lint:check`   | Zero errors or warnings                                                                                   |
-| `npm run format:check` | All matched files use the shared format                                                                   |
-| `npm audit`            | Zero reported vulnerabilities, including development dependencies                                         |
-| `npm run deps:check`   | All 11 direct dependencies/dev dependencies and both runtime tools match current stable registry versions |
-| Package / lockfile     | Matching version, dependencies, development dependencies, and engines                                     |
+| Check                | Result                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| Test suite           | 122 passing tests, zero failures                                                        |
+| Offline preflight    | 164 scripts; 61 active modules; zero module errors                                      |
+| ESLint               | Zero errors or warnings                                                                 |
+| Prettier             | Shared formatting checks pass                                                           |
+| Clean installation   | `npm ci` and `npm run verify` pass from a fresh source folder                           |
+| npm audit            | Zero vulnerabilities, including development dependencies                                |
+| Stable-version check | All direct dependencies, pinned overrides, Node, and npm match stable registry releases |
 
-The 61 active modules comprise 51 commands, 7 events, and 3 component handlers. Eleven copyable templates live under `tools/templates/`.
+The active modules comprise 51 commands, 7 events, and 3 persistent component handlers. The tests do not use live Discord credentials or user databases.
 
-## Tested dependency versions
+## Exact versions
 
-| Package          | Version |
-| ---------------- | ------- |
-| discord.js       | 14.27.0 |
-| @discordjs/voice | 0.19.2  |
-| @snazzah/davey   | 0.1.12  |
-| axios            | 1.20.0  |
-| chokidar         | 6.0.0   |
-| dotenv           | 18.0.9  |
-| js-yaml          | 5.5.0   |
-| @eslint/js       | 10.0.1  |
-| eslint           | 10.13.0 |
-| globals          | 17.13.0 |
-| prettier         | 3.9.10  |
+| Package or tool           | Version     |
+| ------------------------- | ----------- |
+| Node.js                   | 26.13.0 LTS |
+| npm                       | 12.2.1      |
+| discord.js                | 14.28.0     |
+| @discordjs/voice          | 0.19.2      |
+| @snazzah/davey            | 0.1.12      |
+| Axios                     | 1.21.0      |
+| chokidar                  | 6.0.0       |
+| dotenv                    | 18.0.9      |
+| js-yaml                   | 5.5.0       |
+| @eslint/js                | 10.0.1      |
+| ESLint                    | 10.14.0     |
+| globals                   | 17.13.0     |
+| Prettier                  | 3.9.10      |
+| minimatch override        | 11.0.3      |
+| follow-redirects override | 1.16.2      |
 
-Node uses the Current release line requested for this update; the SDK remains on its latest stable release. Discord REST registration uses API v10. Exact package versions and the lockfile make installs repeatable. `deps:check` performs a read-only registry comparison when checking future updates.
+The minimatch override supplies the patched implementation to lint tooling; compatibility was checked both by linting the source and by confirming that an intentional undefined identifier is still detected. The redirect override supplies the patched dependency used by Axios. Production dependency versions remain exact, and installs use the lockfile.
 
-## Runtime coverage
+## Coverage added in this release
 
-The suite exercises filesystem watching, invalid-save retention, duplicate rejection, module removal, lifecycle cleanup, guild isolation, late guild joins, CommonJS cache cleanup, cooldowns, permissions, autocomplete, error handling, REST synchronization/retries/scope cleanup, settings reloads, atomic persistence, rollback, unchanged-write suppression, credentials validation, modern forms/polls, and temporary voice behavior.
+- The installed Discord SDK serializes a Custom status with the exact text `Made by Skypixel Framework` into a Gateway presence packet. Rotation, deduplication, timer cleanup, and text limits are checked.
+- Deferred component failures produce private follow-ups without overwriting a public game. Deferred V2 updates keep V2 presentation. Missing command targets still receive an error response.
+- Related message/button collectors process session mutations through one queue. Normal deleted-response outcomes are contained; permission failures remain reported.
+- Initial identity rendering is awaited; rating and joke reroll failures remain inside the asynchronous error boundary.
+- Actual included command implementations are exercised with offline interactions and the real SDK message serializer. Tests include first renders, failed animations, job application/resignation, thread permissions, nickname bounds, malformed guesses, and expired hints.
+- A failed replacement file metadata read preserves the previous live event listener. One guild's ready failure does not block another guild or consume a failed guild's retry.
+- Version selection excludes alpha, beta, preview, and nightly strings even when a registry latest tag points at one.
 
-Message tests cover all four response methods, existing custom embeds, nonmutation, files and controls, live styles, explicit plain mode, partial edits, V2 notices, Unicode-safe splitting, field limits, actual SDK attachment serialization, and a real slash interaction with a local REST double. The help regression still checks an actual select interaction update, including disabled controls and one-page categories.
+Existing help duplicate-ID, voice-room ownership, atomic persistence, schema synchronization, watcher, cache, cooldown, permission, and modern UI regression coverage remains in place.
 
-Collector tests cover ordered actions/completion, asynchronous failures, closed confirmations, and the final event reaching an SDK collection limit. Blackjack tests cover deck/ace rules, double-click charging/payout, initial-delivery refunds, and expired actions. Catalog tests cover 51 jobs across 25-option pages and invalid giveaway dates.
+## Practical limits
 
-All 66 original split configuration/job definition files remain semantically identical to the 3.0 checkpoint. Persistent guild state is unchanged. Tests use temporary data paths and do not authenticate the bot.
+No live Discord login, channel posts, DMs, voice connections, or soundboard actions were performed. Offline checks cannot establish the exact cause of an error seen only on an operator's server without its stack trace. Real channel permissions, external service availability, gateway connectivity, and Discord client appearance should be checked after startup. Keep the full error and action details when reporting a remaining issue.
 
-## Live verification
-
-No Discord login or live server actions were performed. Verify channel permissions, actual rendered appearance, voice/soundboard connectivity, external API availability, DM privacy settings, and command propagation after configuring the bot on your server.
-
-Official references: [Node 26.12.1](https://nodejs.org/en/blog/release/v26.12.1), [npm 12.2.1](https://github.com/npm/cli/releases/tag/v12.2.1), [discord.js 14.27.0](https://discord.js.org/docs/packages/discord.js/14.27.0), [Discord API](https://docs.discord.com/developers/reference), [components](https://docs.discord.com/developers/components/reference).
+Official references: [Node.js 26.13.0](https://nodejs.org/en/blog/release/v26.13.0), [discord.js 14.28.0](https://github.com/discordjs/discord.js/releases/tag/14.28.0), [Gateway activities](https://docs.discord.com/developers/events/gateway-events#activity-object), [minimatch advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249), [redirect advisory](https://github.com/advisories/GHSA-mrwp-f3q8-3g9p).

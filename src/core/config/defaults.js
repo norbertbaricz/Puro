@@ -18,6 +18,7 @@ const DEFAULTS = {
     logging: { quiet_startup: false, listener_max: 64 },
     database: { path: 'database.json', auto_repair: true },
     health: { interval_ms: 300_000 },
+    status: { branding: 'Made by Skypixel Framework', texts: [], type: 'Custom', status: 'idle', interval_ms: 30000 },
     ui: {
         accent: '#ff1493',
         footer: 'Puro • Skypixel',

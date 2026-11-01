@@ -204,6 +204,7 @@ module.exports = {
                         return;
                     }
 
+                    await componentInteraction.deferUpdate();
                     const outcome = await withEconomy((db) => {
                         const record = ensureUserRecord(db, interaction.user.id);
                         if (!record.job) {
@@ -226,7 +227,7 @@ module.exports = {
                     });
 
                     if (outcome.status === 'no-job') {
-                        await componentInteraction.reply({
+                        await componentInteraction.followUp({
                             content: messages.quit_no_job || 'You are not currently employed.',
                             flags: MessageFlags.Ephemeral,
                         });
@@ -242,7 +243,7 @@ module.exports = {
                     });
                     state.flashVariant = 'success';
 
-                    await componentInteraction.update({
+                    await interaction.editReply({
                         embeds: [buildEmbed()],
                         components: [buildSelect(), buildButtons()],
                     });

@@ -54,3 +54,9 @@ Keep `.env`, the configured economy database, and `data/` outside source control
 Ordinary interaction responses become embeds by default. Channel/DM sends and custom event replies use `client.ui`. See [Messages](MESSAGES.md) for the complete API. UI settings reload live. Grant Embed Links in posting destinations. `/announce` and `/send` default to embed mode; plain mode must be chosen explicitly.
 
 The runtime minimum, pinned npm version, and exact dependency declarations are in `package.json`; `.node-version` selects the tested Node Current release. `npm run deps:check` reads the registry without changing files. `npm run format` applies the common source format; `npm run verify` includes a format check.
+
+## Presence and runtime updates
+
+`status.branding` defaults to `Made by Skypixel Framework`. The ready event sends it first as a Custom activity's `state`, followed by entries from `status.texts`. Duplicate entries are removed. Existing configurations inherit this branding through defaults. Presence intervals must be at least 15000 ms; supported status values are `online`, `idle`, `dnd`, and `invisible`.
+
+Only stable Node/npm and package versions are accepted by the release checks; an npm `latest` tag pointing to an alpha is filtered out. Version checks also include pinned dependency overrides. The current lockfile pins `follow-redirects` and the lint tool's `minimatch` to patched releases; see the verification report.

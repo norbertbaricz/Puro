@@ -9,6 +9,8 @@ const {
     MessageFlags,
 } = require('discord.js');
 
+const INPUT_LIMIT = 32;
+
 module.exports = {
     guildOnly: true,
     category: 'Moderation',
@@ -16,7 +18,11 @@ module.exports = {
         .setName('allnick')
         .setDescription('Change or reset the nickname of many members')
         .addStringOption((option) =>
-            option.setName('nickname').setDescription('Nickname to set (leave empty to reset)').setRequired(false),
+            option
+                .setName('nickname')
+                .setDescription('Nickname to set (leave empty to reset)')
+                .setMaxLength(INPUT_LIMIT)
+                .setRequired(false),
         )
         .addRoleOption((option) =>
             option.setName('role').setDescription('Limit to members with this role').setRequired(false),
@@ -39,6 +45,12 @@ module.exports = {
     async execute(interaction) {
         const config = interaction.client.config.commands.allnick || {};
         const newNick = interaction.options.getString('nickname');
+        if (newNick && newNick.length > INPUT_LIMIT)
+            return interaction.reply(
+                interaction.client.ui.warning(`Nicknames must contain at most ${INPUT_LIMIT} characters.`, {
+                    flags: MessageFlags.Ephemeral,
+                }),
+            );
         const role = interaction.options.getRole('role');
         const includeBots = interaction.options.getBoolean('include_bots') ?? true;
         const onlyWithNickname = interaction.options.getBoolean('only_with_nickname') || false;

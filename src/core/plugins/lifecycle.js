@@ -15,9 +15,13 @@ async function invoke(manager, record, args, onlyGuildId = null) {
                 if ((onlyGuildId && id !== onlyGuildId) || record.initializedGuilds.has(id)) continue;
                 const target = manager.client.guilds.cache.get(id);
                 if (!target) continue;
-                record.initializedGuilds.add(id);
-                const dispose = await record.module.execute(target, manager.client);
-                if (typeof dispose === 'function') record.disposers.push(dispose);
+                try {
+                    const dispose = await record.module.execute(target, manager.client);
+                    if (typeof dispose === 'function') record.disposers.push(dispose);
+                    record.initializedGuilds.add(id);
+                } catch (error) {
+                    manager.report(`Event ${record.name} failed for guild ${id}`, error, record);
+                }
             }
         } else {
             const dispose = await record.module.execute(...args, manager.client);

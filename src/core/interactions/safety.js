@@ -1,78 +1,50 @@
+// Expired tokens and deleted response messages are normal UI lifecycle outcomes.
 const UNKNOWN_INTERACTION_CODE = 10062;
+const UNAVAILABLE_RESPONSE_CODES = new Set([10008, 10015, 10062, 50027]);
+const errorCode = (error) => Number(error?.code ?? error?.rawError?.code);
 
-const hasUnknownInteractionMessage = (error) =>
-    typeof error?.message === 'string' && error.message.toLowerCase().includes('unknown interaction');
+function isUnknownInteractionError(error) {
+    return Boolean(
+        error &&
+        (errorCode(error) === UNKNOWN_INTERACTION_CODE ||
+            (typeof error.message === 'string' && error.message.toLowerCase().includes('unknown interaction'))),
+    );
+}
 
-const isUnknownInteractionError = (error) =>
-    !error
-        ? false
-        : error.code === UNKNOWN_INTERACTION_CODE ||
-          error.rawError?.code === UNKNOWN_INTERACTION_CODE ||
-          hasUnknownInteractionMessage(error);
+function isUnavailableResponseError(error) {
+    return isUnknownInteractionError(error) || UNAVAILABLE_RESPONSE_CODES.has(errorCode(error));
+}
 
-const safeFollowUp = async (interaction, payload) => {
-    if (!interaction) return;
+async function response(interaction, method, payload) {
+    if (!interaction) return undefined;
     try {
-        await interaction.followUp(payload);
+        return await interaction[method](payload);
     } catch (error) {
-        if (!isUnknownInteractionError(error)) {
-            throw error;
-        }
+        if (!isUnavailableResponseError(error)) throw error;
     }
-};
+}
 
-const safeReply = async (interaction, payload) => {
-    if (!interaction) return;
-    if (interaction.deferred || interaction.replied) {
-        await safeFollowUp(interaction, payload);
-        return;
-    }
-    try {
-        await interaction.reply(payload);
-    } catch (error) {
-        if (!isUnknownInteractionError(error)) {
-            throw error;
-        }
-    }
-};
+const safeFollowUp = (interaction, payload) => response(interaction, 'followUp', payload);
+const safeReply = (interaction, payload) =>
+    response(interaction, interaction?.deferred || interaction?.replied ? 'followUp' : 'reply', payload);
+const safeUpdate = (interaction, payload) => response(interaction, 'update', payload);
+const safeEditReply = (interaction, payload) => response(interaction, 'editReply', payload);
 
-const safeUpdate = async (interaction, payload) => {
-    if (!interaction) return;
-    try {
-        await interaction.update(payload);
-    } catch (error) {
-        if (!isUnknownInteractionError(error)) {
-            throw error;
-        }
-    }
-};
-
-const safeEditReply = async (interaction, payload) => {
-    if (!interaction) return;
-    try {
-        await interaction.editReply(payload);
-    } catch (error) {
-        if (!isUnknownInteractionError(error)) {
-            throw error;
-        }
-    }
-};
-
-const safeDeferUpdate = async (interaction) => {
-    if (!interaction || interaction.deferred || interaction.replied) {
-        return;
-    }
+async function safeDeferUpdate(interaction) {
+    if (!interaction) return false;
+    if (interaction.deferred || interaction.replied) return true;
     try {
         await interaction.deferUpdate();
+        return true;
     } catch (error) {
-        if (!isUnknownInteractionError(error)) {
-            throw error;
-        }
+        if (!isUnavailableResponseError(error)) throw error;
+        return false;
     }
-};
+}
 
 module.exports = {
     isUnknownInteractionError,
+    isUnavailableResponseError,
     safeDeferUpdate,
     safeEditReply,
     safeReply,
