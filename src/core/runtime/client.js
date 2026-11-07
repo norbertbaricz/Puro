@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, Partials, Options } = require('discord.js');
 const { createUi } = require('../ui/messages');
+const { buildGatewayStrategy } = require('./gateway');
 
 // Cache limits come from config.yml; sweeper timing is independent of bot traffic.
 const MESSAGE_SWEEP_SECONDS = 300;
@@ -10,6 +11,7 @@ function createClient(config) {
         intents: config.runtime.intents.map((name) => GatewayIntentBits[name]),
         partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User, Partials.Reaction],
         allowedMentions: { parse: ['users'], repliedUser: false },
+        ws: { buildStrategy: buildGatewayStrategy },
         makeCache: Options.cacheWithLimits({
             ...Options.DefaultMakeCacheSettings,
             MessageManager: config.runtime.message_cache_limit,

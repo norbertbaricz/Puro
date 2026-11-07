@@ -1,3 +1,10 @@
+# 3.2.1 — 2026-11-07
+
+- Recover from Discord Gateway DNS failures through the original Gateway URL. Repeated network failures back off, and a successful connection resets the delay.
+- Reopen voice connections with fresh endpoints after temporary DNS or WebSocket failures. Moving channels, leaving voice, and unloading the event cancel its pending retries.
+- Send the follow soundboard sound once after the voice connection becomes ready.
+- Update discord.js to 14.28.1 and exercise the recovery paths with a local Gateway and simulated voice failures.
+
 # 3.2.0 — 2026-11-01
 
 - Updated to discord.js 14.28.0, Node.js 26.13.0 LTS, Axios 1.21.0, and ESLint 10.14.0; retained current stable npm 12.2.1.

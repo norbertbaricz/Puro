@@ -1,5 +1,19 @@
 # Puro 3.2 verification
 
+## 3.2.1 — 2026-11-07
+
+Verified with **Node.js 26.13.0**, **npm 12.2.1**, **discord.js 14.28.1**, and **@discordjs/voice 0.19.2**. `npm run verify` passed all 126 tests, syntax checks for 166 scripts, loading for 61 active modules, ESLint, and Prettier. The npm audit reported zero vulnerabilities.
+
+- The installed SDK connects to a local Gateway, fails to resolve a regional resume host, and identifies again through the original Gateway URL. A later healthy reconnect resumes its session.
+- Repeated Gateway DNS failures increase the retry delay, and client shutdown cancels a pending retry.
+- Simulated voice DNS and HTTP 521 failures request fresh connections. The tests verify soundboard playback after readiness and cancellation when the followed member moves.
+
+The registry check confirmed the Discord SDK and voice package versions. It also reported newer releases for DAVE, globals, minimatch, and npm. Voice 0.19.2 depends on DAVE 0.1.x. Live Discord credentials and server connections were outside this verification.
+
+Protocol references are the [Discord Gateway reconnect guide](https://docs.discord.com/developers/events/gateway#reconnecting) and the [Discord voice connection guide](https://docs.discord.com/developers/topics/voice-connections).
+
+## 3.2.0 — 2026-11-01
+
 Verified on **2026-11-01** with **Node.js 26.13.0 LTS**, **npm 12.2.1**, and **discord.js 14.28.0**.
 
 | Check                | Result                                                                                  |

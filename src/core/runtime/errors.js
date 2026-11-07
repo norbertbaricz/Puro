@@ -26,7 +26,10 @@ function installRuntimeHandlers(client, shutdown) {
         log.error('Discord client error', { error });
         client.healthMonitor.recordError(error);
     });
-    client.on(Events.ShardError, (error) => log.error('Discord shard error', { error }));
+    client.on(Events.ShardError, (error, shardId) => {
+        log.error('Discord shard error', { shardId, error });
+        client.healthMonitor.recordError(error);
+    });
     client.on(Events.ShardDisconnect, (event, shardId) =>
         log.warn('Discord shard disconnected', { shardId, code: event.code }),
     );
